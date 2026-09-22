@@ -2,6 +2,8 @@
 
 Static HTML/CSS sandbox for **agentic deploys** (Cursor, Claude, ChatGPT).
 
+**Full instructions:** see **[GUIDE.md](./GUIDE.md)** (paths, Render, DNS, deploy options).
+
 ## Workflow for Mohit / team
 
 1. Edit `index.html`, `css/`, or add folders under `packages/`.
