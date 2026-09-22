@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Total cost of ownership · Nebius</title>
+<link rel="icon" href="logo.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@700&display=swap" rel="stylesheet">
+<style>
+/* ------------------------------------------------------------------
+   Nebius TCO calculator. Layout follows the pricing calculator that
+   landed well: questions left, answer top-right, detail below.
+   Brand tokens from Brand Reference/DESIGN.md.
+   Space Grotesk stands in for Gramatika, which is licensed to Nebius.
+   ------------------------------------------------------------------ */
+:root{
+  --navy:#052B42;
+  --deep:#0F2839;
+  --lime:#E0FF4F;
+  --blue-text:#2563EB;     /* 5.17:1. Their #3277FF measures 4.02 and fails AA */
+  --surface:#F3F4F5;
+  --border:#E6EAEC;
+  --cardline:rgba(5,43,66,.1);
+  --ghost:rgba(5,43,66,.05);
+
+  /* Three ink steps, no more. On the gradient panel these are overridden. */
+  --second:rgba(5,43,66,.68);    /* 5.31:1 on white */
+  --tertiary:rgba(5,43,66,.64);  /* 4.68:1 on white */
+
+  /* Chart ramp: tints of navy, not hues. A hue strong enough to read on the
+     gradient is strong enough to fight it. Lightness does not.
+     Measured on the panel: 10.19 / 5.98 / 3.26. The two lighter steps of the
+     ramp fall under 3:1 there and are not used. */
+  --t1:#052B42;
+  --t2:#1F5070;
+  --t3:#3D7A9E;
+
+  --display:"Space Grotesk","Helvetica Neue",Arial,sans-serif;
+  --sans:"Inter","Helvetica Neue",Arial,sans-serif;
+  --ease:cubic-bezier(.22,.61,.36,1);
+  --reveal:cubic-bezier(.25,.46,.45,.94);
+
+  --r-in:10px; --r-btn:12px; --r-card:24px;
+  --container:1328px;
+
+  /* measured at boot so changing an input never moves anything */
+  --h-hero:auto; --h-sum:auto;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;background:#fff;color:var(--navy);
+  font:400 14px/22px var(--sans);-webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:var(--container);margin:0 auto;padding:0 48px}
+h1,h2,h3,h4{margin:0}
+button{font:inherit;color:inherit}
+a{color:var(--blue-text);text-decoration:none;font-weight:600}
+a:hover{text-decoration:underline}
+
+/* ---------- header ---------- */
+header.site{border-bottom:1px solid var(--border);background:#fff;position:sticky;top:0;z-index:50}
+header.site .row{display:flex;align-items:center;gap:20px;height:62px}
+header.site img{display:block;height:24px;width:auto}
+header.site .rule{width:1px;height:22px;background:var(--border)}
+header.site .ctx{font:600 14px/18px var(--sans);white-space:nowrap}
+header.site .sp{flex:1 1 auto}
+header.site .stamp{font:400 12px/18px var(--sans);color:var(--tertiary);white-space:nowrap}
+
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  padding:9px 18px;border-radius:var(--r-btn);border:0;
+  font:500 14px/20px var(--sans);cursor:pointer;white-space:nowrap;
+  transition:background .2s ease,color .2s ease,border-color .2s ease;
+}
+.btn.dark{background:var(--navy);color:#fff}
+.btn.dark:hover{background:var(--deep)}
+.btn.ghost{background:var(--ghost);color:var(--navy)}
+.btn.ghost:hover{background:rgba(5,43,66,.09)}
+.btn.lime{background:var(--lime);color:var(--navy)}
+.btn.lime:hover{background:#d4f53b}
+.btn.line{background:#fff;color:var(--navy);border:1px solid var(--navy)}
+.btn.line:hover{background:var(--surface)}
+.btn.wide{width:100%}
+:focus-visible{outline:2px solid var(--blue-text);outline-offset:2px;border-radius:6px}
+
+/* ---------- title ---------- */
+.intro{padding:40px 0 0}
+.intro h1{font:700 40px/44px var(--display);letter-spacing:.02em}
+.intro p{margin:10px 0 0;font-size:15px;line-height:24px;color:var(--second);max-width:none}
+
+/* ---------- the three zones ---------- */
+.grid{display:grid;grid-template-columns:minmax(0,320px) minmax(0,1fr);gap:24px;margin-top:28px;align-items:start}
+.askcol{position:sticky;top:86px}
+
+/* ---------- left: the questions ---------- */
+.ask{border:1px solid var(--cardline);border-radius:var(--r-card);padding:22px}
+.ask h2{font:700 20px/26px var(--sans);letter-spacing:-.01em}
+.ask .lede{margin:4px 0 16px;font:400 12px/18px var(--sans);color:var(--tertiary)}
+.fld{margin-top:20px}
+.fld:first-of-type{margin-top:0}
+.fld > .lbl{display:block;font:600 14px/18px var(--sans);margin-bottom:9px}
+.opts{display:flex;flex-direction:column;gap:7px}
+.opt{
+  display:block;width:100%;text-align:left;padding:11px 13px;cursor:pointer;
+  background:#fff;border:1px solid var(--cardline);border-radius:var(--r-in);
+  transition:background .2s ease,border-color .2s ease;
+}
+.opt:hover{background:var(--surface)}
+.opt[aria-pressed="true"]{border-color:var(--navy);background:var(--surface)}
+.opt b{display:block;font:600 14px/18px var(--sans)}
+.opt span{display:block;font:400 12px/17px var(--sans);color:var(--tertiary);margin-top:1px}
+.pillrow{display:flex;gap:6px;flex-wrap:wrap}
+.pill{
+  padding:7px 13px;border-radius:999px;border:1px solid var(--cardline);background:#fff;
+  font:500 12px/17px var(--sans);color:var(--navy);cursor:pointer;
+  transition:background .2s ease,border-color .2s ease,color .2s ease;
+}
+.pill:hover{background:var(--surface)}
+.pill[aria-pressed="true"]{background:var(--navy);border-color:var(--navy);color:#fff}
+.ask hr{border:0;border-top:1px solid var(--border);margin:20px 0}
+.actcol{display:flex;flex-direction:column;gap:8px;margin-top:16px}
+
+/* ---------- right column ---------- */
+.answers{min-width:0;display:flex;flex-direction:column;gap:18px}
+
+/* hero: the brand's Mode A gradient band */
+.hero{
+  position:relative;overflow:hidden;border-radius:var(--r-card);
+  padding:26px 34px 28px;min-height:var(--h-hero);
+}
+.hero::before{content:"";position:absolute;inset:0;z-index:0;
+  background:
+    radial-gradient(60% 80% at 18% 25%,rgba(255,255,255,.62),transparent 62%),
+    radial-gradient(52% 72% at 88% 74%,rgba(183,190,255,.42),transparent 66%),
+    linear-gradient(100deg,#C8F7ED 0%,#BBF0F1 25%,#B3E8F7 50%,#B5E0FD 75%,#BFD9FF 100%);
+}
+.hero::after{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;opacity:.04;
+  mix-blend-mode:multiply;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='.8'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+.hero > *{position:relative;z-index:2}
+/* alpha inks composite with the panel, so they take a darker step here */
+.hero{--second:rgba(5,43,66,.80);--tertiary:rgba(5,43,66,.80)}
+
+.costline{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+/* One dominant figure. Nothing else on the page goes above 40px. */
+.costline .n{
+  font:700 clamp(52px,5.6vw,76px)/1.02 var(--display);letter-spacing:.02em;
+  font-variant-numeric:tabular-nums;
+}
+.costline .u{font:700 20px/26px var(--sans)}
+.chip{
+  display:inline-block;background:var(--lime);color:var(--navy);
+  padding:4px 12px;border-radius:999px;font:600 14px/20px var(--sans);
+}
+.hero .says{margin:8px 0 0;font:400 14px/22px var(--sans);color:var(--navy);max-width:none}
+.hero .says b{font-weight:600}
+
+/* three figures, in type */
+.three{
+  margin-top:22px;padding-top:18px;border-top:1px solid rgba(5,43,66,.16);
+  display:grid;grid-template-columns:repeat(3,1fr);gap:20px;
+}
+.three .k{font:500 12px/16px var(--sans);color:var(--second)}
+.three .v{font:700 28px/34px var(--sans);font-variant-numeric:tabular-nums;margin-top:3px}
+.three .s{font:400 12px/16px var(--sans);color:var(--second);margin-top:2px}
+
+/* waterfall, in tints of navy */
+.wf{margin-top:20px;padding-top:18px;border-top:1px solid rgba(5,43,66,.16)}
+.wf h3{font:600 14px/18px var(--sans);margin-bottom:12px}
+.wfrow{display:grid;grid-template-columns:118px 1fr 78px;gap:10px;align-items:center;height:22px}
+.wfrow .l{font:400 12px/16px var(--sans);color:var(--second);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wfrow .t{position:relative;height:10px}
+.wfrow .b{position:absolute;top:0;height:10px;border-radius:3px}
+.wfrow .v{font:500 12px/16px var(--sans);text-align:right;font-variant-numeric:tabular-nums}
+.wfrow.anchor{height:26px}
+.wfrow.anchor .l{font-weight:600;font-size:14px;color:var(--navy)}
+.wfrow.anchor .v{font-weight:700;font-size:14px}
+
+/* ---------- detail ---------- */
+.detail{border:1px solid var(--cardline);border-radius:var(--r-card);overflow:hidden}
+.tabbar{
+  display:flex;align-items:center;justify-content:space-between;gap:16px;
+  padding:10px 14px;border-bottom:1px solid var(--border);
+  background:linear-gradient(100deg,#EEFBF8 0%,#EAF6FD 55%,#EEF2FF 100%);
+}
+.tabs{display:flex;align-items:center;font:700 14px/18px var(--sans);color:var(--navy)}
+.btn.sm{padding:6px 12px;font-size:12px;margin-bottom:7px}
+.tab{
+  padding:11px 16px;border:0;background:none;cursor:pointer;
+  font:500 14px/18px var(--sans);color:var(--second);
+  border-bottom:2px solid transparent;margin-bottom:-1px;
+}
+.tab:hover{color:var(--navy)}
+.tab[aria-selected="true"]{color:var(--navy);font-weight:600;border-bottom-color:var(--navy)}
+
+.tscroll{overflow-x:auto;padding:0 22px 4px}
+table{width:100%;border-collapse:collapse}
+th,td{text-align:left;padding:0 14px 0 0;height:46px;vertical-align:middle}
+thead th{
+  font:400 12px/17px var(--sans);color:var(--tertiary);
+  border-bottom:1px solid var(--border);height:40px;
+}
+tbody td{border-bottom:1px solid var(--border);font:400 14px/19px var(--sans)}
+tbody tr:last-child td{border-bottom:0}
+td.n{font-variant-numeric:tabular-nums;white-space:nowrap;font-weight:500}
+td.n small,td.cfg small{display:block;font:400 12px/16px var(--sans);color:var(--tertiary);font-weight:400}
+td.cfg{color:var(--second)}
+td.inc{color:var(--tertiary)}
+tr.sect td{
+  border-bottom:1px solid var(--border);border-top:0;
+  height:auto;padding:22px 14px 7px 0;
+}
+tr.sect:first-child td{padding-top:8px}
+.sect b{font:600 12px/16px var(--sans);color:var(--tertiary);letter-spacing:.01em}
+tr.tot td{border-top:1px solid var(--navy);border-bottom:0;font:700 14px/20px var(--sans);height:54px}
+tr.tot.grand td{font-size:20px}
+tr.tot td small{display:block;font:400 12px/16px var(--sans);color:var(--second);font-weight:400}
+
+.tools .hint{font:400 12px/18px var(--sans);color:var(--tertiary);white-space:nowrap}
+.linkbtn{
+  background:none;border:0;padding:0 2px;cursor:pointer;white-space:nowrap;
+  font:600 12px/18px var(--sans);color:var(--blue-text);text-decoration:underline;
+  text-underline-offset:3px;
+}
+.linkbtn:hover{color:var(--navy)}
+.linkbtn[hidden]{display:none}
+.tools .hint a{font-size:12px}
+
+/* inputs inside the table */
+.num{
+  width:76px;height:30px;border-radius:8px;border:1px solid transparent;
+  background:var(--surface);padding:4px 9px;font:400 14px/20px var(--sans);
+  color:var(--navy);font-variant-numeric:tabular-nums;
+}
+.num:hover{border-color:var(--cardline)}
+.num:focus{outline:none;border-color:var(--blue-text);background:#fff}
+.num.bad{border-color:#D14343;background:#fff}
+.unit{font:400 12px/16px var(--sans);color:var(--tertiary);margin-left:6px}
+
+/* info affordance, portalled so no overflow container can clip it */
+.info{
+  width:17px;height:17px;border-radius:50%;border:1px solid var(--cardline);
+  background:#fff;color:var(--second);cursor:pointer;flex:0 0 auto;position:relative;
+  display:inline-flex;align-items:center;justify-content:center;padding:0;
+  font:600 12px/16px var(--sans);vertical-align:-3px;margin-left:6px;
+}
+.info::before{content:"";position:absolute;inset:-8px}
+.info:hover{background:var(--surface);border-color:var(--navy);color:var(--navy)}
+#tip{
+  position:fixed;z-index:80;max-width:348px;padding:17px 19px;background:#fff;
+  border:1px solid var(--cardline);border-radius:var(--r-in);display:none;
+  box-shadow:rgba(5,43,66,.12) 0 12px 32px 0, rgba(5,43,66,.06) 0 2px 6px 0;
+}
+#tip.on{display:block}
+#tip h4{margin:0 0 5px;font:600 12px/16px var(--sans);color:var(--tertiary)}
+#tip p{margin:0 0 13px;font:400 14px/20px var(--sans)}
+#tip p:last-of-type{margin-bottom:0}
+#tip code{display:block;margin:0 0 13px;padding:10px 12px;background:var(--surface);
+  border-radius:8px;font:400 12px/18px ui-monospace,Menlo,monospace;white-space:pre-wrap}
+#tip .src{margin-top:13px;padding-top:11px;border-top:1px solid var(--border);
+  font:400 12px/17px var(--sans);color:var(--tertiary)}
+#tip .src a{font-size:12px}
+
+/* ---------- the rate card ----------
+   One table, always the full card. It scrolls in place and expands to full
+   screen. Density follows the ClusterMAX sheet the client works from:
+   financial models carry smaller type so more of the model fits. */
+.detail .tscroll{padding:0;max-height:560px;overflow:auto;scrollbar-width:thin;
+  scrollbar-color:rgba(5,43,66,.28) transparent}
+.detail.fs .tscroll{max-height:calc(100vh - 190px)}
+.tscroll::-webkit-scrollbar{width:8px;height:8px}
+.tscroll::-webkit-scrollbar-track{background:transparent}
+.tscroll::-webkit-scrollbar-thumb{background:rgba(5,43,66,.24);border-radius:99px}
+.tscroll::-webkit-scrollbar-thumb:hover{background:rgba(5,43,66,.4)}
+/* fits the column at 1328, so the horizontal bar never appears */
+.detail table{min-width:0;width:100%}
+.detail th,.detail td{padding:0 8px;height:26px}
+.detail th:first-child,.detail td:first-child{padding-left:14px}
+.detail th:last-child,.detail td:last-child{padding-right:14px}
+/* header and section rows stay on one line, always */
+/* the header row and the item column both freeze while you scroll */
+/* header and section rows stay on one line, always */
+/* header and section rows stay on one line, always */
+.detail thead th{
+  height:28px;white-space:nowrap;font:600 12px/16px var(--sans);color:var(--tertiary);
+  border-bottom:1px solid var(--border);position:sticky;top:0;background:#fff;z-index:5;
+}
+.detail th:first-child,.detail td:first-child{
+  position:sticky;left:0;z-index:4;background:#fff;
+}
+.detail thead th:first-child{z-index:6}
+.detail tr.sect td:first-child{background:var(--surface)}
+.detail th:first-child::after,.detail td:first-child::after{
+  content:"";position:absolute;top:0;right:0;bottom:0;width:1px;background:var(--border);
+}
+.detail thead th.me{color:var(--navy)}
+.detail tbody td{font:400 12px/16px var(--sans);border-bottom:1px solid var(--border)}
+.detail td.n{font-weight:500;font-variant-numeric:tabular-nums;white-space:nowrap}
+.detail td.q{color:var(--second);white-space:nowrap}
+tr.sect td{background:var(--surface);border-top:0;border-bottom:1px solid var(--border);height:26px;white-space:nowrap}
+/* The flex row lives INSIDE the cell. Setting display:flex on the td itself
+   took it out of the table layout and left a white band under every section. */
+.sectcell{display:flex;align-items:center}
+.sectcell .info{margin-left:7px;top:0;vertical-align:baseline;width:15px;height:15px;font-size:10px}
+.sectbtn{
+  display:inline-flex;align-items:center;gap:6px;background:none;border:0;padding:0;cursor:pointer;
+  font:700 12px/16px var(--sans);color:var(--navy);
+}
+.sectbtn .chev{transition:transform .18s ease}
+.sectbtn[aria-expanded="false"] .chev{transform:rotate(-90deg)}
+.hintu{font:400 11px/15px var(--sans);color:var(--tertiary);margin-left:7px;white-space:nowrap}
+.sub{font:600 12px/16px var(--sans);font-variant-numeric:tabular-nums}
+tr.row.hide{display:none}
+tr.tot td{border-top:1px solid var(--navy);border-bottom:0;font:700 13px/17px var(--sans);height:30px}
+tr.tot.yr td{border-top:0;height:26px;font-weight:600;color:var(--second)}
+tr.tot td small{display:block;font:400 11px/15px var(--sans);color:var(--second);font-weight:400}
+.rowcell{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.delrow{
+  border:0;background:none;cursor:pointer;color:var(--tertiary);
+  width:18px;height:18px;border-radius:50%;flex:0 0 auto;
+  font:400 14px/1 var(--sans);opacity:0;transition:opacity .15s ease;
+}
+tr.row:hover .delrow,.delrow:focus-visible{opacity:1}
+.delrow:hover{background:var(--surface);color:var(--navy)}
+
+.colhead{display:inline-flex;align-items:center;gap:7px;white-space:nowrap}
+.addcol{
+  display:inline-flex;align-items:center;gap:5px;flex:0 0 auto;
+  height:28px;padding:0 12px;border-radius:999px;border:1px dashed rgba(5,43,66,.28);
+  background:rgba(255,255,255,.8);cursor:pointer;font:600 12px/1 var(--sans);color:var(--second);
+  white-space:nowrap;
+}
+.addcol[hidden]{display:none}
+.addcol:hover{background:var(--surface);color:var(--navy);border-style:solid}
+.delcol{width:20px;height:20px;border-radius:50%;border:0;background:none;cursor:pointer;
+  color:var(--tertiary);font:400 12px/1 var(--sans)}
+.delcol:hover{color:var(--navy)}
+.incl{font:400 11px/15px var(--sans);color:var(--tertiary);margin-left:5px}
+.detail .num{width:56px;height:20px;font-size:12px;padding:0 6px;border-radius:6px}
+.detail .unit{font-size:11px;margin-left:3px}
+
+.tools{display:flex;gap:6px;align-items:center}
+.iconbtn{
+  width:28px;height:28px;border-radius:9px;border:1px solid rgba(5,43,66,.14);background:rgba(255,255,255,.8);
+  display:inline-flex;align-items:center;justify-content:center;cursor:pointer;color:var(--second);
+}
+.iconbtn:hover{background:var(--surface);color:var(--navy)}
+.iconbtn.lime{background:var(--lime);border-color:var(--lime);color:var(--navy)}
+.iconbtn.lime:hover{background:#d4f53b}
+
+/* full screen */
+.detail.fs{
+  position:fixed;inset:16px;z-index:70;background:#fff;overflow:auto;
+  box-shadow:rgba(5,43,66,.18) 0 24px 64px 0;
+}
+.detail.fs .tscroll{max-height:none}
+.fsback{position:fixed;inset:0;z-index:65;background:rgba(5,43,66,.28);display:none}
+.fsback.on{display:block}
+body.locked{overflow:hidden}
+
+/* ---------- foot ---------- */
+footer.site{margin-top:44px;border-top:1px solid var(--border);padding:22px 0 44px}
+footer.site .zones{display:flex;justify-content:space-between;gap:32px;flex-wrap:wrap}
+footer.site .z{font:400 12px/18px var(--sans);color:var(--tertiary);max-width:42ch}
+footer.site .z b{display:block;color:var(--navy);font-weight:600;margin-bottom:4px}
+footer.site .base{margin-top:18px;padding-top:14px;border-top:1px solid var(--border);
+  display:flex;justify-content:space-between;gap:24px;flex-wrap:wrap;
+  font:400 12px/17px var(--sans);color:var(--tertiary)}
+
+@media (prefers-reduced-motion:reduce){*{transition-duration:.001ms !important}}
+
+@media (max-width:1080px){
+  .grid{grid-template-columns:1fr}
+  .askcol{position:static}
+  .wrap{padding:0 24px}
+}
+@media (max-width:900px){
+  .detail table{min-width:660px}
+}
+@media (max-width:720px){
+  /* the header stamp and CTA do not fit beside the logo, and the CTA is
+     repeated in the panel below, so the header keeps only its identity */
+  header.site .stamp,header.site .btn,header.site .rule{display:none}
+  header.site .row{gap:12px}
+  .tabbar{flex-wrap:wrap;gap:8px}
+  .tools{flex-wrap:wrap}
+  .costline{gap:8px}
+  .detail .tscroll{max-height:none}
+  .detail.fs{inset:8px}
+  .wrap{padding:0 16px}
+  .intro h1{font-size:30px;line-height:34px}
+  .three{grid-template-columns:1fr;gap:14px}
+  .hero{padding:22px}
+  .tabs{position:static}
+  .wfrow{grid-template-columns:96px 1fr 68px}
+}
+
+@media print{
+  @page{size:A4 landscape;margin:12mm}
+  header.site,.askcol,.moreRow,.btn,.tabs{display:none !important}
+  .grid{grid-template-columns:1fr}
+  .hero::before{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .chip{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  thead{display:table-header-group}
+  tr{break-inside:avoid}
+}
+</style>
+</head>
+<body>
+
+<header class="site">
+  <div class="wrap">
+    <div class="row">
+      <img src="logo.svg" alt="Nebius">
+      <span class="rule"></span>
+      <span class="ctx">Total cost of ownership</span>
+      <span class="sp"></span>
+      <span class="stamp">Pricing as of February 2026</span>
+      <button type="button" class="btn dark">Talk to an expert</button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <section class="intro">
+    <h1>What does it really cost?</h1>
+    <p>Everyone quotes a price per GPU-hour. Nobody charges it. Support, setup, proof of
+      concept and failed work all land on the same budget, and only some of them reach an invoice.</p>
+  </section>
+
+  <div class="grid">
+
+    <div class="askcol">
+      <section class="ask">
+        <h2>Start from a Nebius solution</h2>
+        <p class="lede">Every figure is editable once you open the detail.</p>
+
+        <div class="fld">
+          <div class="opts" id="recipes" role="group" aria-label="Solution"></div>
+        </div>
+
+        <hr>
+
+        <div class="fld">
+          <span class="lbl">Compare with</span>
+          <div class="pillrow" id="cmp" role="group" aria-label="Comparator"></div>
+        </div>
+
+        <div class="fld">
+          <span class="lbl">Over</span>
+          <div class="pillrow" id="term" role="group" aria-label="Term">
+            <button type="button" class="pill" data-term="1" aria-pressed="true">1 year</button>
+            <button type="button" class="pill" data-term="3" aria-pressed="false">3 years</button>
+          </div>
+        </div>
+
+        <hr>
+
+        <div class="actcol">
+          <button type="button" class="btn lime wide" id="consult">Schedule a consultation</button>
+          <button type="button" class="btn line wide" id="pdf">Download as PDF</button>
+        </div>
+      </section>
+    </div>
+
+    <div class="answers">
+
+      <section class="hero" id="hero" aria-live="polite">
+        <div class="costline">
+          <span class="n" id="allin">$0.00</span>
+          <span class="u">per GPU-hour</span>
+          <span class="chip" id="scale">72 racks</span>
+        </div>
+        <p class="says" id="says"></p>
+
+        <div class="three" id="three"></div>
+
+        <div class="wf">
+          <h3 id="wfh">Where the difference comes from</h3>
+          <div id="wfrows"></div>
+        </div>
+      </section>
+
+      <section class="detail" id="detail">
+        <div class="tabbar">
+          <div class="tabs" id="tabs"></div>
+          <div class="tools">
+            <button type="button" class="linkbtn" id="reset" hidden>Reset</button>
+            <button type="button" class="addcol" id="addcol" aria-label="Add a provider"><span aria-hidden="true">+</span> Add provider</button>
+            <button type="button" class="iconbtn" id="collapseAll" title="Collapse every section" aria-label="Collapse every section">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M2 4.75A.75.75 0 0 1 2.75 4h10.5a.75.75 0 0 1 0 1.5H2.75A.75.75 0 0 1 2 4.75Zm0 3A.75.75 0 0 1 2.75 7h10.5a.75.75 0 0 1 0 1.5H2.75A.75.75 0 0 1 2 7.75Zm.75 2.25a.75.75 0 0 0 0 1.5h10.5a.75.75 0 0 0 0-1.5H2.75Z"/></svg>
+            </button>
+            <button type="button" class="iconbtn lime" id="expand" title="Expand to full screen" aria-label="Expand to full screen">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M2 2h5v1.5H3.5V7H2V2Zm7 0h5v5h-1.5V3.5H9V2ZM2 9h1.5v3.5H7V14H2V9Zm12 0v5H9v-1.5h3.5V9H14Z"/></svg>
+            </button>
+          </div>
+        </div>
+        <div class="tscroll">
+          <table id="grid"><thead id="head"></thead><tbody id="body"></tbody></table>
+        </div>
+      </section>
+    </div>
+  </div>
+</main>
+
+<footer class="site">
+  <div class="wrap">
+    <div class="zones">
+      <div class="z"><b>Method</b> Every rate, assumption and formula is taken from SemiAnalysis,
+        Calculating the Total Cost of a GPU Cluster, February 2026. Goodput formulas from section
+        2.3, rate cards from 4.1 to 4.3. The Nebius column reconciles to the study to the cent.
+        Comparison columns land within half a percent of its published totals, and they land low
+        rather than high.</div>
+      <div class="z"><b>Trademarks</b> NVIDIA, H100, H200, B200, B300, GB200 and GB300 are
+        trademarks of NVIDIA Corporation. ClusterMAX is a trademark of SemiAnalysis. All
+        third-party names and marks are used nominatively for identification only.</div>
+      <div class="z"><b>Scope</b> A hyperscaler and a silver-tier neocloud are composite
+        profiles from the study, not named vendors. Figures are modelled, not quotes.</div>
+    </div>
+    <div class="base">
+      <span>Prototype built by Digital Apple for Nebius</span>
+      <span>&copy; 2026 Nebius B.V.</span>
+    </div>
+  </div>
+</footer>
+
+<div class="fsback" id="fsback"></div>
+<div id="tip" role="dialog" aria-modal="false"></div>
+
+<script src="engine.js"></script>
+<script src="ui.js"></script>
+</body>
+</html>
