@@ -1,0 +1,7 @@
+# Optional Blueprint — primary service was created via Render API
+services:
+  - type: web
+    name: proto-digitalapple
+    runtime: static
+    buildCommand: echo "Static HTML — no npm build"
+    staticPublishPath: .
