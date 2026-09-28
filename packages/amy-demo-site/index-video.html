@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Amy · Personalized AI Demo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body class="video-voice-demo">
+
+<header class="topbar simple pdf-hub-topbar">
+  <a class="brand" href="./index.html" title="All demos">
+    <img src="./assets/amy-logo.png" alt="Amy">
+    <div class="brand-copy"><b>Amy</b></div>
+  </a>
+  <span class="topbar-center-title" id="currentLabel">Personalized AI Demo</span>
+  <nav class="navlinks">
+    <a class="small-link" href="./index.html">Home</a>
+    <a class="small-link" href="./index-pdf.html">PDF demo</a>
+  </nav>
+</header>
+
+<main class="video-main">
+  <div class="video-frame">
+    <video id="demoVideo" controls playsinline preload="metadata" muted></video>
+    <div class="video-missing" id="videoMissing" style="display:none">
+      <div>
+        <h2>Video asset missing</h2>
+        <p>Expected: <strong>./assets/demo-video.mp4</strong></p>
+      </div>
+    </div>
+  </div>
+
+  <div class="chapters-carousel" id="chapters"></div>
+</main>
+
+<elevenlabs-convai agent-id="agent_2701kqsp215dfjar5mv87rdabn3q"></elevenlabs-convai>
+<script src="https://unpkg.com/@elevenlabs/convai-widget-embed" async type="text/javascript"></script>
+<script>
+const CONFIG_URL = './assets/video-demo-config.json';
+let VIDEO_PATH = './assets/demo-video.mp4';
+let chaptersList = [];
+let currentTs = 0;
+
+/* ── Config loading ── */
+async function loadVideoConfig() {
+  const res = await fetch(CONFIG_URL);
+  if (!res.ok) throw new Error('Failed to load ' + CONFIG_URL);
+  return res.json();
+}
+
+function chaptersFromConfig(cfg) {
+  return cfg.chapters
+    .map((c) => ({ id: c.id, timestamp: c.time, label: c.label, description: c.description, thumbnail: c.thumbnail || null, thumbSrc: null }))
+    .sort((a, b) => a.timestamp - b.timestamp);
+}
+
+/* ── Thumbnail capture ── */
+function seekVideo(video, seconds) {
+  const dur = Number.isFinite(video.duration) && video.duration > 0 ? video.duration : null;
+  const t = dur != null ? Math.min(Math.max(0, seconds), Math.max(0, dur - 0.05)) : Math.max(0, seconds);
+  return new Promise((resolve) => {
+    if (dur != null && Math.abs(video.currentTime - t) < 0.2) { resolve(); return; }
+    let settled = false;
+    const finish = () => { if (settled) return; settled = true; video.removeEventListener('seeked', finish); resolve(); };
+    video.addEventListener('seeked', finish);
+    video.currentTime = t;
+    setTimeout(finish, 750);
+  });
+}
+
+async function captureThumbnailsFromVideo(video, list) {
+  if (!video || !list.length) return;
+  const w = video.videoWidth, h = video.videoHeight;
+  if (!w || !h) return;
+  const canvas = document.createElement('canvas');
+  const scale = Math.min(1, 320 / w);
+  canvas.width = Math.round(w * scale);
+  canvas.height = Math.round(h * scale);
+  const ctx = canvas.getContext('2d');
+  const origTime = video.currentTime;
+  const wasPlaying = !video.paused;
+  video.pause();
+  for (const ch of list) {
+    if (ch.thumbnail) { ch.thumbSrc = ch.thumbnail; continue; }
+    try {
+      await seekVideo(video, ch.timestamp);
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      ch.thumbSrc = canvas.toDataURL('image/jpeg', 0.72);
+    } catch (e) { ch.thumbSrc = null; }
+  }
+  await seekVideo(video, origTime);
+  if (wasPlaying) video.play().catch(() => {});
+}
+
+/* ── Helpers ── */
+function setTitle(text) {
+  const el = document.getElementById('currentLabel');
+  if (el) el.textContent = text;
+}
+
+function formatTime(seconds) {
+  const m = Math.floor(seconds / 60), s = Math.floor(seconds % 60);
+  return m + ':' + String(s).padStart(2, '0');
+}
+
+/* ── Video init ── */
+function initVideo() {
+  const v = document.getElementById('demoVideo');
+  v.src = VIDEO_PATH;
+  v.addEventListener('loadedmetadata', async () => {
+    document.getElementById('videoMissing').style.display = 'none';
+    setTitle('Capturing chapter thumbnails…');
+    await captureThumbnailsFromVideo(v, chaptersList);
+    setTitle('Personalized AI Demo');
+    renderChapters();
+  });
+  v.addEventListener('error', () => {
+    document.getElementById('videoMissing').style.display = 'flex';
+    chaptersList.forEach((ch) => { if (!ch.thumbSrc && ch.thumbnail) ch.thumbSrc = ch.thumbnail; });
+    renderChapters();
+  });
+  v.addEventListener('timeupdate', () => updateActiveChapter(v.currentTime));
+}
+
+/* ── Chapter render ── */
+function renderChapters() {
+  const el = document.getElementById('chapters');
+  el.innerHTML = chaptersList.map((ch, i) => {
+    const still = ch.thumbSrc
+      ? '<img class="chapter-thumb-img" src="' + String(ch.thumbSrc).replace(/"/g, '&quot;') + '" alt="" />'
+      : '<span class="chapter-time-fallback">' + formatTime(ch.timestamp) + '</span>';
+    return (
+      '<button type="button" class="chapter' + (i === 0 ? ' active' : '') + '" data-ts="' + ch.timestamp + '" onclick="navigateVideo(' + ch.timestamp + ')">' +
+      '<div class="chapter-still">' + still + '</div>' +
+      '<div class="chapter-title">' + ch.label + '</div>' +
+      '<div class="chapter-time">' + formatTime(ch.timestamp) + '</div>' +
+      '</button>'
+    );
+  }).join('');
+  /* scroll to first active */
+  scrollActiveChapterIntoView();
+}
+
+function scrollActiveChapterIntoView() {
+  const active = document.querySelector('.chapter.active');
+  if (active) active.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+}
+
+/* ── Navigation ── */
+function navigateVideo(timestamp) {
+  const v = document.getElementById('demoVideo');
+  timestamp = parseFloat(timestamp) || 0;
+  currentTs = timestamp;
+  const ch = findChapter(timestamp);
+  setTitle(formatTime(timestamp) + ' · ' + (ch?.label || 'Demo section'));
+  if (v && v.src && !Number.isNaN(v.duration)) {
+    v.currentTime = timestamp;
+    v.play().catch(() => {});
+  }
+  updateActiveChapter(timestamp);
+  return 'Showing video section ' + formatTime(timestamp) + ': ' + (ch?.label || 'Demo section');
+}
+
+function updateActiveChapter(time) {
+  let active = 0;
+  for (const ch of chaptersList) { if (time >= ch.timestamp) active = ch.timestamp; }
+  document.querySelectorAll('.chapter').forEach((c) => {
+    const wasActive = c.classList.contains('active');
+    const isActive = parseInt(c.dataset.ts, 10) === active;
+    c.classList.toggle('active', isActive);
+    if (isActive && !wasActive) c.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+  });
+}
+
+function findChapter(ts) {
+  return chaptersList.find((c) => c.timestamp === ts) ||
+    chaptersList.reduce((a, c) => Math.abs(c.timestamp - ts) < Math.abs(a.timestamp - ts) ? c : a, chaptersList[0]);
+}
+
+/* ── ElevenLabs client tools ── */
+function registerClientTools() {
+  const widget = document.querySelector('elevenlabs-convai');
+  if (!widget) { setTimeout(registerClientTools, 500); return; }
+  widget.addEventListener('elevenlabs-convai:call', (event) => {
+    event.detail.config.clientTools = {
+      navigate_video: ({ timestamp }) => navigateVideo(parseFloat(timestamp)),
+      get_current_state: () => {
+        const v = document.getElementById('demoVideo');
+        return JSON.stringify({ experience: 'personalized_ai_demo_video', video_time: Math.floor(v?.currentTime ?? currentTs), video_duration: Math.floor(v?.duration ?? 0), video_playing: !!(v && !v.paused) });
+      },
+      get_sitemap: () => JSON.stringify({ experience: 'Personalized AI Demo', chapters: chaptersList.map(({ id, timestamp, label, description }) => ({ id, timestamp, label, description })) }),
+      find_content: ({ query }) => {
+        const q = (query || '').toLowerCase();
+        const results = chaptersList.filter((ch) => ch.label.toLowerCase().includes(q) || ch.description.toLowerCase().includes(q))
+          .map((ch) => ({ type: 'video', timestamp: ch.timestamp, label: ch.label, description: ch.description, action: 'Call navigate_video with this timestamp' }));
+        return JSON.stringify(results.slice(0, 5));
+      },
+      get_page_knowledge: ({ timestamp }) => {
+        const ch = findChapter(parseFloat(timestamp || currentTs)) || {};
+        const { thumbSrc: _a, thumbnail: _b, ...lean } = ch;
+        return JSON.stringify(lean);
+      }
+    };
+  });
+  widget.addEventListener('elevenlabs-convai:modality', (e) => {
+    const m = e.detail?.mode;
+    if (m) setTitle(m.charAt(0).toUpperCase() + m.slice(1) + ' — Amy is live');
+  });
+}
+
+/* ── Bootstrap ── */
+async function bootstrap() {
+  try {
+    const cfg = await loadVideoConfig();
+    if (cfg.video) VIDEO_PATH = cfg.video;
+    chaptersList = chaptersFromConfig(cfg);
+  } catch (e) {
+    console.error(e);
+    chaptersList = [];
+  }
+  initVideo();
+  registerClientTools();
+}
+
+bootstrap();
+</script>
+</body>
+</html>

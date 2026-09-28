@@ -1,0 +1,92 @@
+{
+  "version": 2,
+  "title": "Raksha AI Anti-Scam — platform walkthrough",
+  "video": "./assets/demo-video.mp4",
+  "notes": "Chapter start times in seconds. Optional thumbnail paths are relative to the static site root; null captures a frame from the video.",
+  "chapters": [
+    {
+      "time": 0,
+      "id": "intro-use-case",
+      "label": "Intro & Use Case Overview",
+      "description": "Introduction to the Raksha AI Anti-Scam application and its multi-persona architecture.",
+      "thumbnail": null
+    },
+    {
+      "time": 140,
+      "id": "devops-infrastructure",
+      "label": "DevOps & Infrastructure Setup",
+      "description": "AI Ops persona configuring platform services, container registries, and message buses.",
+      "thumbnail": null
+    },
+    {
+      "time": 265,
+      "id": "data-storage",
+      "label": "Data Storage Provisioning",
+      "description": "Data Scientist setting up S3 buckets for the data lake.",
+      "thumbnail": null
+    },
+    {
+      "time": 310,
+      "id": "ai-workspace",
+      "label": "AI Workspace Configuration",
+      "description": "Creating a GPU-enabled Jupyter workspace for model experimentation.",
+      "thumbnail": null
+    },
+    {
+      "time": 445,
+      "id": "model-training-mlflow",
+      "label": "Model Training & MLflow",
+      "description": "Developing the predictive model and tracking experiments using MLflow.",
+      "thumbnail": null
+    },
+    {
+      "time": 570,
+      "id": "model-registry",
+      "label": "Model Registry Management",
+      "description": "Verifying and managing the registered model within the AI Studio UI.",
+      "thumbnail": null
+    },
+    {
+      "time": 618,
+      "id": "application-development",
+      "label": "Application Development",
+      "description": "AI Developer configuring a VS Code workspace and reviewing the Streamlit app code.",
+      "thumbnail": null
+    },
+    {
+      "time": 718,
+      "id": "genai-model-hub",
+      "label": "GenAI Model Hub Integration",
+      "description": "Selecting an open-source GenAI model from the hub and generating API keys.",
+      "thumbnail": null
+    },
+    {
+      "time": 879,
+      "id": "vector-database",
+      "label": "Vector Database Provisioning",
+      "description": "Setting up a Qdrant vector database for RAG-based compliance instructions.",
+      "thumbnail": null
+    },
+    {
+      "time": 936,
+      "id": "cicd-serverless",
+      "label": "CI/CD & Serverless Triggers",
+      "description": "Committing code to container registries and setting up serverless functions for testing.",
+      "thumbnail": null
+    },
+    {
+      "time": 1000,
+      "id": "model-serving-deployment",
+      "label": "Model Serving & App Deployment",
+      "description": "Deploying the predictive model and Streamlit frontend using ML Services.",
+      "thumbnail": null
+    },
+    {
+      "time": 1122,
+      "id": "e2e-demo",
+      "label": "End-to-End Application Demo",
+      "description": "Showcasing real-time spam detection and GenAI-powered mitigation recommendations.",
+      "thumbnail": null
+    }
+  ]
+}

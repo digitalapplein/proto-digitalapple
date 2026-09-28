@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Amy · AI-Guided eBook</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./styles.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+</head>
+<body class="pdf-voice-demo">
+<header class="topbar simple pdf-hub-topbar">
+  <a class="brand" href="./index.html" title="All demos">
+    <img src="./assets/amy-logo.png" alt="Amy">
+    <div class="brand-copy"><b>Amy</b></div>
+  </a>
+  <span class="topbar-center-title" id="currentLabel">AI-Guided eBook</span>
+  <nav class="navlinks">
+    <a class="small-link" href="./index.html">Home</a>
+    <a class="small-link" href="./index-video.html">Video demo</a>
+  </nav>
+</header>
+
+<main class="app-shell pdf-shell">
+  <aside class="side">
+    <div class="side-head"><span>Guide sections</span><span id="pdfCount">—</span></div>
+    <div class="thumbs" id="pdfThumbs"></div>
+  </aside>
+  <section class="main-view pdf-main-view">
+    <div class="pdf-stage" id="pdfStage"></div>
+  </section>
+</main>
+
+<elevenlabs-convai agent-id="agent_6701kqsn4qz2erp9qyvbxhq84rnz"></elevenlabs-convai>
+<script src="https://unpkg.com/@elevenlabs/convai-widget-embed" async type="text/javascript"></script>
+<script>
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+const PDF_PATH = './assets/lumen-meter-ebook.pdf';
+const CONTENT_MAP = {
+  1: { label: 'Cover', description: 'The CIOs Guide for a Network That Just Works' },
+  2: { label: 'Table of Contents', description: 'The structure of the guide' },
+  3: { label: 'The Great Network Shift', description: 'Why enterprise networking needs to become faster, simpler and more invisible' },
+  4: { label: 'Cost of Complexity', description: 'Network complexity, multi-cloud AI demand, and infrastructure readiness' },
+  5: { label: 'Talent Crisis & AI', description: 'Talent shortages and why AI changes network expectations' },
+  6: { label: 'Intelligent Networking', description: 'Lumen backbone plus Meter intelligent local networking' },
+  7: { label: 'What If It Just Worked?', description: 'Vision, quotes, and invisible network experience' },
+  8: { label: 'Unified Solution', description: 'First WAN-to-LAN enterprise offering, Meter Connect, single pane of glass' },
+  9: { label: 'Speed to Value', description: 'Deployment speed, warehouse migration, procurement and provisioning' },
+  10: { label: 'Complexity to Consistency', description: 'Meter Command and natural language network management' },
+  11: { label: 'Connectivity to Outcomes', description: 'Distributed enterprise, multi-site expansion, NaaS and smart campus scenarios' },
+  12: { label: 'Why It Matters', description: 'Scale, validation, new connectivity vision' },
+  13: { label: 'Ready to Explore', description: 'CTA and next steps' }
+};
+let pdfDoc = null;
+let currentPdfPage = 1;
+
+function status(text) {
+  const el = document.getElementById('currentLabel');
+  if (el && text) el.textContent = text;
+}
+
+async function initPdf() {
+  try {
+    const buf = await (await fetch(PDF_PATH)).arrayBuffer();
+    pdfDoc = await pdfjsLib.getDocument({ data: buf }).promise;
+    document.getElementById('pdfCount').textContent = pdfDoc.numPages + ' pages';
+    await renderPages();
+    await renderThumbs();
+    setTimeout(() => navigatePdf(1), 300);
+  } catch (e) {
+    status('PDF not found — check ' + PDF_PATH);
+    console.error(e);
+  }
+}
+
+async function renderPages() {
+  const stage = document.getElementById('pdfStage');
+  stage.innerHTML = '';
+  for (let i = 1; i <= pdfDoc.numPages; i++) {
+    const page = await pdfDoc.getPage(i);
+    const viewport = page.getViewport({ scale: 1.45 });
+    const wrap = document.createElement('div');
+    wrap.className = 'page-wrap';
+    wrap.id = 'pdf-page-' + i;
+    wrap.innerHTML =
+      '<div class="page-title">' + (CONTENT_MAP[i]?.label || 'Page ' + i) + '</div>' +
+      '<div class="page-card"><canvas></canvas></div>';
+    stage.appendChild(wrap);
+    const canvas = wrap.querySelector('canvas');
+    canvas.width = viewport.width;
+    canvas.height = viewport.height;
+    await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+  }
+}
+
+async function renderThumbs() {
+  const strip = document.getElementById('pdfThumbs');
+  strip.innerHTML = '';
+  for (let i = 1; i <= pdfDoc.numPages; i++) {
+    const page = await pdfDoc.getPage(i);
+    const viewport = page.getViewport({ scale: 0.18 });
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'thumb';
+    btn.dataset.page = i;
+    btn.onclick = () => navigatePdf(i);
+    btn.innerHTML =
+      '<canvas class="thumb-canvas"></canvas>' +
+      '<span><span class="thumb-label">' + (CONTENT_MAP[i]?.label || 'Page ' + i) + '</span>' +
+      '<span class="thumb-sub">Page ' + i + '</span></span>';
+    strip.appendChild(btn);
+    const canvas = btn.querySelector('canvas');
+    canvas.width = viewport.width;
+    canvas.height = viewport.height;
+    await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+  }
+}
+
+function navigatePdf(pageNumber) {
+  if (!pdfDoc) return;
+  pageNumber = Math.max(1, Math.min(pdfDoc.numPages, parseInt(pageNumber, 10)));
+  currentPdfPage = pageNumber;
+  const wrap = document.getElementById('pdf-page-' + pageNumber);
+  if (!wrap) return;
+  wrap.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  document.querySelectorAll('.page-wrap').forEach((x) => x.classList.remove('focus'));
+  setTimeout(() => wrap.classList.add('focus'), 260);
+  document.querySelectorAll('.thumb').forEach((t) =>
+    t.classList.toggle('active', parseInt(t.dataset.page, 10) === pageNumber)
+  );
+  const label = CONTENT_MAP[pageNumber]?.label || 'Page ' + pageNumber;
+  document.getElementById('currentLabel').textContent = 'Page ' + pageNumber + ' · ' + label;
+  return 'Showing page ' + pageNumber + ': ' + label;
+}
+
+function highlightElevenLabs() {
+  const w = document.querySelector('elevenlabs-convai');
+  if (w) {
+    w.style.filter = 'drop-shadow(0 0 18px rgba(255,115,95,.9))';
+    setTimeout(() => { w.style.filter = ''; }, 2200);
+  }
+}
+
+function registerClientTools() {
+  const widget = document.querySelector('elevenlabs-convai');
+  if (!widget) { setTimeout(registerClientTools, 500); return; }
+  widget.addEventListener('elevenlabs-convai:call', (event) => {
+    event.detail.config.clientTools = {
+      navigate_pdf: ({ page_number }) => navigatePdf(page_number),
+      get_current_state: () =>
+        JSON.stringify({
+          experience: 'thought_leadership',
+          pdf_page: currentPdfPage,
+          pdf_total_pages: pdfDoc?.numPages || 0
+        }),
+      get_sitemap: () =>
+        JSON.stringify({
+          experience: 'AI-Guided Thought Leadership',
+          asset: 'Lumen Meter eBook',
+          sections: Object.entries(CONTENT_MAP).map(([page, d]) => ({
+            page: parseInt(page, 10), ...d
+          }))
+        }),
+      find_content: ({ query }) => {
+        const q = (query || '').toLowerCase();
+        const results = [];
+        for (const [page, d] of Object.entries(CONTENT_MAP)) {
+          const score =
+            (d.label.toLowerCase().includes(q) ? 2 : 0) +
+            (d.description.toLowerCase().includes(q) ? 1 : 0);
+          if (score > 0)
+            results.push({ type: 'pdf', page: parseInt(page, 10), label: d.label, description: d.description, score });
+        }
+        return JSON.stringify(results.sort((a, b) => b.score - a.score).slice(0, 5).map(({ score: _s, ...r }) => r));
+      },
+      get_page_knowledge: ({ page_number }) =>
+        JSON.stringify({
+          page: parseInt(page_number || currentPdfPage, 10),
+          ...(CONTENT_MAP[parseInt(page_number || currentPdfPage, 10)] || {})
+        })
+    };
+  });
+  widget.addEventListener('elevenlabs-convai:modality', (e) => {
+    const m = e.detail?.mode;
+    if (m) document.getElementById('currentLabel').textContent = m.charAt(0).toUpperCase() + m.slice(1) + ' — Amy is live';
+  });
+}
+
+initPdf();
+registerClientTools();
+</script>
+</body>
+</html>
