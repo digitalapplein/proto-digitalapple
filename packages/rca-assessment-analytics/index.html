@@ -1,0 +1,781 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>RCA Analytics Mockup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* tokens read from the Vodafone Figma file 'VF ROI Calculator' (Results 1 year) */
+  --red:#E60000; --red-deep:#BD0000; --red-10:rgba(230,0,0,.1); --ink:#25282B; --ink-2:#383B40; --muted:#494C4E; --faint:#7C7F82;
+  --line:#E6EAEE; --line-2:#B6B7B8; --chip:#C3C8CC; --wash:#F6F6F6; --white:#fff;
+  --aqua:#00B0CA; --plum:#5E2750; --green:#0B7A4B; --amber:#A85A00;
+  --r:4px; --shadow:0 2px 8px rgba(0,0,0,.10),0 8px 24px rgba(0,0,0,.06);
+  --ease:cubic-bezier(.16,1,.3,1);
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--white);color:var(--ink);font:400 14px/1.45 Figtree,"Helvetica Neue",Arial,sans-serif;font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased}
+::selection{background:var(--red);color:#fff}
+button,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--ink);outline-offset:2px;border-radius:3px}
+.sidebar :focus-visible{outline-color:#fff}
+*{scrollbar-width:thin;scrollbar-color:var(--line-2) transparent}
+svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;flex:none}
+
+/* shell */
+.app{display:grid;grid-template-columns:272px minmax(0,1fr);min-height:100vh}
+.sidebar{background:var(--ink);color:#fff;position:sticky;top:0;height:100vh;overflow:auto;display:flex;flex-direction:column;padding:20px 14px 16px}
+.brand{display:flex;align-items:center;gap:12px;padding:4px 10px 22px}
+.mark{width:34px;height:34px;border-radius:50%;background:var(--red);display:grid;place-items:center;font-weight:700;font-size:15px;letter-spacing:-.02em}
+.brand b{display:block;font-weight:600;font-size:15px;line-height:1.1}
+.brand span{font-size:12px;color:#B8B8B8}
+.pf{margin-top:8px}
+.pf-h{display:flex;align-items:center;gap:10px;padding:10px 10px 6px;font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#B8B8B8}
+.pf-h .tag{margin-left:auto;font-size:11px;letter-spacing:.02em;text-transform:none;border:1px solid #555;border-radius:20px;padding:1px 8px;color:#DADADA;font-weight:500}
+.nav{display:flex;align-items:center;gap:8px;width:100%;border:0;background:transparent;color:#E8E8E8;text-align:left;padding:8px 10px 8px 38px;border-radius:var(--r);font-size:14px;position:relative}
+.nav:hover{background:rgba(255,255,255,.07)}
+.nav[aria-current=true]{background:rgba(255,255,255,.12);color:#fff;font-weight:600}
+.nav[aria-current=true]::before{content:"";position:absolute;left:19px;top:50%;width:7px;height:7px;margin-top:-3.5px;border-radius:50%;background:var(--red)}
+.nav .n{margin-left:auto;font-size:12px;color:#B8B8B8}
+.nav .dot{width:7px;height:7px;border-radius:50%;flex:none}
+.side-foot{margin-top:auto;padding:18px 10px 0;border-top:1px solid #2c2c2c}
+.side-foot label{display:block;font-size:12px;color:#B8B8B8;margin-bottom:6px}
+.side-foot select{width:100%;background:#1b1b1b;color:#fff;border:1px solid #444;border-radius:var(--r);padding:9px 10px}
+.side-foot p{margin:10px 0 0;font-size:12px;color:#9a9a9a}
+
+.main{min-width:0;background:var(--wash)}
+.top{display:flex;align-items:center;gap:12px;padding:0 32px;height:56px;border-bottom:1px solid var(--line);background:#fff;position:sticky;top:0;z-index:5}
+.menu-btn{display:none;border:1px solid var(--line-2);background:#fff;border-radius:var(--r);padding:6px}
+.crumb{color:var(--muted);font-size:13px;display:flex;gap:8px;align-items:center}
+.crumb b{color:var(--ink);font-weight:600}
+.sample{margin-left:auto;display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);background:var(--wash);border-radius:20px;padding:5px 12px}
+.sample i{width:7px;height:7px;border-radius:50%;background:var(--amber)}
+
+.page{padding:28px 32px 56px;max-width:1440px}
+.head{display:flex;flex-wrap:wrap;gap:16px 24px;align-items:flex-end;justify-content:space-between}
+h1{margin:0;font-size:30px;font-weight:700;letter-spacing:-.01em;line-height:1.15;color:var(--red)}
+.sub{margin:6px 0 0;color:var(--muted)}
+.ctl{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.seg{display:inline-flex;gap:8px}
+.seg button{border:1px solid var(--chip);background:#fff;padding:6px 14px;border-radius:100px;font-size:13px;color:var(--muted);transition:border-color .15s}
+.seg button:hover{border-color:var(--ink)}
+.seg button[aria-pressed=true]{background:var(--red);border-color:var(--red);color:#fff;font-weight:700}
+.btn{display:inline-flex;gap:8px;align-items:center;border:1px solid var(--line-2);background:#fff;border-radius:var(--r);padding:8px 14px;font-weight:500;font-size:13px;transition:background .15s,border-color .15s}
+.btn:hover{background:var(--wash);border-color:var(--faint)}
+.btn.primary{background:var(--red);border-color:var(--red);color:#fff;font-weight:700}
+.btn.primary:hover{background:var(--red-deep);border-color:var(--red-deep)}
+.btn.sm{padding:5px 10px;font-size:12px}
+
+.tabs{display:flex;gap:36px;margin:24px 0 0;border-bottom:1px solid var(--line-2);overflow-x:auto}
+.tabs button{border:0;background:transparent;padding:10px 4px 14px;color:var(--ink-2);font-weight:400;font-size:17px;letter-spacing:.01em;position:relative;white-space:nowrap}
+.tabs button:hover{color:var(--red)}
+.tabs button[aria-selected=true]{color:var(--red);font-weight:700}
+.tabs button[aria-selected=true]::after{content:"";position:absolute;left:-6px;right:-6px;bottom:-1px;height:4px;background:var(--red);border-radius:2px 2px 0 0}
+
+.sec{margin-top:24px}
+.sec-h{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin:0 0 14px}
+h2{margin:0;font-size:18px;font-weight:700;letter-spacing:.01em;color:var(--ink)}
+.note{color:var(--muted);font-size:13px}
+.grid{display:grid;gap:24px;margin-top:24px}
+.grid>section,.sec,.funnel{background:#fff;border:1px solid var(--line-2);border-radius:var(--r)}
+.grid>section,.sec{padding:22px 24px}
+.g-2-1{grid-template-columns:minmax(0,1.9fr) minmax(0,1fr)}
+.g-1-1{grid-template-columns:repeat(2,minmax(0,1fr))}
+.g-3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.grid>section{min-width:0}
+.grid .sec-h{margin-bottom:12px}
+
+/* funnel */
+.funnel{margin-top:24px;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));overflow:hidden}
+.stage{padding:22px 22px 20px;position:relative}
+.stage+.stage::before{content:"";position:absolute;left:0;top:22px;bottom:22px;width:1px;background:var(--line)}
+.stage.hl{background:var(--red-10)}
+.stage.hl .fig{color:var(--red)}
+.stage .lab{color:var(--ink);font-size:14px;font-weight:700}
+.stage .fig{font-size:38px;font-weight:700;letter-spacing:-.03em;line-height:1.1;margin-top:8px}
+.stage .rate{margin-top:6px;font-size:13px;color:var(--ink-2);min-height:20px}
+.stage .rate b{font-weight:600}
+.stage .bar{height:6px;background:var(--line);border-radius:3px;margin-top:14px;overflow:hidden}
+.stage .bar i{display:block;height:100%;background:var(--ink);border-radius:3px;width:0;transition:width .9s var(--ease)}
+.stage.hl .bar i{background:var(--red)}
+.cover{margin:10px 2px 0;font-size:12.5px;color:var(--muted);display:flex;gap:8px;align-items:center}
+
+/* chart */
+.chart{position:relative}
+.chart svg{display:block;width:100%;overflow:visible}
+.legend{display:flex;gap:18px;flex-wrap:wrap;margin-bottom:6px;font-size:13px;color:var(--ink-2)}
+.legend span{display:inline-flex;gap:8px;align-items:center}
+.legend i{width:12px;height:3px;border-radius:2px;display:inline-block}
+.legend i.sq{height:10px;width:10px;border-radius:2px}
+.tip{position:absolute;pointer-events:none;background:var(--ink);color:#fff;border-radius:var(--r);padding:9px 12px;font-size:12.5px;line-height:1.5;box-shadow:var(--shadow);opacity:0;transition:opacity .12s;white-space:nowrap;z-index:3}
+.tip b{display:block;font-weight:600;margin-bottom:2px}
+
+/* bar lists */
+.bl{display:grid;gap:14px}
+.bl-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;align-items:baseline}
+.bl-row .t{height:8px;background:var(--line);border-radius:4px;grid-column:1/-1;overflow:hidden}
+.bl-row .t i{display:block;height:100%;background:var(--ink);border-radius:4px;width:0;transition:width .9s var(--ease)}
+.bl-row.red .t i{background:var(--red)}
+.bl-row .v{font-weight:600}
+.bl-row .v small{font-weight:400;color:var(--muted);margin-left:6px}
+
+/* table */
+.scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:680px}
+th{font-size:13px;font-weight:700;color:var(--red);text-align:right;padding:0 10px 10px;white-space:nowrap;letter-spacing:.01em}
+th:first-child,td:first-child{text-align:left;padding-left:0}
+th.l,td.l{text-align:left}
+td{height:46px;padding:0 10px;border-top:1px solid var(--line);text-align:right;white-space:nowrap}
+tr.click{cursor:pointer}
+tr.click:hover td{background:var(--wash)}
+td.m{font-weight:600}
+tfoot td{font-weight:600;border-top:2px solid var(--ink);background:transparent}
+.cell-bar{display:inline-flex;align-items:center;gap:10px;justify-content:flex-end;width:100%}
+.cell-bar .t{width:56px;height:6px;border-radius:3px;background:var(--line);overflow:hidden}
+.cell-bar .t i{display:block;height:100%;background:var(--ink);border-radius:3px}
+.dash{color:var(--faint)}
+
+.chip{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:500}
+.chip i{width:8px;height:8px;border-radius:50%;flex:none}
+.chip.ok i{background:var(--green)} .chip.warn i{background:var(--amber)}
+.chip.off i{background:transparent;border:1.5px solid var(--faint)}
+.chip.ok{color:var(--green)} .chip.warn{color:var(--amber)} .chip.off{color:var(--muted)}
+
+/* attention list */
+.alist{list-style:none;margin:0;padding:0;display:grid;gap:0}
+.alist li{display:grid;grid-template-columns:22px 1fr;gap:10px;padding:14px 0;border-top:1px solid var(--line)}
+.alist li:first-child{border-top:0;padding-top:2px}
+.alist svg{margin-top:1px}
+.alist .w{color:var(--amber)} .alist .g{color:var(--green)} .alist .r{color:var(--red)}
+.alist p{margin:0;color:var(--ink-2)} .alist b{font-weight:600;color:var(--ink)}
+
+/* stacked pipeline */
+.stack{display:flex;height:14px;border-radius:3px;overflow:hidden;gap:2px;min-width:260px}
+.stack i{display:block;height:100%;min-width:2px}
+.stack-off{height:14px;border:1px dashed var(--line-2);border-radius:3px;min-width:260px;display:flex;align-items:center;padding:0 8px;font-size:11.5px;color:var(--muted);white-space:nowrap}
+
+/* columns */
+.cols{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:14px;align-items:end;height:300px;padding-top:10px}
+.col{display:flex;flex-direction:column;justify-content:flex-end;align-items:stretch;height:100%;text-align:center}
+.col .v{font-weight:600;font-size:15px;margin-bottom:6px}
+.col .b{background:var(--faint);border-radius:4px 4px 0 0;height:0;transition:height .9s var(--ease)}
+.col.hit .b{background:var(--red)}
+.col .d{font-size:12px;color:var(--muted);margin-top:8px;min-height:18px}
+.col.hit .d{color:var(--red-deep);font-weight:600}
+.col .n{font-size:12.5px;color:var(--ink-2);margin-top:2px;min-height:34px;line-height:1.25}
+
+.opt{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1.5fr) auto;gap:6px 18px;padding:16px 0;border-top:1px solid var(--line);align-items:start}
+.opt:first-of-type{border-top:0}
+.opt h3{margin:0;font-size:15px;font-weight:600}
+.opt p{margin:2px 0 0;color:var(--muted);font-size:13px}
+.pill{display:inline-block;font-size:12px;font-weight:600;border-radius:20px;padding:2px 10px;background:var(--wash);color:var(--ink-2)}
+.pill.rec{background:var(--red);color:#fff}
+.tog{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 0;border-top:1px solid var(--line)}
+.tog:first-of-type{border-top:0}
+.tog b{font-weight:600} .tog p{margin:2px 0 0;color:var(--muted);font-size:13px}
+.sw{position:relative;width:42px;height:24px;border-radius:12px;border:0;background:var(--line-2);flex:none;transition:background .2s}
+.sw::after{content:"";position:absolute;left:3px;top:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:transform .25s var(--ease);box-shadow:0 1px 2px rgba(0,0,0,.3)}
+.sw[aria-checked=true]{background:var(--red)}
+.sw[aria-checked=true]::after{transform:translateX(18px)}
+
+.toast{position:fixed;left:50%;bottom:28px;transform:translate(-50%,20px);background:var(--ink);color:#fff;padding:12px 18px;border-radius:var(--r);box-shadow:var(--shadow);opacity:0;transition:opacity .2s,transform .3s var(--ease);z-index:20;pointer-events:none;max-width:90vw}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+.scrim{display:none}
+
+.dates{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)}
+.dates input{border:1px solid var(--chip);border-radius:var(--r);background:#fff;padding:6px 10px;font:inherit;color:var(--ink)}
+.dates input:hover{border-color:var(--ink)}
+.rank{display:grid;grid-template-columns:56px minmax(0,1fr);gap:12px;align-items:center;padding:11px 0;border-top:1px solid var(--line)}
+.rank:first-child{border-top:0;padding-top:0}
+.rank.click{cursor:pointer}.rank.click:hover .qn{background:var(--red);color:#fff}
+.rank b{font-weight:700}
+.rank .note{display:block}
+.qn{display:inline-grid;place-items:center;min-width:48px;height:30px;padding:0 10px;border-radius:100px;background:var(--red-10);color:var(--red);font-weight:700;font-size:14px;transition:background .15s,color .15s}
+.qchips{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 20px}
+.qchip{border:1px solid var(--chip);background:#fff;border-radius:100px;padding:4px 0;min-width:48px;font-size:13px;color:var(--ink-2);transition:border-color .15s}
+.qchip:hover{border-color:var(--ink)}
+.qchip.warn{color:var(--red);border-color:rgba(230,0,0,.45);font-weight:700}
+.qchip[aria-pressed=true]{background:var(--red);border-color:var(--red);color:#fff;font-weight:700}
+.qhead{margin:0 0 22px}
+.qhead p{margin:8px 0 0;font-size:20px;font-weight:700;line-height:1.3;color:var(--ink);max-width:62ch}
+.qmeta{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center}
+.split{display:grid;gap:36px;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr)}
+.sec{scroll-margin-top:72px}
+.tall{max-height:460px;overflow:auto}
+table.qt{min-width:760px}
+table.qt thead th{position:sticky;top:0;background:#fff;z-index:1;padding-top:2px;box-shadow:0 1px 0 var(--line-2)}
+table.qt td.wrap{white-space:normal;line-height:1.3;padding-top:8px;padding-bottom:8px}
+table.qt tr.sel td{background:var(--red-10)}
+table.heat td{height:38px;text-align:center;font-weight:600}
+table.heat th{text-align:center}
+table.heat th:first-child,table.heat td:first-child{text-align:left}
+table.heat td.agg{border-left:1px solid var(--line-2);border-right:1px solid var(--line-2)}
+@media (max-width:1180px){
+  .g-2-1,.g-1-1,.g-3,.split{grid-template-columns:minmax(0,1fr)}
+  .funnel{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .stage:nth-child(4)::before{display:none}
+  .stage:nth-child(n+4){border-top:1px solid var(--line)}
+}
+@media (max-width:960px){
+  .app{grid-template-columns:minmax(0,1fr)}
+  .sidebar{position:fixed;z-index:30;left:0;top:0;width:280px;transform:translateX(-100%);transition:transform .35s var(--ease)}
+  body.nav-open .sidebar{transform:none}
+  body.nav-open .scrim{display:block;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:25}
+  .menu-btn{display:inline-flex}
+  .top{padding:0 16px} .page{padding:22px 16px 48px} .grid>section,.sec{padding:18px 16px}
+  .sample span{display:none}
+  .opt{grid-template-columns:minmax(0,1fr)}
+}
+@media (max-width:640px){
+  h1{font-size:24px} .qhead p{font-size:17px}
+  .funnel{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .stage:nth-child(n)::before{display:none}
+  .stage:nth-child(n+3){border-top:1px solid var(--line)}
+  .stage:nth-child(even){border-left:1px solid var(--line)}
+  .stage .fig{font-size:32px}
+  .cols{gap:6px;height:220px} .col .n{font-size:11px}
+  .tabs{gap:20px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" id="side" aria-label="Portfolios and markets"></aside>
+  <div class="scrim" id="scrim"></div>
+  <div class="main">
+    <header class="top">
+      <button class="menu-btn" id="menu" aria-label="Open navigation"></button>
+      <div class="crumb" id="crumb"></div>
+      <div class="sample"><i></i><span>Mockup by Digital Apple with sample data and draft question wording. Real figures appear once each market's feed is connected.</span></div>
+    </header>
+    <main class="page" id="page"></main>
+  </div>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+/* ---------- icons ---------- */
+const P={
+ cloud:'<path d="M7 18a4 4 0 0 1-.6-7.96A5.5 5.5 0 0 1 17 8.5a4.75 4.75 0 0 1 .5 9.5H7z"/>',
+ shield:'<path d="M12 3l7 3v5c0 4.5-3 8.2-7 10-4-1.8-7-5.5-7-10V6l7-3z"/><path d="M9 12l2 2 4-4"/>',
+ download:'<path d="M12 4v11"/><path d="M7.5 11 12 15.5 16.5 11"/><path d="M5 19h14"/>',
+ calendar:'<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M8 3v4M16 3v4"/>',
+ clock:'<circle cx="12" cy="12" r="8"/><path d="M12 7.5V12l3 2"/>',
+ plug:'<path d="M9 3v5M15 3v5"/><path d="M6 8h12v3a6 6 0 0 1-12 0V8z"/><path d="M12 17v4"/>',
+ upload:'<path d="M12 16V5"/><path d="M7.5 9 12 4.5 16.5 9"/><path d="M5 19h14"/>',
+ alert:'<path d="M12 4 3 19h18L12 4z"/><path d="M12 10v4M12 16.5v.5"/>',
+ check:'<path d="M5 12.5 10 17.5 19 7"/>',
+ menu:'<path d="M4 7h16M4 12h16M4 17h16"/>',
+ trend:'<path d="M4 17l5-5 4 4 7-8"/><path d="M15 8h5v5"/>',
+ mail:'<rect x="3.5" y="5.5" width="17" height="13" rx="2"/><path d="M4 7l8 6 8-6"/>'
+};
+const ic=n=>`<svg class="i" viewBox="0 0 24 24" aria-hidden="true">${P[n]}</svg>`;
+
+/* ---------- sample data (illustrative). Question wording is draft: replace with the live RCA survey ---------- */
+const ps=s=>s.split('|').map(x=>{const i=x.lastIndexOf(':');return [x.slice(0,i),+x.slice(i+1)]});
+const Qn=(sec,text,type,opts)=>({sec,text,type,opts:ps(opts)});
+const DATA={
+ cloud:{name:'Cloud',tag:'',icon:'cloud',assessment:'Cloud Readiness Assessment',
+  markets:[
+   {id:'uk',name:'United Kingdom',feed:'crm',sync:'Today, 06:10',s:2400,comp:.67,lead:.35,cont:.86,won:.20,days:1.9},
+   {id:'ie',name:'Ireland',feed:'crm',sync:'Today, 06:10',s:1190,comp:.74,lead:.44,cont:.91,won:.26,days:1.2},
+   {id:'al',name:'Albania',feed:'upload',sync:'28 Sep 2026',s:860,comp:.66,lead:.37,cont:.71,won:.17,days:4.8}
+  ],
+  services:[['Cloud migration',31],['Managed hosting',24],['Hybrid connectivity',19],['Backup and disaster recovery',15],['Security add-on',11]],
+  q:[
+   Qn('Business',"Which best describes your organisation's cloud strategy?",'s',"No formal strategy:22|Strategy being drafted:31|Approved, early rollout:29|Cloud-first, fully adopted:18"),
+   Qn('Business','What share of your workloads run in the cloud today?','s',"Under 10%:24|10 to 30%:33|30 to 60%:28|Over 60%:15"),
+   Qn('Business','How is cloud spend approved and tracked?','s',"No central tracking:27|Tracked by IT only:38|Shared IT and finance review:25|Automated budgets and alerts:10"),
+   Qn('Business','Which business outcome matters most from cloud?','s',"Lower cost:34|Faster delivery:26|Resilience:23|Growth and new services:17"),
+   Qn('People','How many staff hold a cloud certification?','s',"None:41|1 to 5:34|6 to 20:17|More than 20:8"),
+   Qn('People','Do you have a dedicated cloud team?','s',"No:36|Part-time team:37|Yes, small team:20|Yes, centre of excellence:7"),
+   Qn('People','How do you source cloud skills?','m',"Train existing staff:52|Use a partner:44|Hire:31|Contractors:23"),
+   Qn('People','How aware are leaders of cloud cost and risk?','s',"Not aware:15|Somewhat:44|Well informed:31|Report on it regularly:10"),
+   Qn('Operating model','How do teams request cloud resources?','s',"Email or ticket to IT:39|Approval workflow:28|Self-service portal:21|Fully automated:12"),
+   Qn('Operating model','Do you use infrastructure as code?','s',"No:47|Trialling:28|In some teams:18|Everywhere:7"),
+   Qn('Operating model','How are cloud incidents escalated?','s',"Ad hoc:33|Documented process:40|24/7 on-call:19|Managed by a provider:8"),
+   Qn('Operating model','How often is your cloud architecture reviewed?','s',"Never:21|Yearly:42|Quarterly:26|Continuously:11"),
+   Qn('Infrastructure','Which cloud providers do you use today?','m',"Microsoft Azure:46|Private or on-premises:41|AWS:38|Google Cloud:19|No cloud yet:12"),
+   Qn('Infrastructure','How are most applications hosted today?','s',"On-premises servers:34|Virtual machines in cloud:32|Containers or serverless:20|Colocation:14"),
+   Qn('Infrastructure','How do you back up critical data?','s',"Offsite copy:38|Cloud backup:30|Tape or local disk:22|Tested disaster recovery:10"),
+   Qn('Infrastructure','How much of your estate is virtualised?','s',"About half:35|Most of it:33|Under a quarter:19|Almost all:13"),
+   Qn('Network','How do sites connect to cloud?','s',"Public internet:41|VPN:35|SD-WAN:16|Private link:8"),
+   Qn('Network','Do you have private connectivity to your cloud providers?','s',"No:52|Planned:24|For some workloads:17|For all:7"),
+   Qn('Network','How do you monitor network performance to the cloud?','s',"Basic tools:44|Not monitored:28|Dedicated tooling:21|Provider-managed:7"),
+   Qn('Network','What bandwidth plans exist for the next 12 months?','s',"Modest increase:41|No change:33|Large increase:19|Not sure:7"),
+   Qn('Security','Which compliance standards apply to you?','m',"GDPR:64|ISO 27001:41|Sector rules:27|PCI DSS:22|None yet:14"),
+   Qn('Security','Must any workloads stay in-country?','s',"Some:44|No:31|Most:18|All:7"),
+   Qn('Security','How do you manage identity and access in the cloud?','s',"Single sign-on:39|Multi-factor everywhere:27|Individual accounts:24|Zero trust:10"),
+   Qn('Security','How do you detect and respond to security threats?','s',"Tools, reviewed ad hoc:39|No formal process:26|Security team, business hours:24|24/7 monitoring:11"),
+   Qn('Interest','Which areas would you like to explore with a specialist?','m',"Cloud migration:38|Cloud security:33|Managed hosting:31|Hybrid connectivity:29|Backup and disaster recovery:26|AI workloads:21|Unified communications:17|IoT:12")
+  ],
+  lw:[3,2.5,2.2,2,2.2,1.8,2.4,1.6,2,3.4,1.8,1.6,4.6,2.2,2.6,3.2,2,2.4,1.8,2.8,5.2,4.2,2.2,2,1.2,9],
+  mods:{al:{'IoT':1.9,'Managed hosting':1.15},uk:{'AI workloads':1.55,'Cloud security':1.1},ie:{'Hybrid connectivity':1.25,'Backup and disaster recovery':1.1}},
+  asked:[['Pricing and contract terms',34],['Security and compliance',28],['Migration timeline',24],['Managed security',16],['Connectivity upgrade',13],['IoT',8]]},
+ cyber:{name:'Cybersecurity',tag:'Pilot',icon:'shield',assessment:'Cybersecurity Posture Assessment',
+  markets:[
+   {id:'uk',name:'United Kingdom',feed:'crm',sync:'Today, 06:10',s:780,comp:.58,lead:.47,cont:.88,won:.13,days:1.8},
+   {id:'ie',name:'Ireland',feed:'crm',sync:'Today, 06:10',s:410,comp:.61,lead:.50,cont:.86,won:.15,days:1.5},
+   {id:'al',name:'Albania',feed:'upload',sync:'12 Aug 2026',stale:true,s:330,comp:.55,lead:.44,cont:.70,won:.09,days:5.6},
+   {id:'ro',name:'Romania',feed:'none',sync:'Never',s:260,comp:.57,lead:.46}
+  ],
+  services:[['Managed detection and response',33],['Email security',24],['Firewall management',19],['Penetration testing',14],['Security awareness training',10]],
+  q:[
+   Qn('Identity and access','How do staff sign in to company systems?','s',"Passwords and some MFA:36|Passwords only:29|MFA for most:24|Passwordless or SSO:11"),
+   Qn('Identity and access','Is multi-factor sign-in enforced?','s',"No:31|For admins only:28|For most staff:27|For everyone:14"),
+   Qn('Identity and access',"How are leavers' accounts removed?",'s',"Manually, when remembered:34|Within a week:33|Within a day:23|Automatically:10"),
+   Qn('Identity and access','Who has admin access?','s',"Named IT staff:44|Many people:26|Reviewed quarterly:21|Just-in-time access:9"),
+   Qn('Network and devices','How are laptops and phones secured?','s',"Antivirus only:37|Managed devices:30|No central control:23|Managed and monitored:10"),
+   Qn('Network and devices','How is your network segmented?','s',"Basic zones:39|Flat network:35|Segmented by function:20|Micro-segmented:6"),
+   Qn('Network and devices','How often are devices patched?','s',"Monthly:43|Weekly:27|Rarely:18|Automatically:12"),
+   Qn('Network and devices','How are third-party connections controlled?','s',"Contract terms only:36|Reviewed access:28|Not controlled:24|Continuously monitored:12"),
+   Qn('Data protection','How is sensitive data classified?','s',"Not classified:39|Informally:33|Policy in place:21|Automated labelling:7"),
+   Qn('Data protection','Is data encrypted?','s',"At rest and in transit:41|In transit only:31|No:19|With managed keys:9"),
+   Qn('Data protection','How often are backups tested?','s',"Yearly:38|Never:27|Quarterly:24|Monthly or more:11"),
+   Qn('Data protection','How is data leaving the company monitored?','s',"Not monitored:38|Email only:29|Endpoints and email:23|Full data loss prevention:10"),
+   Qn('Threat detection','Who watches for threats, and when?','s',"Business-hours IT team:39|Tools, no one watching:28|24/7 security operations:18|Nobody:15"),
+   Qn('Threat detection','Which security tools do you run?','m',"Antivirus:78|Firewall:71|Email filtering:49|Endpoint detection:31|SIEM:14"),
+   Qn('Threat detection','How are phishing reports handled?','s',"Forwarded to IT:44|No process:27|Triage process:21|Automated response:8"),
+   Qn('Threat detection','Do you run vulnerability scans?','s',"Yearly:36|Quarterly:28|Never:23|Continuously:13"),
+   Qn('Incident readiness','Is there a written incident plan?','s',"No:34|Draft:29|Yes, not tested:25|Yes, tested:12"),
+   Qn('Incident readiness','How quickly could you restore after ransomware?','s',"Within a week:46|Within a day:21|Not sure:19|Longer:14"),
+   Qn('Incident readiness','Who owns a security incident?','s',"IT manager:42|Unclear:31|Security lead:19|External provider:8"),
+   Qn('Incident readiness','When did you last run an exercise?','s',"Never:44|More than 2 years ago:27|Last year:21|Last 6 months:8"),
+   Qn('Interest','Which areas would you like to explore with a specialist?','m',"Managed detection and response:36|Email security:29|Compliance support:24|Firewall management:23|Penetration testing:21|Security awareness training:19|Cloud migration:14")
+  ],
+  lw:[2.8,2,2.2,2.6,2,2.4,1.8,3.2,2.2,2.8,1.6,2.4,3,2.2,1.8,3.6,4.6,5.4,2.6,4,1.4,10],
+  mods:{ro:{'Compliance support':1.5},al:{'Email security':1.2},uk:{'Managed detection and response':1.2}},
+  asked:[['Incident response retainer',31],['Pricing and contract terms',27],['Compliance audit support',22],['Cloud migration',12],['Connectivity upgrade',8]]}
+};
+Object.entries(DATA).forEach(([k,d])=>{d.markets.forEach(m=>m.key=k+m.id);d.interest=d.q[d.q.length-1].opts});
+const ROLES={
+ group:{label:'Group super user',pf:['cloud','cyber'],mk:null},
+ al:{label:'Albania product manager',pf:['cloud'],mk:['al']}
+};
+const STAGE_COL={nc:'#C3C8CC',ct:'#7C7F82',mt:'#00B0CA',pr:'#5E2750',won:'#0B7A4B',lost:'#25282B'};
+
+/* ---------- state ---------- */
+const S={role:'group',pf:'cloud',mk:'all',tab:'overview',preset:'90',from:'',to:'',q:1};
+const $=s=>document.querySelector(s);
+const fmt=n=>n==null?'<span class="dash">&ndash;</span>':Math.round(n).toLocaleString('en-GB');
+const pct=(x,d=0)=>(x==null||!isFinite(x))?'<span class="dash">&ndash;</span>':(x*100).toFixed(d)+'%';
+const jit=(id,i,a)=>{let h=0;for(const c of id+i)h=(h*31+c.charCodeAt(0))%997;return 1+((h/997)-.5)*2*a};
+const MO=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const fmtD=(d,y)=>d.getDate()+' '+MO[d.getMonth()]+(y?' '+d.getFullYear():'');
+const D0=new Date(2025,9,1),D1=new Date(2026,9,15),DAY=864e5;
+const idx=d=>Math.round((Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())-Date.UTC(2025,9,1))/DAY);
+const NDAYS=idx(D1)+1;
+const iso=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+const fromIso=t=>{const [y,m,d]=t.split('-').map(Number);return new Date(y,m-1,d)};
+const dayAt=i=>new Date(2025,9,1+i);
+function setPreset(p){S.preset=String(p);if(p!=='custom'){const s0=new Date(2026,9,15-(+p-1));S.from=iso(s0<D0?D0:s0);S.to=iso(D1)}}
+setPreset(90);
+function rng(){let a=idx(fromIso(S.from)),b=idx(fromIso(S.to));a=Math.max(0,Math.min(a,NDAYS-1));b=Math.max(a,Math.min(b,NDAYS-1));return {a,b,n:b-a+1}}
+const rngLabel=()=>fmtD(fromIso(S.from),true)+' to '+fmtD(fromIso(S.to),true);
+const FULL={a:NDAYS-365,b:NDAYS-1,n:365};
+
+/* ---------- maths ---------- */
+const WC={};
+function weights(m){
+ if(WC[m.key])return WC[m.key];
+ let seed=0;for(const c of m.key)seed+=c.charCodeAt(0);
+ const w=[];
+ for(let i=0;i<NDAYS;i++){const d=dayAt(i),wd=d.getDay();
+  let v=(1+.2*Math.sin(i/47+seed)+.1*Math.sin(i/11+seed*2))*(wd===0||wd===6?.42:1.14)*(1+.0009*i)*jit(m.key,i,.28);
+  if((d.getMonth()===11&&d.getDate()>=24)||(d.getMonth()===0&&d.getDate()<=2))v*=.45;
+  w.push(v)}
+ const last=w.slice(NDAYS-365).reduce((a,b)=>a+b,0);
+ return WC[m.key]=w.map(v=>v*m.s/last);
+}
+function wsum(m,a,b){const w=weights(m);let t=0;for(let i=a;i<=b;i++)t+=w[i];return t}
+function calc(m,r){
+ const started=Math.round(wsum(m,r.a,r.b)),completed=Math.round(started*m.comp),leads=Math.round(completed*m.lead);
+ const live=m.feed!=='none';
+ const contacted=live?Math.round(leads*m.cont):null;
+ const won=live?Math.round(contacted*m.won):null;
+ return {m,started,completed,leads,contacted,won,live};
+}
+function total(rows){
+ const t={started:0,completed:0,leads:0,contacted:0,won:0,liveLeads:0,live:0,n:rows.length,days:0,dn:0};
+ rows.forEach(r=>{t.started+=r.started;t.completed+=r.completed;t.leads+=r.leads;
+  if(r.live){t.contacted+=r.contacted;t.won+=r.won;t.liveLeads+=r.leads;t.live++;t.days+=r.m.days*r.leads;t.dn+=r.leads}});
+ t.days=t.dn?t.days/t.dn:null;return t;
+}
+const pfData=()=>DATA[S.pf];
+function scoped(){
+ const r=rng(),d=pfData();
+ const ms=S.mk==='all'?d.markets:d.markets.filter(m=>m.id===S.mk);
+ return ms.map(m=>calc(m,r));
+}
+function trend(rows){
+ const r=rng();let g=r.n<=31?'day':r.n<=100?'week':'month',bk=[];
+ if(g==='month'){let i=r.a;while(i<=r.b){const d=dayAt(i);const eom=idx(new Date(d.getFullYear(),d.getMonth()+1,0));
+   if(d.getDate()===1&&eom<=r.b)bk.push({a:i,b:eom});i=eom+1}
+  if(bk.length<3){g='week';bk=[]}}
+ if(g==='week'&&!bk.length){for(let e=r.b;e-6>=r.a;e-=7)bk.unshift({a:e-6,b:e});if(bk.length<3){g='day';bk=[]}}
+ if(g==='day')for(let i=r.a;i<=r.b;i++)bk.push({a:i,b:i});
+ const comp=[],leads=[],labs=[];
+ bk.forEach(x=>{let c=0,l=0;rows.forEach(rw=>{const s=wsum(rw.m,x.a,x.b);c+=s*rw.m.comp;l+=s*rw.m.comp*rw.m.lead});comp.push(Math.round(c));leads.push(Math.round(l));
+  const d=dayAt(x.a),e=dayAt(x.b);
+  if(g==='day')labs.push({s:fmtD(d),l:d.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',year:'numeric'})});
+  else if(g==='week')labs.push({s:fmtD(d),l:'Week of '+fmtD(d,true)+(x.b>x.a?' to '+fmtD(e):'')});
+  else labs.push({s:MO[d.getMonth()]+' '+String(d.getFullYear()).slice(2),l:MO[d.getMonth()]+' '+d.getFullYear()})});
+ return {comp,leads,labs,g};
+}
+/* question model: share of all starters lost at each step (questions, then the details form) */
+function qmodel(pf,rows){
+ const d=DATA[pf],N=d.q.length,L=new Array(N+1).fill(0);let st=0;
+ rows.forEach(r=>{const w=d.lw.map((x,i)=>x*jit(r.m.id,i,.35)),sw=w.reduce((a,b)=>a+b,0),loss=1-r.m.comp;
+  w.forEach((x,i)=>L[i]+=r.started*loss*x/sw);st+=r.started});
+ const drop=L.map(x=>st?x/st:0),reach=[];let c=1;drop.forEach(x=>{reach.push(c);c-=x});
+ return {drop,reach,N,st,end:c};
+}
+const topDrops=(m,k)=>m.drop.map((x,i)=>({i,pts:x*100})).sort((a,b)=>b.pts-a.pts).slice(0,k);
+const qLab=(d,i)=>i<d.q.length?'Q'+(i+1):'Form';
+const qSec=(d,i)=>i<d.q.length?d.q[i].sec:'Details form';
+/* answers: share of respondents per option, per market and combined */
+function answersFor(rows,qi){
+ const q=pfData().q[qi],names=q.opts.map(o=>o[0]);
+ const per=rows.map(r=>{const v=q.opts.map(o=>o[1]*jit(r.m.id+'q'+qi,o[0],.16));
+  if(q.type==='s'){const s=v.reduce((a,b)=>a+b,0);return v.map(x=>x/s)}
+  return v.map(x=>Math.min(.95,x/100))});
+ const W=rows.reduce((a,r)=>a+r.started,0);
+ const agg=names.map((n,i)=>W?rows.reduce((s,r,ri)=>s+per[ri][i]*r.started,0)/W:null);
+ return {q,names,per,agg};
+}
+function interestFor(rows,key){
+ const d=pfData(),list=key==='interest'?d.interest:d.asked,names=list.map(a=>a[0]);
+ const per=rows.map(r=>names.map((nm,i)=>Math.min(.8,list[i][1]*((d.mods[r.m.id]||{})[nm]||1)*jit(r.m.id+key,nm,.1)/100)));
+ const w=rows.map(r=>key==='interest'?r.completed:(r.live?r.contacted:0)),W=w.reduce((a,b)=>a+b,0);
+ const agg=names.map((nm,i)=>W?rows.reduce((s,r,ri)=>s+per[ri][i]*w[ri],0)/W:null);
+ return {names,per,agg,W};
+}
+
+/* ---------- small renderers ---------- */
+function barList(items,{max,red=false,suffix='%',sub}={}){
+ const m=max||Math.max(...items.map(i=>i[1]));
+ return `<div class="bl">${items.map((it,i)=>`<div class="bl-row ${red&&i===0?'red':''}"><span>${it[0]}</span><span class="v">${typeof it[1]==='number'&&suffix==='%'?it[1]:it[1]}${suffix}${it[2]?`<small>${it[2]}</small>`:''}</span><div class="t"><i data-w="${(it[1]/m*100).toFixed(1)}"></i></div></div>`).join('')}</div>`;
+}
+function feedChip(m){
+ if(m.feed==='crm')return `<span class="chip ok"><i></i>CRM connected</span>`;
+ if(m.feed==='upload')return m.stale?`<span class="chip warn"><i></i>Monthly upload, overdue</span>`:`<span class="chip warn"><i></i>Monthly upload</span>`;
+ return `<span class="chip off"><i></i>Not connected</span>`;
+}
+function lineChart(el,ser,labs,unit=''){
+ const W=Math.max(el.clientWidth,300),H=300,pl=44,pr=10,pt=14,pb=34,iw=W-pl-pr,ih=H-pt-pb,n=labs.length;
+ const max0=Math.max(...ser.flatMap(s=>s.v)),step=Math.pow(10,Math.floor(Math.log10(max0)))/ (max0/Math.pow(10,Math.floor(Math.log10(max0)))<3?2:1);
+ const max=Math.ceil(max0/step)*step,x=i=>pl+iw*(n>1?i/(n-1):.5),y=v=>pt+ih-ih*v/max;
+ let g='';for(let t=0;t<=4;t++){const v=max*t/4;g+=`<line x1="${pl}" x2="${W-pr}" y1="${y(v)}" y2="${y(v)}" stroke="#E6EAEE"/><text x="${pl-10}" y="${y(v)+4}" text-anchor="end" font-size="12" fill="#494C4E">${(max<4?v.toFixed(1):Math.round(v).toLocaleString('en-GB'))}${unit}</text>`}
+ const every=Math.max(1,Math.ceil(46/(iw/Math.max(n-1,1))));
+ labs.forEach((l,i)=>{if(i%every===(n-1)%every)g+=`<text x="${x(i)}" y="${H-10}" text-anchor="${i===0?'start':i===n-1?'end':'middle'}" font-size="12" fill="#494C4E">${l.s}</text>`});
+ ser.forEach((s,si)=>{
+  const pts=s.v.map((v,i)=>`${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ');
+  if(si===0)g+=`<polygon points="${x(0)},${y(0)} ${pts} ${x(n-1)},${y(0)}" fill="${s.c}" opacity=".07"/>`;
+  g+=`<polyline points="${pts}" fill="none" stroke="${s.c}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>`;
+ });
+ g+=`<line id="hl" y1="${pt}" y2="${pt+ih}" stroke="#0D0D0D" stroke-width="1" opacity="0"/>`;
+ ser.forEach((s,si)=>g+=`<circle id="pt${si}" r="5" fill="#fff" stroke="${s.c}" stroke-width="2.5" opacity="0"/>`);
+ g+=`<rect id="hit" x="${pl}" y="${pt}" width="${iw}" height="${ih}" fill="transparent"/>`;
+ el.innerHTML=`<svg viewBox="0 0 ${W} ${H}" height="${H}" role="img" aria-label="Trend chart">${g}</svg><div class="tip" id="tip"></div>`;
+ const tip=el.querySelector('#tip'),hit=el.querySelector('#hit'),hl=el.querySelector('#hl');
+ const move=e=>{const r=hit.getBoundingClientRect();const cx=(e.touches?e.touches[0].clientX:e.clientX)-r.left;
+  const i=Math.max(0,Math.min(n-1,Math.round(cx/r.width*(n-1))));
+  hl.setAttribute('x1',x(i));hl.setAttribute('x2',x(i));hl.setAttribute('opacity',.25);
+  ser.forEach((s,si)=>{const p=el.querySelector('#pt'+si);p.setAttribute('cx',x(i));p.setAttribute('cy',y(s.v[i]));p.setAttribute('opacity',1)});
+  tip.innerHTML=`<b>${labs[i].l}</b>`+ser.map(s=>`${s.n}: ${s.v[i].toLocaleString('en-GB')}${unit}`).join('<br>');
+  tip.style.opacity=1;const tw=tip.offsetWidth;let lx=x(i)+14;if(lx+tw>W)lx=x(i)-tw-14;tip.style.left=lx+'px';tip.style.top=(pt+10)+'px'};
+ const out=()=>{tip.style.opacity=0;hl.setAttribute('opacity',0);ser.forEach((s,si)=>el.querySelector('#pt'+si).setAttribute('opacity',0))};
+ hit.addEventListener('mousemove',move);hit.addEventListener('touchmove',move,{passive:true});hit.addEventListener('mouseleave',out);hit.addEventListener('touchend',out);
+}
+function barChart(el,vals,labs,hi,tipf){
+ const W=Math.max(el.clientWidth,300),H=230,pl=40,pr=6,pt=26,pb=30,iw=W-pl-pr,ih=H-pt-pb,n=vals.length;
+ const m0=Math.max(...vals,.5),stp=m0<2.5?.5:m0<6?1:2,max=Math.ceil(m0*1.12/stp)*stp,y=v=>pt+ih-ih*v/max,bw=iw/n,bar=Math.max(4,bw*.64);
+ let g='';
+ for(let v=0;v<=max+1e-9;v+=stp){g+=`<line x1="${pl}" x2="${W-pr}" y1="${y(v)}" y2="${y(v)}" stroke="#E6EAEE"/><text x="${pl-8}" y="${y(v)+4}" text-anchor="end" font-size="12" fill="#494C4E">${v.toFixed(stp<1?1:0)}</text>`}
+ const every=Math.max(1,Math.ceil(26/bw));
+ vals.forEach((v,i)=>{
+  const x=pl+bw*i+(bw-bar)/2,cx=x+bar/2,h=ih*v/max,on=hi.has(i);
+  g+=`<rect x="${x.toFixed(1)}" y="${y(v).toFixed(1)}" width="${bar.toFixed(1)}" height="${h.toFixed(1)}" rx="2" fill="${on?'#E60000':'#9A9DA0'}"/>`;
+  if(on)g+=`<text x="${cx.toFixed(1)}" y="${(y(v)-6).toFixed(1)}" text-anchor="middle" font-size="12" font-weight="700" fill="#E60000">${v.toFixed(1)}</text>`;
+  const last=i===n-1,show=last||(i%every===0&&(every===1||i<n-every));
+  if(show)g+=`<text x="${(last?W-pr:cx).toFixed(1)}" y="${H-9}" text-anchor="${last?'end':'middle'}" font-size="12" fill="${on?'#E60000':'#494C4E'}" font-weight="${on?700:400}">${labs[i].s}</text>`;
+  g+=`<rect class="bh" data-i="${i}" x="${(pl+bw*i).toFixed(1)}" y="${pt}" width="${bw.toFixed(1)}" height="${ih}" fill="transparent"/>`;
+ });
+ el.innerHTML=`<svg viewBox="0 0 ${W} ${H}" height="${H}" role="img" aria-label="Drop-off by question number">${g}</svg><div class="tip"></div>`;
+ const tip=el.querySelector('.tip');
+ el.querySelectorAll('.bh').forEach(r=>{
+  r.addEventListener('mouseenter',()=>{const i=+r.dataset.i;tip.innerHTML=tipf(i);tip.style.opacity=1;const tw=tip.offsetWidth;let lx=pl+bw*i+bw/2+12;if(lx+tw>W)lx=pl+bw*i-tw-12;tip.style.left=Math.max(0,lx)+'px';tip.style.top='6px'});
+  r.addEventListener('mouseleave',()=>{tip.style.opacity=0});
+ });
+}
+function animate(root){
+ requestAnimationFrame(()=>requestAnimationFrame(()=>{
+  root.querySelectorAll('[data-w]').forEach(e=>e.style.width=e.dataset.w+'%');
+  root.querySelectorAll('[data-h]').forEach(e=>e.style.height=e.dataset.h+'px');
+ }));
+}
+
+/* ---------- tabs ---------- */
+function ovFunnel(t){
+ const st=[
+  ['Assessments started',t.started,'',t.started/t.started,false],
+  ['Completed',t.completed,`<b>${pct(t.completed/t.started)}</b> of those started`,t.completed/t.started,false],
+  ['Leads generated',t.leads,`<b>${pct(t.leads/t.completed)}</b> of completed`,t.leads/t.started,true],
+  ['Contacted by sales',t.live?t.contacted:null,t.live?`<b>${pct(t.contacted/t.liveLeads)}</b> of leads`:'No follow-up data',t.live?t.contacted/t.started:0,false],
+  ['Sold through RCA',t.live?t.won:null,t.live?`<b>${pct(t.won/t.contacted)}</b> of contacted`:'No follow-up data',t.live?t.won/t.started:0,false]
+ ];
+ return `<div class="funnel">${st.map(s=>`<div class="stage ${s[4]?'hl':''}"><div class="lab">${s[0]}</div><div class="fig">${fmt(s[1])}</div><div class="rate">${s[2]}</div><div class="bar"><i data-w="${Math.max(s[3]*100,s[1]?2:0).toFixed(1)}"></i></div></div>`).join('')}</div>`;
+}
+function attention(rows,t){
+ const d=pfData(),out=[],qm=qmodel(S.pf,rows),top=topDrops(qm,1)[0];
+ const gcomp=t.completed/t.started;
+ const where=top.i<d.q.length?'<b>'+qLab(d,top.i)+'</b>':'the <b>details form</b>';
+ if(rows.length>1){
+  const low=[...rows].sort((a,b)=>a.m.comp-b.m.comp)[0];
+  out.push(['alert','w',`<b>${low.m.name}</b> loses the most respondents: ${pct(low.m.comp)} finish, against ${pct(gcomp)} across the group.`]);
+  out.push(['alert','w',`The biggest single drop is at ${where}: ${top.pts.toFixed(1)} pts of starters leave there.`]);
+  const none=rows.filter(r=>!r.live);
+  if(none.length)out.push(['plug','r',`<b>${none[0].m.name}</b> is not connected: ${fmt(none[0].completed)} completed assessments, ${fmt(none[0].leads)} leads, and no view of what happened next.`]);
+  const stale=rows.filter(r=>r.m.stale);
+  if(stale.length)out.push(['clock','w',`<b>${stale[0].m.name}</b> last uploaded on ${stale[0].m.sync}. Its sales figures are about two months old.`]);
+  const live=rows.filter(r=>r.live);
+  if(live.length){
+   const best=[...live].sort((a,b)=>b.m.won-a.m.won)[0],slow=[...live].sort((a,b)=>b.m.days-a.m.days)[0];
+   out.push(['trend','g',`<b>${best.m.name}</b> converts ${pct(best.m.won)} of contacted leads, the best in the group. ${best.m.days.toFixed(1)} days to first contact.`]);
+   const crm=rows.filter(r=>r.m.feed==='crm');
+   if(slow.m.days>3&&crm.length)out.push(['clock','w',`<b>${slow.m.name}</b> takes ${slow.m.days.toFixed(1)} days to reach a new lead. CRM-connected markets average ${(crm.reduce((a,r)=>a+r.m.days,0)/crm.length).toFixed(1)}.`]);
+  }
+ }else{
+  const r=rows[0];
+  out.push(['trend','g',`<b>${r.m.name}</b> turns ${pct(r.m.lead)} of completed assessments into leads.`]);
+  if(r.live)out.push(['clock',r.m.days>3?'w':'g',`New leads wait <b>${r.m.days.toFixed(1)} days</b> for a first contact.`]);
+  out.push(['alert','w',`The biggest drop is at ${where}: ${top.pts.toFixed(1)} pts of starters leave there. See Assessment insights.`]);
+ }
+ return `<ul class="alist">${out.slice(0,5).map(o=>`<li><span class="${o[1]}">${ic(o[0])}</span><p>${o[2]}</p></li>`).join('')}</ul>`;
+}
+function marketsTable(rows,t){
+ return `<div class="scroll"><table><thead><tr><th>Market</th><th>Completed</th><th class="l" style="text-align:right">Completion rate</th><th>Leads</th><th>Contacted</th><th>Sold</th><th>Days to contact</th><th class="l">Data feed</th></tr></thead><tbody>
+ ${[...rows].sort((a,b)=>b.completed-a.completed).map(r=>`<tr class="click" data-mk="${r.m.id}" tabindex="0"><td class="m">${r.m.name}</td><td>${fmt(r.completed)}</td><td><span class="cell-bar"><span class="t"><i style="width:${r.m.comp*100}%"></i></span>${pct(r.m.comp)}</span></td><td>${fmt(r.leads)}</td><td>${r.live?`${fmt(r.contacted)} <span class="note">(${pct(r.m.cont)})</span>`:fmt(null)}</td><td>${r.live?`${fmt(r.won)} <span class="note">(${pct(r.m.won)})</span>`:fmt(null)}</td><td>${r.live?r.m.days.toFixed(1):fmt(null)}</td><td class="l">${feedChip(r.m)}</td></tr>`).join('')}
+ </tbody><tfoot><tr><td>All markets</td><td>${fmt(t.completed)}</td><td>${pct(t.completed/t.started)}</td><td>${fmt(t.leads)}</td><td>${fmt(t.contacted)}</td><td>${fmt(t.won)}</td><td>${t.days?t.days.toFixed(1):fmt(null)}</td><td class="l"></td></tr></tfoot></table></div>`;
+}
+function compareTable(rows,gt){
+ const r=rows[0],d=pfData();
+ const all=d.markets.map(m=>calc(m,FULL));
+ const live=all.filter(x=>x.live);
+ const avg=k=>live.reduce((a,x)=>a+x.m[k]*x.leads,0)/live.reduce((a,x)=>a+x.leads,0);
+ const gc=all.reduce((a,x)=>a+x.completed,0)/all.reduce((a,x)=>a+x.started,0);
+ const gl=all.reduce((a,x)=>a+x.leads,0)/all.reduce((a,x)=>a+x.completed,0);
+ const m=[['Completion rate',r.m.comp,gc,true],['Leads from completed',r.m.lead,gl,true],['Leads contacted',r.live?r.m.cont:null,avg('cont'),true],['Sold from contacted',r.live?r.m.won:null,avg('won'),true],['Days to first contact',r.live?r.m.days:null,avg('days'),false]];
+ return `<div class="scroll"><table><thead><tr><th>Measure</th><th>${r.m.name}</th><th>Group average</th><th class="l">Difference</th></tr></thead><tbody>${m.map(x=>{
+  const days=x[0].startsWith('Days');const f=v=>v==null?fmt(null):days?v.toFixed(1):pct(v);
+  let diff='<span class="dash">&ndash;</span>';
+  if(x[1]!=null){const dv=days?x[2]-x[1]:(x[1]-x[2])*100;const good=dv>=0;diff=`<span class="chip ${Math.abs(dv)<.3?'off':good?'ok':'warn'}"><i></i>${Math.abs(dv)<.3?'In line':(days?Math.abs(dv).toFixed(1)+' days '+(good?'faster':'slower'):Math.abs(dv).toFixed(0)+' pts '+(good?'above':'below'))}</span>`}
+  return `<tr><td class="m">${x[0]}</td><td>${f(x[1])}</td><td>${f(x[2])}</td><td class="l">${diff}</td></tr>`}).join('')}</tbody></table></div>`;
+}
+
+function tabOverview(){
+ const rows=scoped(),t=total(rows),d=pfData(),gr={day:'Daily',week:'Weekly totals, full weeks only',month:'Monthly totals, full months only'}[trend(rows).g];
+ const single=rows.length===1;
+ const svc=d.services.map(s=>[s[0],Math.round(t.won*s[1]/100),`${s[1]}%`]);
+ const uncovered=rows.filter(r=>!r.live).length;
+ return `
+ ${ovFunnel(t)}
+ <p class="cover">${uncovered?`${ic('alert')}<span>Contacted and sold figures cover ${t.live} of ${t.n} markets. ${rows.filter(r=>!r.live).map(r=>r.m.name).join(', ')} ${uncovered>1?'have':'has'} no follow-up feed yet.</span>`:`${ic('check')}<span>${single?'Follow-up data is live for this market.':`All ${t.n} markets report follow-up data.`}</span>`}</p>
+ <div class="grid g-2-1">
+  <section><div class="sec-h"><h2>Completed assessments and leads</h2><span class="note">${gr}</span></div>
+   <div class="legend"><span><i style="background:#25282B"></i>Completed assessments</span><span><i style="background:#E60000"></i>Leads generated</span></div>
+   <div class="chart" id="trend"></div></section>
+  <section><div class="sec-h"><h2>Services sold through RCA</h2></div>
+   ${t.live?barList(svc,{red:true,suffix:''}):'<p class="note">Appears once sales follow-up is connected.</p>'}
+   <p class="note" style="margin-top:14px">Count of services sold from leads, by service line.</p></section>
+ </div>
+ <div class="grid g-2-1">
+  <section><div class="sec-h"><h2>${single?`${rows[0].m.name} against the group`:'Markets'}</h2>${single?'':'<span class="note">Select a market to open its view</span>'}</div>
+   ${single?compareTable(rows):marketsTable(rows,t)}</section>
+  <section><div class="sec-h"><h2>Worth a look</h2></div>${attention(rows,t)}</section>
+ </div>`;
+}
+function tabFollow(){
+ const rows=scoped(),t=total(rows),d=pfData();
+ const single=rows.length===1;
+ const live=rows.filter(r=>r.live);
+ const pipe=r=>{const c=r.contacted,won=r.won,lost=Math.round(c*.28),pr=Math.round(c*.12),mt=Math.round(c*.16),ct=Math.max(c-won-lost-pr-mt,0);return [['nc',r.leads-c],['ct',ct],['mt',mt],['pr',pr],['won',won],['lost',lost]]};
+ const nm={nc:'Not contacted yet',ct:'Contacted',mt:'Meeting held',pr:'Proposal sent',won:'Sold',lost:'Not taken forward'};
+ const seg=p=>`<div class="stack">${p.map(([k,v])=>`<i title="${nm[k]}: ${v}" style="flex:${v};background:${STAGE_COL[k]}"></i>`).join('')}</div>`;
+ const reasons=[['Budget not available',31],['Already with another provider',24],['Timing: planning for later',21],['No decision maker reached',15],['Service not a fit',9]].map(x=>[x[0],Math.max(2,Math.round(x[1]*jit(S.mk+S.pf,x[0],.12)))]);
+ const sumR=reasons.reduce((a,b)=>a+b[1],0);const reasonsN=reasons.map(x=>[x[0],Math.round(x[1]/sumR*100)]);
+ const dayRows=[...live].sort((a,b)=>a.m.days-b.m.days).map(r=>[r.m.name,r.m.days.toFixed(1)]);
+ const allp=live.length?live.map(pipe).reduce((a,p)=>a.map((x,i)=>[x[0],x[1]+p[i][1]])):null;
+ return `
+ <div class="sec" style="margin-top:24px"><div class="sec-h"><h2>Where each lead stands</h2><span class="note">${rngLabel()}</span></div>
+  <div class="legend">${Object.keys(nm).map(k=>`<span><i class="sq" style="background:${STAGE_COL[k]}"></i>${nm[k]}</span>`).join('')}</div>
+  <div class="scroll"><table><thead><tr><th>Market</th><th>Leads</th><th class="l">Pipeline</th><th>Sold</th></tr></thead><tbody>
+   <tr><td class="m">${single?rows[0].m.name:'All connected markets'}</td><td>${fmt(live.reduce((a,r)=>a+r.leads,0))}</td><td class="l">${allp?seg(allp):`<div class="stack-off">No follow-up data. Connect the CRM or upload monthly.</div>`}</td><td>${fmt(t.won)}</td></tr>
+   ${single?'':rows.map(r=>`<tr class="click" data-mk="${r.m.id}" tabindex="0"><td>${r.m.name}</td><td>${fmt(r.leads)}</td><td class="l">${r.live?seg(pipe(r)):`<div class="stack-off">No follow-up data. Connect the CRM or upload monthly.</div>`}</td><td>${fmt(r.won)}</td></tr>`).join('')}
+  </tbody></table></div></div>
+ <div class="grid g-1-1">
+  <section><div class="sec-h"><h2>Why leads were not taken forward</h2></div>${barList(reasonsN,{max:40})}<p class="note" style="margin-top:14px">Share of lost leads, as logged by sales.</p></section>
+  <section><div class="sec-h"><h2>Days to first contact</h2></div>${dayRows.length?barList(dayRows,{max:7,suffix:' days'}):'<p class="note">No follow-up data yet.</p>'}<p class="note" style="margin-top:14px">Lower is better.</p></section>
+ </div>`;
+}
+function heatTable(rowNames,rows,getv,aggv,cap){
+ const mx=Math.max(.01,...rowNames.flatMap((n,i)=>rows.map((r,ri)=>getv(ri,i)||0)));
+ const cell=v=>v==null?`<td class="dash">&ndash;</td>`:`<td style="background:rgba(230,0,0,${(.07+.34*v/mx).toFixed(2)})">${(v*100).toFixed(0)}%</td>`;
+ return `<div class="scroll"><table class="heat" style="min-width:${cap||420}px"><thead><tr><th>Option</th>${rows.length>1?'<th>All</th>':''}${rows.map(r=>`<th>${r.m.name}</th>`).join('')}</tr></thead><tbody>
+ ${rowNames.map((n,i)=>`<tr><td class="m" style="white-space:normal;line-height:1.25;padding-top:8px;padding-bottom:8px">${n}</td>${rows.length>1?cell(aggv[i]).replace('<td','<td class="agg"'):''}${rows.map((r,ri)=>cell(getv(ri,i))).join('')}</tr>`).join('')}
+ </tbody></table></div>`;
+}
+function tabInsights(){
+ const rows=scoped(),t=total(rows),d=pfData(),m=qmodel(S.pf,rows);
+ if(!S.q||S.q>d.q.length)S.q=1;
+ const qi=S.q-1,an=answersFor(rows,qi),q=an.q;
+ const top=topDrops(m,6);
+ const ans=Math.round(t.started*m.reach[qi]);
+ const order=an.names.map((n,i)=>i).sort((a,b)=>an.agg[b]-an.agg[a]);
+ const maxOpt=Math.max(...an.agg);
+ const opts=order.map(i=>[an.names[i],Math.round(an.agg[i]*100),`${fmt(an.agg[i]*ans)} people`]);
+ return `
+ <div class="grid g-2-1">
+  <section><div class="sec-h"><h2>Where people leave, by question number</h2><span class="note">Share of all starters lost at each question</span></div>
+   <div class="chart" id="qleave"></div>
+   <div class="sec-h" style="margin-top:22px"><h2 style="font-size:15px">Still answering</h2><span class="note">Share of starters who reach each question</span></div>
+   <div class="chart" id="qsurv"></div>
+   <p class="note" style="margin-top:12px">${pct(m.end)} of ${fmt(t.started)} starters finish. The last step, the contact details form, is shown as Form.</p></section>
+  <section><div class="sec-h"><h2>Biggest drop-offs</h2></div>
+   <div class="ranks">${top.map(x=>`<div class="rank ${x.i<d.q.length?'click':''}" ${x.i<d.q.length?`data-q="${x.i+1}" tabindex="0"`:''}><span class="qn">${qLab(d,x.i)}</span><div><b>${x.pts.toFixed(1)} pts</b> of starters leave here<span class="note">${qSec(d,x.i)} &middot; ${(m.reach[x.i]*100).toFixed(0)}% still answering</span></div></div>`).join('')}</div>
+   <p class="note" style="margin-top:14px">Select a question number to see what people answered.</p></section>
+ </div>
+ <section class="sec" id="answers"><div class="sec-h"><h2>What people answered</h2><span class="note">Pick a question number</span></div>
+  <div class="qchips" role="group" aria-label="Question number">${d.q.map((x,i)=>`<button class="qchip ${topDrops(m,3).some(y=>y.i===i)?'warn':''}" data-q="${i+1}" aria-pressed="${S.q===i+1}">Q${i+1}</button>`).join('')}</div>
+  <div class="qhead"><div class="qmeta"><span class="qn">Q${S.q}</span><span class="note">${q.sec} &middot; ${q.type==='m'?'Several answers allowed':'One answer'} &middot; ${fmt(ans)} people reached it &middot; ${(m.drop[qi]*100).toFixed(1)} pts of starters left here</span></div><p>${q.text}</p></div>
+  <div class="split">
+   <div>${barList(opts,{max:Math.max(Math.round(maxOpt*100)*1.1,20),red:true})}<p class="note" style="margin-top:14px">${q.type==='m'?'Shares add up to more than 100% because people pick several options.':'Share of people who answered this question.'}</p></div>
+   <div>${rows.length>1?`<p class="note" style="margin:0 0 8px">Same answer, market by market. Darker means more people chose it.</p>${heatTable(an.names,rows,(ri,i)=>an.per[ri][i],an.agg)}`:`<p class="note">One market selected. Pick All markets in the sidebar to compare.</p>`}</div>
+  </div></section>
+ <section class="sec"><div class="sec-h"><h2>All questions at a glance</h2><span class="note">Select a row to open it above</span></div>
+  <div class="scroll tall"><table class="qt"><thead><tr><th>Q</th><th class="l">Section</th><th class="l">Question</th><th class="l">Most common answer</th><th>Reached it</th><th>Left here</th></tr></thead><tbody>
+  ${d.q.map((x,i)=>{const a=answersFor(rows,i),best=a.agg.indexOf(Math.max(...a.agg));return `<tr class="click ${S.q===i+1?'sel':''}" data-q="${i+1}" tabindex="0"><td class="m">Q${i+1}</td><td class="l">${x.sec}</td><td class="l wrap">${x.text}</td><td class="l wrap">${a.names[best]} <span class="note">${(a.agg[best]*100).toFixed(0)}%</span></td><td>${fmt(t.started*m.reach[i])}</td><td>${(m.drop[i]*100).toFixed(1)} pts</td></tr>`}).join('')}
+  </tbody></table></div></section>`;
+}
+function tabInterest(){
+ const rows=scoped(),d=pfData(),t=total(rows);
+ const it=interestFor(rows,'interest'),as=interestFor(rows,'asked');
+ const ord=it.names.map((n,i)=>i).sort((a,b)=>it.agg[b]-it.agg[a]);
+ const list=ord.map(i=>[it.names[i],Math.round(it.agg[i]*100),`${fmt(it.agg[i]*it.W)} people`]);
+ const aord=as.names.map((n,i)=>i).sort((a,b)=>as.agg[b]-as.agg[a]);
+ const alist=as.W?aord.map(i=>[as.names[i],Math.round(as.agg[i]*100),`${fmt(as.agg[i]*as.W)} leads`]):[];
+ return `
+ <div class="grid g-1-1">
+  <section><div class="sec-h"><h2>Areas people want to explore</h2><span class="note">Q${d.q.length}, ticked at the end of the assessment</span></div>
+   ${barList(list,{max:60,red:true})}
+   <p class="note" style="margin-top:14px">Share of ${fmt(t.completed)} completed assessments. People can tick several areas.</p></section>
+  <section><div class="sec-h"><h2>What they raised in the sales call</h2><span class="note">Logged by sales</span></div>
+   ${alist.length?barList(alist,{max:45}):'<p class="note">Appears once sales follow-up is connected for this market.</p>'}
+   <p class="note" style="margin-top:14px">Share of contacted leads who raised each topic. Covers ${t.live} of ${t.n} markets.</p></section>
+ </div>
+ <section class="sec"><div class="sec-h"><h2>Interest by market</h2><span class="note">Share of completed assessments that ticked each area</span></div>
+  ${rows.length>1?heatTable(ord.map(i=>it.names[i]),rows,(ri,i)=>it.per[ri][ord[i]],ord.map(i=>it.agg[i]),560):'<p class="note">Pick All markets in the sidebar to compare markets.</p>'}</section>`;
+}
+function tabFeed(){
+ const rows=scoped(),d=pfData();
+ const crm=rows.filter(r=>r.m.feed==='crm').length,up=rows.filter(r=>r.m.feed==='upload').length,no=rows.filter(r=>r.m.feed==='none').length;
+ const status=m=>m.feed==='crm'?['ok','Healthy']:m.feed==='upload'?(m.stale?['warn','Overdue']:['ok','Received']):['off','Not set up'];
+ const act=m=>m.feed==='crm'?'<button class="btn sm" data-toast="Mockup: opens the sync log for '+m.name+'">View sync log</button>':m.feed==='upload'?(m.stale?'<button class="btn sm primary" data-toast="Mockup: reminder sent to the '+m.name+' owner">Send reminder</button>':'<button class="btn sm" data-toast="Mockup: opens the upload for '+m.name+'">Upload file</button>'):'<button class="btn sm primary" data-toast="Mockup: starts the integration request for '+m.name+'">Set up integration</button>';
+ return `
+ <div class="sec" style="margin-top:28px"><div class="sec-h"><h2>How each market's sales data arrives</h2><span class="note">${rows.length>1?`${crm} automatic, ${up} monthly upload, ${no} not connected`:''}</span></div>
+  <div class="scroll"><table><thead><tr><th>Market</th><th class="l">Source</th><th class="l">Last update</th><th>Matched</th><th class="l">Status</th><th></th></tr></thead><tbody>
+  ${rows.map(r=>{const s=status(r.m);return `<tr><td class="m">${r.m.name}</td><td class="l">${feedChip(r.m)}</td><td class="l">${r.m.sync}</td><td>${r.m.feed==='crm'?pct(.94+jit(r.m.id,1,.03)*0-0+(r.m.id==='ie'?.03:0)):r.m.feed==='upload'?fmt(Math.round(r.leads*.82)):fmt(null)}</td><td class="l"><span class="chip ${s[0]}"><i></i>${s[1]}</span></td><td>${act(r.m)}</td></tr>`}).join('')}
+  </tbody></table></div></div>
+ <div class="grid g-2-1">
+  <section><div class="sec-h"><h2>Three ways to feed the dashboard</h2></div>
+   <div class="opt"><div><h3>Automatic CRM sync</h3><p><span class="pill rec">Recommended</span></p></div><p>Leads, contact status and sales outcome flow in daily. No work for the market. Needs the market's approval to connect its CRM.</p><span class="note">Effort: none after setup</span></div>
+   <div class="opt"><div><h3>Monthly upload</h3></div><p>One person per market uploads the sales export each month. The tool reminds them and flags anything overdue.</p><span class="note">Effort: about 15 minutes a month</span></div>
+   <div class="opt"><div><h3>Assessment data only</h3></div><p>Completions, drop-off and answers are always available. Follow-up and sales stay blank for that market.</p><span class="note">Effort: none</span></div>
+  </section>
+  <section><div class="sec-h"><h2>Automations</h2></div>
+   <div class="tog"><div><b>Monthly group report</b><p>PDF to the group team on the first working day.</p></div><button class="sw" role="switch" aria-checked="true" aria-label="Monthly group report"></button></div>
+   <div class="tog"><div><b>Upload reminders</b><p>Email market owners on the 25th when a file is due.</p></div><button class="sw" role="switch" aria-checked="true" aria-label="Upload reminders"></button></div>
+   <div class="tog"><div><b>Slow follow-up alert</b><p>Tell the market lead when a lead waits more than 3 days.</p></div><button class="sw" role="switch" aria-checked="false" aria-label="Slow follow-up alert"></button></div>
+  </section>
+ </div>`;
+}
+const TABS=[['overview','Overview',tabOverview],['follow','Lead follow-up',tabFollow],['insights','Assessment insights',tabInsights],['interest','Interest areas',tabInterest],['feed','Data feed',tabFeed]];
+
+/* ---------- shell render ---------- */
+function sidebar(){
+ const r=ROLES[S.role],rg=rng();
+ let h=`<div class="brand"><div class="mark">R</div><div><b>RCA Analytics</b><span>Mockup for Vodafone Business</span></div></div>`;
+ r.pf.forEach(key=>{
+  const d=DATA[key];const ms=r.mk?d.markets.filter(m=>r.mk.includes(m.id)):d.markets;
+  h+=`<div class="pf"><div class="pf-h">${ic(d.icon)}<span>${d.name}</span>${d.tag?`<span class="tag">${d.tag}</span>`:''}</div>`;
+  if(!r.mk)h+=`<button class="nav" data-pf="${key}" data-mk="all" aria-current="${S.pf===key&&S.mk==='all'}">All markets<span class="n">${d.markets.length}</span></button>`;
+  ms.forEach(m=>{h+=`<button class="nav" data-pf="${key}" data-mk="${m.id}" aria-current="${S.pf===key&&S.mk===m.id}"><span class="dot" style="background:${m.feed==='crm'?'#3DBE7F':m.feed==='upload'?'#E8A33A':'transparent;border:1.5px solid #888'}"></span>${m.name}<span class="n">${fmt(calc(m,rg).completed)}</span></button>`});
+  h+=`</div>`;
+ });
+ h+=`<div class="side-foot"><label for="role">Preview as</label><select id="role">${Object.entries(ROLES).map(([k2,v])=>`<option value="${k2}" ${S.role===k2?'selected':''}>${v.label}</option>`).join('')}</select><p>Each person sees only the portfolios and markets they are allowed to. Switch the preview to see it. Numbers beside markets are completed assessments in the date range.</p></div>`;
+ $('#side').innerHTML=h;
+}
+function render(){
+ const d=pfData(),m=d.markets.find(x=>x.id===S.mk),r=rng();
+ sidebar();
+ $('#menu').innerHTML=ic('menu');
+ $('#crumb').innerHTML=`<span>${d.name}</span><span>/</span><b>${S.mk==='all'?'All markets':m.name}</b>`;
+ $('#page').innerHTML=`
+  <div class="head"><div><h1>${d.name}${S.mk==='all'?'':` &middot; ${m.name}`}</h1><p class="sub">${d.assessment}${S.mk==='all'?` &middot; ${d.markets.length} markets`:''} &middot; ${rngLabel()} (${r.n} days)</p></div>
+   <div class="ctl"><div class="seg" role="group" aria-label="Date range">${[7,30,90,365].map(p=>`<button data-p="${p}" aria-pressed="${S.preset===String(p)}">${p===365?'12 months':p+' days'}</button>`).join('')}<button data-p="custom" aria-pressed="${S.preset==='custom'}">Custom</button></div>
+    <div class="dates"><label for="dfrom">From</label><input type="date" id="dfrom" value="${S.from}" min="${iso(D0)}" max="${iso(D1)}"><label for="dto">To</label><input type="date" id="dto" value="${S.to}" min="${iso(D0)}" max="${iso(D1)}"></div>
+    <button class="btn" data-toast="Mockup: downloads this view as a PDF">${ic('download')}Export PDF</button>
+    <button class="btn primary" data-toast="Mockup: opens the report schedule">${ic('calendar')}Schedule report</button></div></div>
+  <div class="tabs" role="tablist">${TABS.map(t=>`<button role="tab" data-tab="${t[0]}" aria-selected="${S.tab===t[0]}">${t[1]}</button>`).join('')}</div>
+  <div id="body">${TABS.find(t=>t[0]===S.tab)[2]()}</div>`;
+ drawCharts();
+ animate($('#page'));
+}
+function drawCharts(){
+ const rows=scoped(),d=pfData();
+ const tr=$('#trend');
+ if(tr){const t=trend(rows);lineChart(tr,[{n:'Completed assessments',c:'#25282B',v:t.comp},{n:'Leads generated',c:'#E60000',v:t.leads}],t.labs)}
+ const ql=$('#qleave'),qs=$('#qsurv');
+ if(ql||qs){
+  const m=qmodel(S.pf,rows),labs=m.drop.map((x,i)=>({s:qLab(d,i),l:qLab(d,i)+' · '+qSec(d,i)}));
+  const hi=new Set(topDrops(m,3).map(x=>x.i));
+  if(ql)barChart(ql,m.drop.map(x=>+(x*100).toFixed(2)),labs,hi,i=>`<b>${qLab(d,i)} · ${qSec(d,i)}</b>${(m.drop[i]*100).toFixed(1)} pts of starters leave here<br>${(m.reach[i]*100).toFixed(0)}% reached it`);
+  if(qs)lineChart(qs,[{n:'Still answering',c:'#E60000',v:m.reach.map(x=>+(x*100).toFixed(1))}],labs,'%');
+ }
+}
+function go(p){Object.assign(S,p);const y=window.scrollY;render();window.scrollTo(0,y)}
+function openQ(n){go({q:+n,tab:'insights'});const a=document.getElementById('answers');if(a)a.scrollIntoView({behavior:'smooth',block:'start'})}
+document.addEventListener('click',e=>{
+ const nav=e.target.closest('[data-pf]');if(nav){go({pf:nav.dataset.pf,mk:nav.dataset.mk,q:1});document.body.classList.remove('nav-open');return}
+ const tab=e.target.closest('[data-tab]');if(tab){go({tab:tab.dataset.tab});return}
+ const per=e.target.closest('[data-p]');if(per){const v=per.dataset.p;if(v==='custom')S.preset='custom';else setPreset(+v);go({});return}
+ const qq=e.target.closest('[data-q]');if(qq){openQ(qq.dataset.q);return}
+ const row=e.target.closest('tr[data-mk]');if(row){go({mk:row.dataset.mk,tab:S.tab==='feed'?'feed':'overview',q:1});window.scrollTo(0,0);return}
+ const sw=e.target.closest('.sw');if(sw){sw.setAttribute('aria-checked',sw.getAttribute('aria-checked')!=='true');return}
+ const ts=e.target.closest('[data-toast]');if(ts){toast(ts.dataset.toast);return}
+ if(e.target.closest('#menu'))document.body.classList.add('nav-open');
+ if(e.target.id==='scrim')document.body.classList.remove('nav-open');
+});
+document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('tr[data-mk],tr[data-q],.rank[data-q]')){e.preventDefault();e.target.click()}});
+document.addEventListener('change',e=>{
+ if(e.target.id==='role'){S.role=e.target.value;const r=ROLES[S.role];if(!r.pf.includes(S.pf))S.pf=r.pf[0];S.mk=r.mk?r.mk[0]:'all';S.q=1;render();return}
+ if(e.target.id==='dfrom'||e.target.id==='dto'){
+  let a=$('#dfrom').value,b=$('#dto').value;if(!a||!b)return;
+  const lo=iso(D0),hi=iso(D1);a=a<lo?lo:a>hi?hi:a;b=b<lo?lo:b>hi?hi:b;
+  if(a>b){if(e.target.id==='dfrom')b=a;else a=b}
+  S.from=a;S.to=b;S.preset='custom';go({});
+ }
+});
+let tt;function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('on');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('on'),2400)}
+let rz;window.addEventListener('resize',()=>{clearTimeout(rz);rz=setTimeout(drawCharts,120)});
+render();
+</script>
+</body>
+</html>
