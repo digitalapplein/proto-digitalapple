@@ -1,8 +1,8 @@
 /* Discussion page: one card per asset, filled live in the meeting.
    Kept apart from the business case model: answers live in D, saved to
    the server (/api/discuss) when the tool is hosted, and to this browser
-   as a backup. Empty fields are tinted red so gaps are visible, and what is
-   typed also fills the detailed As-is page. */
+   as a backup. Empty boxes are tinted red so gaps are visible; after the
+   call the answers are sorted into the detailed As-is page. */
 
 const DSTORE = STORE + "discuss";
 const ONLINE = location.protocol.startsWith("http");
@@ -130,54 +130,55 @@ function discussHTML(){
   const rail = RAIL_HIDE ? `<div class="askcol slim"><button class="railbtn" data-rail data-hover="Show the asset list" aria-label="Show the asset list">${ic("side", 16)}</button></div>`
     : `<div class="askcol"><section class="ask">${railHTML()}</section></div>`;
   const a = all.find(x => x.name === DCUR), name = DCUR;
-  const field = f => {
-    const v = dval(name, f.k), gap = !f.opt && (v === "" || v == null), est = !gap && disEst(name, f.k), cls = `df${gap ? " gap" : ""}${est ? " est" : ""}`;
-    let ctl;
-    if (f.t === "pick") ctl = `<div class="dpick">${f.o.map(o => `<button class="dchip" data-dset="${f.k}" data-dv="${esc(o)}" aria-pressed="${v === o}">${esc(o)}</button>`).join("")}</div>`;
-    else if (f.t === "text") ctl = `<textarea data-dfield="${f.k}" rows="2" placeholder="${esc(f.ph || "")}">${esc(val(v))}</textarea>`;
-    else ctl = `<input class="dinp" data-dfield="${f.k}" ${f.t === "num" ? 'inputmode="decimal"' : ""} value="${esc(val(v))}" placeholder="${esc(f.ph || "")}">`;
-    return `<label class="${cls} w-${f.t}"><span class="dl">${esc(f.l)}</span>${ctl}</label>`;
+  const made = dval(name, "made");
+  const box = b => {
+    const v = dbox(name, b), gap = !b.opt && !v.trim();
+    return `<label class="df${gap ? " gap" : ""}"><span class="dl">${esc(b.l)}</span>
+      <textarea data-dfield="${b.k}" rows="3" placeholder="${esc(b.ph)}">${esc(v)}</textarea></label>`;
   };
-  const groups = [...new Set(DF.map(f => f.g))].map(g => `<div class="dgrp"><div class="dgh">${esc(g)}</div>
-    <div class="dgrid g-${dkey(g)}">${DF.filter(f => f.g === g).map(field).join("")}</div></div>`).join("");
+  const phase = (PH().find(p => p.id === a.phase) || {}).name || "";
   return `<div class="grid${RAIL_HIDE ? " slimg" : ""}">${rail}<div class="answers">
     <section class="dcard">
-      <div class="dhead"><div class="dcrumb">${esc((PH().find(p => p.id === a.phase) || {}).name || "")}${a.parent ? " · " + esc(a.parent) : ""}</div>
-        <h2>${esc(name)}</h2></div>
-      ${groups}
+      <div class="dhead">${a.parent || phase !== name ? `<div class="dcrumb">${esc(a.parent || phase)}</div>` : ""}
+        <div class="dtitle"><h2>${esc(name)}</h2>
+        <div class="dpick">${["In-house", "External", "Not done"].map(o => `<button class="dchip" data-dset="made" data-dv="${o}" aria-pressed="${made === o}">${o}</button>`).join("")}</div></div></div>
+      <div class="dboxes">${BOX.map(box).join("")}</div>
       <div class="dfoot"><label class="dwho">Typing as <input class="dinp" id="dwho" value="${esc(DWHO)}" placeholder="Your name"></label>
-        <span class="dhint"><i class="sw gap"></i>Not captured yet <i class="sw est"></i>Estimate, please confirm</span>
+        <span class="dhint"><i class="sw gap"></i>Not covered yet</span>
         <span class="dsync" id="dsync"></span>
         <button class="btn" data-dnext>Next asset</button></div>
     </section></div></div>`;
 }
 
-/* ---------- answers fill the detailed As-is page ----------
-   Only what was typed in the discussion (not estimates) is copied across,
-   into the asset of the same name; the As-is page stays editable after. */
-const dnum = v => { const n = parseFloat(String(v).replace(",", ".")); return isFinite(n) ? n : null; };
-function dApply(name, k, v){
-  const a = Object.values(S.assets).find(x => x.name === name); if (!a) return false;
-  const steps = a.steps || [], made = steps.filter(x => x.phase !== "market");
-  const st = re => made.find(x => re.test(x.label));
-  let s;
-  if (k === "what" && v) a.desc = v;
-  else if (k === "format" && v) a.output = v;
-  else if (k === "notes" && v) a.nuances = v;
-  else if (k === "brief" && (s = st(/brief/i)) && dnum(v) != null) s.hours = dnum(v);
-  else if (k === "make" && (s = made.find(x => x.phase === "create" && !/brief/i.test(x.label))) && dnum(v) != null) s.hours = dnum(v);
-  else if (k === "review" && (s = st(/review/i)) && dnum(v) != null) s.hours = dnum(v);
-  else if (k === "approvers" && v && (s = st(/approv/i))) s.who = v;
-  else return false;
-  return true;
+/* six free-text boxes in the order the call runs; each opens with what is
+   already known (estimates say so), and is sorted into the detail after the call */
+const BOX = [
+  {k: "b_what", l: "What it is, and who makes it", ph: "What it is, who it is for, which team or agency makes it, is there a template"},
+  {k: "b_how", l: "How it is made", ph: "Inputs and where they come from, the steps, the output format and length"},
+  {k: "b_time", l: "Time and cost", ph: "Hours to brief, make and review; days start to finish; agency cost"},
+  {k: "b_appr", l: "Approval", ph: "Who approves; must approve or alignment only"},
+  {k: "b_ver", l: "Versions", ph: "How many markets adapt it, how often it is updated, any variants"},
+  {k: "b_notes", l: "Notes", ph: "Anything else said", opt: true}
+];
+function dboxSeed(name){
+  const v = k => { const x = dval(name, k); return x === "" || x == null ? "" : String(x) + (disEst(name, k) ? " (estimate)" : ""); };
+  const join = parts => parts.filter(p => p[1]).map(([l, x]) => l ? `${l}: ${x}` : x).join("\n");
+  return {
+    b_what: join([["", v("what")], ["Made by", v("maker")], ["Template", v("template")]]),
+    b_how: join([["Inputs", v("inputs")], ["Steps", v("how")], ["Output", v("format")]]),
+    b_time: join([["Briefing, hours", v("brief")], ["Making, hours", v("make")], ["Review, hours", v("review")], ["Start to finish, days", v("wait")], ["Agency cost, € new / update / market", v("cost")]]),
+    b_appr: join([["", v("approvers")], ["", v("approval")]]),
+    b_ver: join([["Market versions", v("mv")], ["Updates", v("upd")], ["Variants", v("var")]]),
+    b_notes: v("notes")
+  };
 }
+const dbox = (name, b) => { const r = D[name]; if (r && b.k in r) return String(r[b.k] || ""); return dboxSeed(name)[b.k] || ""; };
 
 /* ---------- saving: this browser always, the server when hosted ---------- */
 let dSaveT;
 function dLocal(){ try { localStorage.setItem(DSTORE, JSON.stringify(D)); } catch(_){} }
 function dPut(name, k, v){
   (D[name] = D[name] || {})[k] = v; dLocal();
-  if (dApply(name, k, v)) save();
   if (!ONLINE) return;
   fetch("api/discuss", {method: "POST", headers: {"content-type": "application/json"}, body: JSON.stringify({asset: name, field: k, value: v, by: DWHO})})
     .then(r => { if (!r.ok) throw 0; const e = $("#dsync"); if (e) e.textContent = ""; })
@@ -191,7 +192,7 @@ function dPull(){
     for (const [name, r] of Object.entries(remote || {})) for (const [k, v] of Object.entries(r)){
       if (editing && name === DCUR && k === editing) continue;
       const cur = D[name] && D[name][k];
-      if (JSON.stringify(cur) !== JSON.stringify(v)){ (D[name] = D[name] || {})[k] = v; changed = true; if (dApply(name, k, v)) save(); }
+      if (JSON.stringify(cur) !== JSON.stringify(v)){ (D[name] = D[name] || {})[k] = v; changed = true; }
     }
     if (changed){ dLocal(); if (TAB === "discuss" && !editing) render(); }
   }).catch(() => {});
