@@ -143,8 +143,7 @@ function discussHTML(){
         <div class="dtitle"><h2>${esc(name)}</h2>
         <div class="dpick">${["In-house", "External", "Not done"].map(o => `<button class="dchip" data-dset="made" data-dv="${o}" aria-pressed="${made === o}">${o}</button>`).join("")}</div></div></div>
       <div class="dboxes">${BOX.map(box).join("")}</div>
-      <div class="dfoot"><label class="dwho">Typing as <input class="dinp" id="dwho" value="${esc(DWHO)}" placeholder="Your name"></label>
-        <span class="dhint"><i class="sw gap"></i>Not covered</span>
+      <div class="dfoot"><span class="dhint"><i class="sw gap"></i>Not covered</span>
         <span class="dsync" id="dsync"></span>
         <button class="btn" data-dnext>Next asset</button></div>
     </section></div></div>`;
@@ -208,7 +207,6 @@ document.addEventListener("click", e => {
 });
 document.addEventListener("input", e => {
   const t = e.target;
-  if (t.id === "dwho"){ DWHO = t.value; try { localStorage.setItem(DSTORE + ":who", DWHO); } catch(_){} return; }
   if (!t.dataset.dfield) return;
   const k = t.dataset.dfield, v = t.value, name = DCUR;
   const box = t.closest(".df"); box.classList.toggle("gap", v.trim() === ""); box.classList.remove("est");
