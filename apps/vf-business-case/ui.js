@@ -41,9 +41,25 @@ let saveT;
 function save(){
   clearTimeout(saveT);
   saveT = setTimeout(() => {
+    S.savedAt = Date.now();
     try { localStorage.setItem(STORE + S.client.id, JSON.stringify(S)); $("#saved").textContent = ""; }
     catch(_){ $("#saved").textContent = "Not saved: use Export, Save a copy"; }
+    if (SHARED) fetch("api/state", {method: "POST", headers: {"content-type": "application/json"}, body: JSON.stringify(S)})
+      .then(r => { if (!r.ok) throw 0; }).catch(() => { $("#saved").textContent = "Not saved online, kept in this browser"; });
   }, 250);
+}
+/* hosted: one shared copy of the whole tool; the newest save wins */
+const SHARED = location.protocol.startsWith("http");
+function pullState(){
+  if (!SHARED) return;
+  const act = document.activeElement; if (act && /INPUT|TEXTAREA|SELECT/.test(act.tagName)) return;
+  fetch("api/state").then(r => r.json()).then(R => {
+    if (!R || !R.assets || (R.version || 0) < 16) return;
+    if ((R.savedAt || 0) > (S.savedAt || 0)){
+      S = R; try { localStorage.setItem(STORE + S.client.id, JSON.stringify(S)); } catch(_){}
+      const y = scrollY; render(); scrollTo(0, y);
+    }
+  }).catch(() => {});
 }
 const levLine = key => { for (const g of S.tobe.groups) for (const l of g.lines) if (l.key === key) return l; };
 
@@ -113,9 +129,20 @@ function uncKeys(a){
 function markUnconfirmed(){
   const a = S.assets[S.current]; if (!a) return;
   const keys = uncKeys(a);
-  document.querySelectorAll("#main [data-k]").forEach(el => el.classList.toggle("unc", keys.has(el.dataset.k)));
-  const n = $("#tocf"); if (n) n.textContent = keys.size ? `${keys.size} to confirm` : "";
+  document.querySelectorAll("#main [data-k]").forEach(el => {
+    const on = keys.has(el.dataset.k); el.classList.toggle("unc", on);
+    if (on && !(el.nextElementSibling && el.nextElementSibling.dataset.cfm)){
+      el.insertAdjacentHTML("afterend", `<button class="cfm" data-cfm="${el.dataset.k}" title="Confirm this value" aria-label="Confirm this value">✓</button>`);
+      el.parentElement.classList.add("cfmwrap");
+    }
+  });
+  tocfCount(a, keys.size);
 }
+function tocfCount(a, n){
+  const el = $("#tocf"); if (el) el.innerHTML = n ? `${n} to confirm <button class="cfall" data-cfall>Confirm all</button>` : "";
+  const r = document.querySelector(`[data-asset="${a.id}"] .ucnt`); if (r){ r.textContent = n || ""; r.hidden = !n; }
+}
+function confirmKey(a, k){ (a.conf = a.conf || {})[k] = 1; }
 
 /* count-up: the one authored motion moment */
 const LAST = {};
@@ -188,7 +215,7 @@ function railHTML(){
       const a = S.assets[id];
       return `<div class="it ${id === S.current ? "on" : ""} ${isMapped(a) ? "" : "blank"} ${a.optional ? "opt" : ""} ${a.parent ? "kid" : ""}" data-asset="${id}" draggable="true"${a.optional ? ` title="Optional"` : a.parent ? ` title="Part of ${esc((S.assets[a.parent] || {}).name || "")}: counted there"` : ""}>
         <span class="grip hov">${ic("grip", 12)}</span>
-        <span class="nm" data-ren-asset="${id}">${esc(a.name)}</span>
+        <span class="nm" data-ren-asset="${id}">${esc(a.name)}</span>${(n => n ? `<span class="ucnt" title="${n} to confirm">${n}</span>` : `<span class="ucnt" hidden></span>`)(uncKeys(a).size)}
         ${a.parent ? "" : a.optional ? `<span class="dot opt" title="Optional"></span>` : madeToday(a) ? "" : `<span class="dot" title="Not made today"></span>`}
         <button class="mini hov" data-del-asset="${id}" aria-label="Remove ${esc(a.name)}" title="Remove asset">${ic("x", 12)}</button>
       </div>`;
@@ -614,8 +641,15 @@ function soft(el){
 document.addEventListener("input", e => {
   const t = e.target; if (TAB !== "asis" || !t.dataset || !t.dataset.k || !t.classList.contains("unc")) return;
   const a = S.assets[S.current]; if (!a) return;
-  (a.conf = a.conf || {})[t.dataset.k] = 1; t.classList.remove("unc");
-  const n = $("#tocf"), left = uncKeys(a).size; if (n) n.textContent = left ? `${left} to confirm` : "";
+  confirmKey(a, t.dataset.k); t.classList.remove("unc");
+  const b = t.nextElementSibling; if (b && b.dataset.cfm) b.remove();
+  tocfCount(a, uncKeys(a).size); save();
+});
+document.addEventListener("click", e => {
+  const b = e.target.closest("[data-cfm],[data-cfall]"); if (!b) return;
+  const a = S.assets[S.current]; if (!a) return;
+  if (b.dataset.cfall != null) uncKeys(a).forEach(k => confirmKey(a, k)); else confirmKey(a, b.dataset.cfm);
+  const y = scrollY; render(); save(); scrollTo(0, y);
 });
 document.addEventListener("input", e => {
   const t = e.target;
@@ -950,3 +984,5 @@ function exportExcel(){
 
 render();
 window.__bc = {S: () => S, compute, render};
+
+if (SHARED){ pullState(); setInterval(pullState, 15000); }

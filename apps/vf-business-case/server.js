@@ -1,5 +1,5 @@
 /* Small server for the hosted tool: serves the files in this folder and
-   keeps the Discussion answers and attachments on one disk (DATA_DIR).
+   keeps the Discussion answers, the shared As-is data and attachments on one disk (DATA_DIR).
    Every change is also appended to a log, so nothing typed is lost.
    ACCESS_KEY, when set, is asked for once and kept in a cookie. */
 const http = require("http"), fs = require("fs"), path = require("path"), crypto = require("crypto");
@@ -7,6 +7,8 @@ const ROOT = __dirname, DATA = process.env.DATA_DIR || path.join(ROOT, "_data"),
 const KEY = process.env.ACCESS_KEY || "", PORT = process.env.PORT || 8866;
 fs.mkdirSync(FILES, {recursive: true});
 const DB = path.join(DATA, "discuss.json"), LOG = path.join(DATA, "discuss-log.jsonl");
+const STATE = path.join(DATA, "state.json"), SNAPS = path.join(DATA, "state-history"); let lastSnap = 0;
+fs.mkdirSync(SNAPS, {recursive: true});
 let store = {}; try { store = JSON.parse(fs.readFileSync(DB, "utf8")); } catch(_){}
 const TYPES = {".html": "text/html; charset=utf-8", ".js": "text/javascript", ".css": "text/css", ".svg": "image/svg+xml", ".png": "image/png",
   ".jpg": "image/jpeg", ".json": "application/json", ".woff2": "font/woff2", ".pdf": "application/pdf"};
@@ -31,6 +33,16 @@ http.createServer(async (req, res) => {
       if (!p.asset || !p.field) return send(res, 400, "{}");
       (store[p.asset] = store[p.asset] || {})[p.field] = p.value;
       saveStore(); fs.appendFileSync(LOG, JSON.stringify({t: new Date().toISOString(), ...p}) + "\n");
+      return send(res, 200, '{"ok":true}');
+    }
+    if (u.pathname === "/api/state" && req.method === "GET"){
+      try { return send(res, 200, fs.readFileSync(STATE)); } catch(_){ return send(res, 200, "{}"); }
+    }
+    if (u.pathname === "/api/state" && req.method === "POST"){
+      const raw = await body(req, 8e6); JSON.parse(raw);
+      const tmp = STATE + ".tmp"; fs.writeFileSync(tmp, raw); fs.renameSync(tmp, STATE);
+      /* a dated copy now and then, so any earlier version can be brought back */
+      const now = Date.now(); if (now - lastSnap > 10 * 60e3){ lastSnap = now; fs.writeFileSync(path.join(SNAPS, new Date(now).toISOString().replace(/[:.]/g, "-") + ".json"), raw); }
       return send(res, 200, '{"ok":true}');
     }
     if (u.pathname === "/api/upload" && req.method === "POST"){
