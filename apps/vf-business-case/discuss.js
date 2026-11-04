@@ -134,7 +134,7 @@ function discussHTML(){
   const box = b => {
     const v = dbox(name, b), gap = !b.opt && !v.trim();
     return `<label class="df${gap ? " gap" : ""}"><span class="dl">${esc(b.l)}</span><span class="dcov">${esc(b.ph)}</span>
-      <textarea data-dfield="${b.k}" rows="3" placeholder="Notes from the call">${esc(v)}</textarea></label>`;
+      <textarea data-dfield="${b.k}" rows="3" placeholder="Notes">${esc(v)}</textarea></label>`;
   };
   const phase = (PH().find(p => p.id === a.phase) || {}).name || "";
   return `<div class="grid${RAIL_HIDE ? " slimg" : ""}">${rail}<div class="answers">
@@ -144,7 +144,7 @@ function discussHTML(){
         <div class="dpick">${["In-house", "External", "Not done"].map(o => `<button class="dchip" data-dset="made" data-dv="${o}" aria-pressed="${made === o}">${o}</button>`).join("")}</div></div></div>
       <div class="dboxes">${BOX.map(box).join("")}</div>
       <div class="dfoot"><label class="dwho">Typing as <input class="dinp" id="dwho" value="${esc(DWHO)}" placeholder="Your name"></label>
-        <span class="dhint"><i class="sw gap"></i>Not covered yet</span>
+        <span class="dhint"><i class="sw gap"></i>Not covered</span>
         <span class="dsync" id="dsync"></span>
         <button class="btn" data-dnext>Next asset</button></div>
     </section></div></div>`;
@@ -153,22 +153,22 @@ function discussHTML(){
 /* six free-text boxes in the order the call runs; each opens with what is
    already known (estimates say so), and is sorted into the detail after the call */
 const BOX = [
-  {k: "b_what", l: "What it is, and who makes it", ph: "What it is and who uses it. Made in-house, by an agency, or not at all? Is there a template?"},
-  {k: "b_how", l: "How it is made", ph: "What goes in and who provides it. The steps, in order. What comes out: format and length."},
-  {k: "b_time", l: "Time and cost", ph: "Hours to brief, make and review. Days from start to finish. What the agency charges."},
-  {k: "b_appr", l: "Approval", ph: "Who signs it off. Must they approve, or is it alignment only?"},
-  {k: "b_ver", l: "Versions", ph: "How many of the 10 markets adapt it. How often it is updated. Any variants, e.g. per ICP group."},
-  {k: "b_notes", l: "Notes", ph: "Anything else worth keeping.", opt: true}
+  {k: "b_what", l: "What it is", ph: "Who uses it. Made in-house, by an agency, or not at all. Template?"},
+  {k: "b_how", l: "How it's made", ph: "Inputs and who provides them. The steps. Output format and length."},
+  {k: "b_time", l: "Time and cost", ph: "Hours to brief, make and review. Days start to finish. Agency fee."},
+  {k: "b_appr", l: "Approval", ph: "Who signs it off. Approval or alignment only?"},
+  {k: "b_ver", l: "Versions", ph: "How many of the 10 markets adapt it. How often it's updated. Variants."},
+  {k: "b_notes", l: "Notes", ph: "Anything else.", opt: true}
 ];
 function dboxSeed(name){
-  const v = k => { const x = dval(name, k); return x === "" || x == null ? "" : String(x) + (disEst(name, k) ? " (estimate)" : ""); };
+  const v = (k, unit = "") => { const x = dval(name, k); return x === "" || x == null ? "" : String(x) + unit + (disEst(name, k) && !(RATE[name] && ["cost", "maker", "made"].includes(k)) ? " (estimate)" : ""); };
   const join = parts => parts.filter(p => p[1]).map(([l, x]) => l ? `${l}: ${x}` : x).join("\n");
   return {
     b_what: join([["", v("what")], ["Made by", v("maker")], ["Template", v("template")]]),
     b_how: join([["Inputs", v("inputs")], ["Steps", v("how")], ["Output", v("format")]]),
-    b_time: join([["Briefing, hours", v("brief")], ["Making, hours", v("make")], ["Review, hours", v("review")], ["Start to finish, days", v("wait")], ["Agency cost, € new / update / market", v("cost")]]),
+    b_time: join([["Brief", v("brief", " h")], ["Make", v("make", " h")], ["Review", v("review", " h")], ["Start to finish", v("wait", " days")], ["Agency fee, € new / update / market", v("cost")]]),
     b_appr: join([["", v("approvers")], ["", v("approval")]]),
-    b_ver: join([["Market versions", v("mv")], ["Updates", v("upd")], ["Variants", v("var")]]),
+    b_ver: join([["Markets", v("mv")], ["Updates", v("upd")], ["Variants", v("var")]]),
     b_notes: v("notes")
   };
 }
