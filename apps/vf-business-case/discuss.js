@@ -29,7 +29,7 @@ const DF = [
   {g: "Versions", k: "mv", l: "Market versions", t: "line", ph: "e.g. 3 of 10 markets"},
   {g: "Versions", k: "upd", l: "Updates", t: "line", ph: "e.g. every 6 months"},
   {g: "Versions", k: "var", l: "Variants", t: "line", ph: "e.g. per ICP group"},
-  {g: "Notes", k: "notes", l: "Notes", t: "text", ph: "Anything else said", opt: true}
+  {g: "Notes", k: "notes", l: "Notes", t: "text", ph: "Anything else worth keeping.", opt: true}
 ];
 const DREQ = DF.filter(f => !f.opt);
 
@@ -133,8 +133,8 @@ function discussHTML(){
   const made = dval(name, "made");
   const box = b => {
     const v = dbox(name, b), gap = !b.opt && !v.trim();
-    return `<label class="df${gap ? " gap" : ""}"><span class="dl">${esc(b.l)}</span>
-      <textarea data-dfield="${b.k}" rows="3" placeholder="${esc(b.ph)}">${esc(v)}</textarea></label>`;
+    return `<label class="df${gap ? " gap" : ""}"><span class="dl">${esc(b.l)}</span><span class="dcov">${esc(b.ph)}</span>
+      <textarea data-dfield="${b.k}" rows="3" placeholder="Notes from the call">${esc(v)}</textarea></label>`;
   };
   const phase = (PH().find(p => p.id === a.phase) || {}).name || "";
   return `<div class="grid${RAIL_HIDE ? " slimg" : ""}">${rail}<div class="answers">
@@ -153,12 +153,12 @@ function discussHTML(){
 /* six free-text boxes in the order the call runs; each opens with what is
    already known (estimates say so), and is sorted into the detail after the call */
 const BOX = [
-  {k: "b_what", l: "What it is, and who makes it", ph: "What it is, who it is for, which team or agency makes it, is there a template"},
-  {k: "b_how", l: "How it is made", ph: "Inputs and where they come from, the steps, the output format and length"},
-  {k: "b_time", l: "Time and cost", ph: "Hours to brief, make and review; days start to finish; agency cost"},
-  {k: "b_appr", l: "Approval", ph: "Who approves; must approve or alignment only"},
-  {k: "b_ver", l: "Versions", ph: "How many markets adapt it, how often it is updated, any variants"},
-  {k: "b_notes", l: "Notes", ph: "Anything else said", opt: true}
+  {k: "b_what", l: "What it is, and who makes it", ph: "What it is and who uses it. Made in-house, by an agency, or not at all? Is there a template?"},
+  {k: "b_how", l: "How it is made", ph: "What goes in and who provides it. The steps, in order. What comes out: format and length."},
+  {k: "b_time", l: "Time and cost", ph: "Hours to brief, make and review. Days from start to finish. What the agency charges."},
+  {k: "b_appr", l: "Approval", ph: "Who signs it off. Must they approve, or is it alignment only?"},
+  {k: "b_ver", l: "Versions", ph: "How many of the 10 markets adapt it. How often it is updated. Any variants, e.g. per ICP group."},
+  {k: "b_notes", l: "Notes", ph: "Anything else worth keeping.", opt: true}
 ];
 function dboxSeed(name){
   const v = k => { const x = dval(name, k); return x === "" || x == null ? "" : String(x) + (disEst(name, k) ? " (estimate)" : ""); };

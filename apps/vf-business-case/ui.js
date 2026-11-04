@@ -103,6 +103,16 @@ function countTo(node){
 }
 
 const n0 = v => Math.round(v).toLocaleString("en-GB");
+/* Required: made today and kept; New: not made today, added with AI; Optional: Sally picks per tier */
+const statusOf = a => a.status || (a.optional ? "optional" : madeToday(a) ? "required" : "new");
+function setStatus(a, v){
+  a.status = v; a.optional = v === "optional";
+  if (v === "required"){
+    if (a._todayWas){ a.today = a._todayWas; delete a._todayWas; }
+    else if (!madeToday(a)){ a.today = {n: 22, u: 0, m: 0}; a.tiers = ["L1", "L2", "L3"]; a.rows = a.rows || "n"; }
+  }
+  if (v !== "required" && madeToday(a)){ a._todayWas = a.today; a.today = {n: 0, u: 0, m: 0}; }
+}
 const madeToday = a => { const t = a.today || {}; return (+t.n || 0) + (+t.u || 0) + (+t.m || 0) > 0; };
 const SIZE_OPTS = (cur, attrs) => `<select class="cell sel sz" ${attrs}>${Object.entries(SIZES).map(([k, l]) => `<option value="${k}" ${k === cur ? "selected" : ""}>${l}</option>`).join("")}</select>`;
 const ROUTE_OPTS = a => `<select class="cell sel" data-route="${a.id}" aria-label="Made by, with AI">${(S.routes || []).map(r => `<option value="${r.key}" ${r.key === a.route ? "selected" : ""}>${esc(r.label)}</option>`).join("")}</select>`;
@@ -251,7 +261,9 @@ function asIsHTML(m){
       <section class="hero">
         <input class="title" data-f="name" data-k="title" value="${esc(a.name)}" aria-label="Asset name">
         <input class="hdesc top" data-f="desc" data-k="desc" value="${esc(a.desc || "")}" placeholder="What this asset is for, in one line" aria-label="What this asset is for">
-        ${a.optional ? `<span class="optg">Optional</span>` : ""}        <div class="twin">
+        <label class="stsel">Status <select class="cell sel" data-status="${a.id}" aria-label="Status of this asset">${[["required", "Required"], ["new", "New"], ["optional", "Optional"]].map(([k, l]) =>
+          `<option value="${k}" ${statusOf(a) === k ? "selected" : ""}>${l}</option>`).join("")}</select></label>
+        <div class="twin">
           <div class="blk">
             <div class="fig"><span data-count="c${a.id}" data-to="${money(c0)}">${eur(money(c0))}</span><span class="to">→</span><span class="ai">${eur(money(c1))}</span><small>per asset</small></div>
             ${twoBars("Today", c0, "With AI", c1, cs, (c, sc) => bar(payParts(c), sc), "", "")}
@@ -667,6 +679,7 @@ document.addEventListener("input", e => {
   }
 });
 /* labels and notes only redraw the sums once the field is left */
+document.addEventListener("change", e => { if (e.target.dataset.status){ const a = S.assets[e.target.dataset.status]; if (a){ setStatus(a, e.target.value); render(); save(); } return; } });
 document.addEventListener("change", e => { if (e.target.dataset.s || e.target.dataset.sai || e.target.dataset.tl || e.target.dataset.f === "name") { const y = scrollY; render(); scrollTo(0, y); } });
 
 document.addEventListener("click", e => {
