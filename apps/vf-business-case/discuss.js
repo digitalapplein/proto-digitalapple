@@ -48,7 +48,7 @@ const SEED = {
   "Ideal customer profile": {made: "In-house", make: 7, template: "Yes", approvers: "Cluster lead", approval: "Must approve"},
   "Market opportunity and vertical matrix": {made: "In-house", inputs: "Government data, market sizing", make: 6, approvers: "Cluster lead"},
   "Buying group and personas": {what: "Who is in the buying group, the decision-making unit, the roles involved. A separate section of the toolkit.", approvers: "Cluster lead"},
-  "Meet the Customer videos": {made: "In-house", maker: "Portfolio marketing, in Synthesia", what: "Role videos, 3 per market", how: "Script (1 hour), build and tweak (2 hours)", make: 3, approvers: "Cluster lead"},
+  "Meet the Customer videos": {made: "In-house", maker: "Portfolio marketing, in Synthesia", what: "Role videos, 3 per market", how: "3 videos; each is a script (1 hour), then build and tweak (2 hours)", make: 9, approvers: "Cluster lead"},
   "Research summaries": {made: "In-house", make: 3, notes: "Per market", approvers: "Cluster lead"},
   "Buyer journey and discovery questions": {made: "Not done", notes: "Underdeveloped today; AI can make it"},
   "Product naming guide": {made: "In-house", format: "PowerPoint, 1 page", make: 6, wait: 60, inputs: "Competitor names, Vodafone taxonomy, partner naming rules (Microsoft, Cisco), AI usage guidelines", approvers: "Brand, Legal, Compliance, Sustainability, Markets (VPC for partner-named products)", approval: "Must approve", notes: "12 days to 12 weeks start to finish"},
@@ -141,7 +141,8 @@ function discussHTML(){
     <section class="dcard">
       <div class="dhead">${a.parent || phase !== name ? `<div class="dcrumb">${esc(a.parent || phase)}</div>` : ""}
         <div class="dtitle"><h2>${esc(name)}</h2>
-        <div class="dpick">${["In-house", "External", "Not done"].map(o => `<button class="dchip" data-dset="made" data-dv="${o}" aria-pressed="${made === o}">${o}</button>`).join("")}</div></div></div>
+        <div class="tools"><div class="dpick">${["In-house", "External", "Not done"].map(o => `<button class="dchip" data-dset="made" data-dv="${o}" aria-pressed="${made === o}">${o}</button>`).join("")}</div>
+          <button class="cvbtn${S.assets[S.current].covered ? " y" : ""}" data-cover>${S.assets[S.current].covered ? ic("check", 12) + " Covered" : "Mark covered"}</button></div></div></div>
       <div class="dboxes">${BOX.map(box).join("")}</div>
       <div class="dfoot"><span class="dhint"><i class="sw gap"></i>Not covered</span>
         <span class="dsync" id="dsync"></span>
