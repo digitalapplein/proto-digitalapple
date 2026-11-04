@@ -89,6 +89,32 @@ function render(){
   const m = compute(S);
   $("#main").innerHTML = TAB === "discuss" ? (typeof discussHTML === "function" ? discussHTML() : "") : TAB === "asis" ? asIsHTML(m) : TAB === "tobe" ? toBeHTML(m) : bcHTML(m);
   document.querySelectorAll("[data-count]").forEach(countTo);
+  if (TAB === "asis") markUnconfirmed();
+}
+
+/* Values still at a starting guess are tinted red until someone confirms
+   them: typing in a cell confirms it (a.conf). Real data stays plain: what
+   was typed on 2 Nov, rate-card agency fees. */
+const DEFAULT_INPUTS = ["Product specs", "Positioning and messaging"];
+function uncKeys(a){
+  const conf = a.conf || {}, out = new Set(), add = k => { if (!conf[k]) out.add(k); };
+  if (!(a.desc || "").trim()) add("desc");
+  if (!(a.output || "").trim()) add("out");
+  for (const it of a.inputs || []){
+    if (DEFAULT_INPUTS.includes(it.label)){ add("il" + it.id); add("if" + it.id); }
+    add("id" + it.id);
+  }
+  for (const st of a.steps || []){
+    add("h" + st.id); add("d" + st.id);
+    if (/agency|external/i.test(st.who || "") && !(+st.fee > 0)) add("f" + st.id);
+  }
+  return out;
+}
+function markUnconfirmed(){
+  const a = S.assets[S.current]; if (!a) return;
+  const keys = uncKeys(a);
+  document.querySelectorAll("#main [data-k]").forEach(el => el.classList.toggle("unc", keys.has(el.dataset.k)));
+  const n = $("#tocf"); if (n) n.textContent = keys.size ? `${keys.size} to confirm` : "";
 }
 
 /* count-up: the one authored motion moment */
@@ -261,7 +287,7 @@ function asIsHTML(m){
       <section class="hero">
         <input class="title" data-f="name" data-k="title" value="${esc(a.name)}" aria-label="Asset name">
         <input class="hdesc top" data-f="desc" data-k="desc" value="${esc(a.desc || "")}" placeholder="What this asset is for, in one line" aria-label="What this asset is for">
-        <label class="stsel">Status <select class="cell sel" data-status="${a.id}" aria-label="Status of this asset">${[["required", "Required"], ["new", "New"], ["optional", "Optional"]].map(([k, l]) =>
+        <label class="stsel"><span class="tocf" id="tocf"></span>Status <select class="cell sel" data-status="${a.id}" aria-label="Status of this asset">${[["required", "Required"], ["new", "New"], ["optional", "Optional"]].map(([k, l]) =>
           `<option value="${k}" ${statusOf(a) === k ? "selected" : ""}>${l}</option>`).join("")}</select></label>
         <div class="twin">
           <div class="blk">
@@ -584,6 +610,13 @@ function soft(el){
   window.scrollTo(0, scroll);
 }
 
+/* typing in a tinted cell confirms it */
+document.addEventListener("input", e => {
+  const t = e.target; if (TAB !== "asis" || !t.dataset || !t.dataset.k || !t.classList.contains("unc")) return;
+  const a = S.assets[S.current]; if (!a) return;
+  (a.conf = a.conf || {})[t.dataset.k] = 1; t.classList.remove("unc");
+  const n = $("#tocf"), left = uncKeys(a).size; if (n) n.textContent = left ? `${left} to confirm` : "";
+});
 document.addEventListener("input", e => {
   const t = e.target;
   if (t.dataset.s){
