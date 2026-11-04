@@ -76,6 +76,27 @@ function applyBatch1(st){
   }
   (st.applied = st.applied || []).push("batch1"); return true;
 }
+/* Batch 2 (agreed 4 Nov): positioning, messaging and enablement hours from the 2 Nov call, same rules as batch 1.
+   The paid Social pack goes back to Buyer-facing: in the copy kit the social posts are just text. */
+const BATCH2 = {"Positioning Statement": 3, "Messaging House": 15, "Copy kit": 4, "Portfolio marketing toolkit": 8, "Marketing Hub page": 2, "Comms": 1};
+function applyBatch2(st){
+  if (!st || !st.assets || (st.applied || []).includes("batch2")) return false;
+  for (const a of Object.values(st.assets)){
+    const nm = (a.name || "").trim(), n = BATCH2[nm]; if (n == null) continue;
+    const draft = (a.steps || []).find(x => x.label === "Draft"), brief = (a.steps || []).find(x => x.label === "Brief"), conf = a.conf = a.conf || {};
+    if (draft && !conf["h" + draft.id]){ draft.hours = n; conf["h" + draft.id] = 1; }
+    if (brief && !conf["h" + brief.id]) brief.hours = 0;
+    if (nm === "Messaging House"){ const pr = (a.steps || []).find(x => x.label === "Product review"); if (pr) pr.who = "Product (group and local), local GTM, cluster lead"; }
+  }
+  const sp = Object.values(st.assets).find(x => (x.name || "").trim() === "Social pack");
+  const from = sp && (st.sections || []).find(x => x.assets.includes(sp.id)), to = (st.sections || []).find(x => x.name === "Buyer-facing");
+  if (from && to && from !== to){
+    from.assets = from.assets.filter(id => id !== sp.id);
+    const em = Object.values(st.assets).find(x => (x.name || "").trim() === "Sales to customer email"), at = em ? to.assets.indexOf(em.id) : -1;
+    to.assets.splice(at >= 0 ? at + 1 : to.assets.length, 0, sp.id);
+  }
+  (st.applied = st.applied || []).push("batch2"); return true;
+}
 /* hosted: one shared copy of the whole tool; the newest save wins */
 const SHARED = location.protocol.startsWith("http");
 function pullState(){
@@ -84,7 +105,7 @@ function pullState(){
   fetch("api/state").then(r => r.json()).then(R => {
     if (!R || !R.assets || (R.version || 0) < 16) return;
     if ((R.savedAt || 0) > (S.savedAt || 0)){
-      S = R; cleanState(S); applyBatch1(S); try { localStorage.setItem(STORE + S.client.id, JSON.stringify(S)); } catch(_){}
+      S = R; cleanState(S); applyBatch1(S); applyBatch2(S); try { localStorage.setItem(STORE + S.client.id, JSON.stringify(S)); } catch(_){}
       const y = scrollY; render(); scrollTo(0, y);
     }
   }).catch(() => {});
@@ -1044,4 +1065,4 @@ window.__bc = {S: () => S, compute, render};
 
 if (SHARED){ pullState(); setInterval(pullState, 15000); }
 
-if (cleanState(S) | applyBatch1(S)){ save(); render(); }
+if (cleanState(S) | applyBatch1(S) | applyBatch2(S)){ save(); render(); }
