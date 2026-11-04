@@ -142,8 +142,7 @@ function discussHTML(){
       ${conv}
       <div class="dsplit">
         <aside class="dcover"><div class="dl">To cover on this one</div>
-          <ul>${coverList(asset, name).map(c => `<li>${esc(c)}</li>`).join("")}</ul>
-          <button class="ad2" data-dknown>Add what we already know</button></aside>
+          <ul>${coverList(asset, name).map(c => `<li>${esc(c)}</li>`).join("")}</ul></aside>
         <div class="dnotes"><textarea data-dfield="free" placeholder="Notes from the call, in your own words">${esc(dfree(name))}</textarea></div>
       </div>
       <span class="dsync" id="dsync"></span>
