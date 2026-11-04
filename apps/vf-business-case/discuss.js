@@ -156,7 +156,7 @@ const BOX = [
   {k: "b_how", l: "How it's made", ph: "Inputs and who provides them. The steps. Output format and length."},
   {k: "b_time", l: "Time and cost", ph: "Hours to brief, make and review. Days start to finish. Agency fee."},
   {k: "b_appr", l: "Approval", ph: "Who signs it off. Approval or alignment only?"},
-  {k: "b_ver", l: "Versions", ph: "How many of the 10 markets adapt it. How often it's updated. Variants."},
+  {k: "b_ver", l: "Adaptations", ph: "Market versions: how many of the 10 markets. Updates: how often. Variants, e.g. per ICP group."},
   {k: "b_notes", l: "Notes", ph: "Anything else.", opt: true}
 ];
 function dboxSeed(name){

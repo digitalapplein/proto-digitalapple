@@ -48,6 +48,17 @@ function save(){
       .then(r => { if (!r.ok) throw 0; }).catch(() => { $("#saved").textContent = "Not saved online, kept in this browser"; });
   }, 250);
 }
+/* tidy typed notes in a saved copy (exact old text -> tidy text from the seed file) */
+function cleanState(st){
+  if (typeof CLEAN_TEXT === "undefined" || !st || !st.assets) return false;
+  let n = 0; const fx = (o, k) => { const v = o[k]; if (typeof v === "string" && CLEAN_TEXT[v] !== undefined){ o[k] = CLEAN_TEXT[v]; n++; } };
+  for (const a of Object.values(st.assets)){
+    ["desc", "output", "nuances"].forEach(k => fx(a, k));
+    (a.inputs || []).forEach(it => { fx(it, "label"); fx(it, "example"); });
+    (a.steps || []).forEach(x => { fx(x, "comment"); fx(x, "label"); });
+  }
+  return n > 0;
+}
 /* hosted: one shared copy of the whole tool; the newest save wins */
 const SHARED = location.protocol.startsWith("http");
 function pullState(){
@@ -56,7 +67,7 @@ function pullState(){
   fetch("api/state").then(r => r.json()).then(R => {
     if (!R || !R.assets || (R.version || 0) < 16) return;
     if ((R.savedAt || 0) > (S.savedAt || 0)){
-      S = R; try { localStorage.setItem(STORE + S.client.id, JSON.stringify(S)); } catch(_){}
+      S = R; cleanState(S); try { localStorage.setItem(STORE + S.client.id, JSON.stringify(S)); } catch(_){}
       const y = scrollY; render(); scrollTo(0, y);
     }
   }).catch(() => {});
@@ -115,7 +126,7 @@ const DEFAULT_INPUTS = ["Product specs", "Positioning and messaging"];
 function uncKeys(a){
   const conf = a.conf || {}, out = new Set(), add = k => { if (!conf[k]) out.add(k); };
   if (!(a.desc || "").trim()) add("desc");
-  if (!(a.output || "").trim()) add("out");
+  outsOf(a).forEach((x, i) => { if (!(x || "").trim()) add("out" + i); });
   for (const it of a.inputs || []){
     if (DEFAULT_INPUTS.includes(it.label)){ add("il" + it.id); add("if" + it.id); }
     add("id" + it.id);
@@ -140,7 +151,6 @@ function markUnconfirmed(){
 }
 function tocfCount(a, n){
   const el = $("#tocf"); if (el) el.innerHTML = n ? `${n} to confirm <button class="cfall" data-cfall>Confirm all</button>` : "";
-  const r = document.querySelector(`[data-asset="${a.id}"] .ucnt`); if (r){ r.textContent = n || ""; r.hidden = !n; }
 }
 function confirmKey(a, k){ (a.conf = a.conf || {})[k] = 1; }
 
@@ -166,6 +176,9 @@ function setStatus(a, v){
   }
   if (v !== "required" && madeToday(a)){ a._todayWas = a.today; a.today = {n: 0, u: 0, m: 0}; }
 }
+/* an asset can have several outputs; a.output keeps them joined for the exports */
+const outsOf = a => Array.isArray(a.outputs) && a.outputs.length ? a.outputs : [a.output || ""];
+const syncOut = a => { a.output = a.outputs.map(x => (x || "").trim()).filter(Boolean).join("; "); };
 const madeToday = a => { const t = a.today || {}; return (+t.n || 0) + (+t.u || 0) + (+t.m || 0) > 0; };
 const SIZE_OPTS = (cur, attrs) => `<select class="cell sel sz" ${attrs}>${Object.entries(SIZES).map(([k, l]) => `<option value="${k}" ${k === cur ? "selected" : ""}>${l}</option>`).join("")}</select>`;
 const ROUTE_OPTS = a => `<select class="cell sel" data-route="${a.id}" aria-label="Made by, with AI">${(S.routes || []).map(r => `<option value="${r.key}" ${r.key === a.route ? "selected" : ""}>${esc(r.label)}</option>`).join("")}</select>`;
@@ -215,7 +228,7 @@ function railHTML(){
       const a = S.assets[id];
       return `<div class="it ${id === S.current ? "on" : ""} ${isMapped(a) ? "" : "blank"} ${a.optional ? "opt" : ""} ${a.parent ? "kid" : ""}" data-asset="${id}" draggable="true"${a.optional ? ` title="Optional"` : a.parent ? ` title="Part of ${esc((S.assets[a.parent] || {}).name || "")}: counted there"` : ""}>
         <span class="grip hov">${ic("grip", 12)}</span>
-        <span class="nm" data-ren-asset="${id}">${esc(a.name)}</span>${(n => n ? `<span class="ucnt" title="${n} to confirm">${n}</span>` : `<span class="ucnt" hidden></span>`)(uncKeys(a).size)}
+        <span class="nm" data-ren-asset="${id}">${esc(a.name)}</span>
         ${a.parent ? "" : a.optional ? `<span class="dot opt" title="Optional"></span>` : madeToday(a) ? "" : `<span class="dot" title="Not made today"></span>`}
         <button class="mini hov" data-del-asset="${id}" aria-label="Remove ${esc(a.name)}" title="Remove asset">${ic("x", 12)}</button>
       </div>`;
@@ -229,7 +242,7 @@ const KIT_OPEN = new Set();  // toolkit sections opened to show their assets
 
 const niceScale = d => Math.max(10, Math.ceil(d / 5) * 5);
 const PC = {create: "c-make", market: "c-mkt", approve: "c-appr"};
-const PHASE = {create: "Creation", approve: "Approvals", market: "Market version"};
+const PHASE = {create: "Creation", approve: "Approvals", market: "Adaptation"};
 const NEXT_PHASE = {create: "approve", approve: "create", market: "market"};
 const viewPills = () => `<div class="pillrow">${[["old", "Today"], ["ai", "With AI"]].map(([k, l]) =>
   `<button class="pill" data-view="${k}" aria-pressed="${VIEW === k}">${l}</button>`).join("")}</div>`;
@@ -335,9 +348,12 @@ function asIsHTML(m){
           <thead><tr><th class="sh">Inputs</th><th>From</th><th class="n">Takes</th><th class="n"><button class="add-btn" data-add-input>${ic("plus", 11)} Add</button></th></tr></thead><tbody>${ins}</tbody></table></div>
         <div class="tscroll"><table>${cols}${thead(true, "Steps", "data-add-step")}<tbody>${make.map((s, i) => stepRow(s, i, false)).join("")}
           ${tot(make, money(c0))}
-          <tr class="row out"><td colspan="7"><div class="rowcell"><span class="sectbtn" style="flex:none">Output</span><input class="cell" data-f="output" data-k="out" value="${esc(a.output)}" placeholder="format, pages, variants"></div></td></tr>
+          ${outsOf(a).map((o, i, all) => `<tr class="row out"><td colspan="7"><div class="rowcell"><span class="sectbtn" style="flex:none">${i ? "" : "Output"}</span><input class="cell" data-out="${i}" data-k="out${i}" value="${esc(o)}" placeholder="format, pages, variants" aria-label="Output ${i + 1}">
+            ${all.length > 1 ? `<button class="mini" data-del-out="${i}" aria-label="Remove this output" title="Remove this output">${ic("x", 12)}</button>` : ""}
+</div></td></tr>`).join("")}
+          <tr class="row out addout"><td colspan="7"><button class="add-btn" data-add-out>${ic("plus", 11)} Add output</button></td></tr>
         </tbody></table></div>
-        <div class="tscroll"><table>${cols}${thead(false, "Market version", `data-add-step="market"`, "by the market team")}<tbody>${mkt.map((s, i) => stepRow(s, i, true)).join("")}
+        <div class="tscroll"><table>${cols}${thead(false, "Adaptations", `data-add-step="market"`, "market versions, updates and variants, by the market team")}<tbody>${mkt.map((s, i) => stepRow(s, i, true)).join("")}
           ${mkt.length ? tot(mkt, money(x.unit.old.m)) : ""}
         </tbody></table></div>
         <div class="nuance"><textarea data-f="nuances" data-k="nu" placeholder="Nuances: anything that changes how this asset is made, approved or adapted">${esc(a.nuances)}</textarea></div>
@@ -681,6 +697,7 @@ document.addEventListener("input", e => {
     const [r, k] = t.dataset.plan.split("."), v = numOrNull(t.value); if (v === undefined) return;
     S.plan[r][k] = v ?? 0; soft(t); return;
   }
+  if (t.dataset.out != null){ const a = S.assets[S.current]; a.outputs = outsOf(a).slice(); a.outputs[+t.dataset.out] = t.value; syncOut(a); save(); return; }
   if (t.dataset.f){
     const a = S.assets[S.current], f = t.dataset.f;
     if (f === "size"){ a.size = t.value; soft(t); return; }
@@ -760,6 +777,8 @@ document.addEventListener("click", e => {
   if ((b = q("[data-rsec]"))){ const id = b.dataset.rsec, sec = S.sections.find(x => x.id === id);
     if (railOpen(sec)){ RAIL_SHUT.add(id); RAIL_OPEN.delete(id); } else { RAIL_OPEN.add(id); RAIL_SHUT.delete(id); } render(); return; }
   if ((b = q("[data-ksec]"))){ const id = b.dataset.ksec; KIT_OPEN.has(id) ? KIT_OPEN.delete(id) : KIT_OPEN.add(id); const y = scrollY; render(); scrollTo(0, y); return; }
+  if ((b = q("[data-add-out]"))){ const a = S.assets[S.current]; a.outputs = outsOf(a).slice(); a.outputs.push(""); syncOut(a); render(); save(); document.querySelector(`[data-out="${a.outputs.length - 1}"]`)?.focus(); return; }
+  if ((b = q("[data-del-out]"))){ const a = S.assets[S.current]; a.outputs = outsOf(a).slice(); a.outputs.splice(+b.dataset.delOut, 1); if (!a.outputs.length) a.outputs = [""]; syncOut(a); render(); save(); return; }
   if ((b = q("[data-add-input]"))){ const a = S.assets[S.current], it = input("", "", 0); (a.inputs = a.inputs || []).push(it); render(); save(); document.querySelector(`[data-k="il${it.id}"]`)?.focus(); return; }
   if ((b = q("[data-del-input]"))){ snap("Removed an input"); const a = S.assets[S.current]; a.inputs = a.inputs.filter(x => x.id !== b.dataset.delInput); render(); save(); return; }
   if ((b = q("[data-view]"))){ VIEW = b.dataset.view; const y = scrollY; render(); scrollTo(0, y); return; }
@@ -967,7 +986,7 @@ function exportExcel(){
       "Amy per asset", "Cost one new, today", "Cost one new, with AI", "Old way a year", "With AI a year", "Days today", "Days with AI"],
     ...m.assets.map(a => [a.section, a.name, SIZES[S.assets[a.id].size] || "", a.route.label, a.today.n, a.today.u, a.today.m, a.planned.n, a.planned.u, a.planned.m,
       a.runs * a.runPrice, money(a.unit.old.n), money(a.unit.ai.n), money(a.year.old), money(a.year.ai), a.sched.old.elapsed, a.sched.ai.elapsed])];
-  const PH = {create: "Creation", approve: "Approvals", market: "Market version"};
+  const PH = {create: "Creation", approve: "Approvals", market: "Adaptation"};
   const map = [["Section", "Asset", "Kind", "Step or input", "Who or from", "Phase", "Hours", "Rate", "Fee", "Days", "AI saves work %", "AI saves idle %", "Alongside step above", "Cost", "Notes or example", "Files"]];
   for (const sec of S.sections) for (const id of sec.assets){
     const a = S.assets[id];
@@ -986,3 +1005,5 @@ render();
 window.__bc = {S: () => S, compute, render};
 
 if (SHARED){ pullState(); setInterval(pullState, 15000); }
+
+if (cleanState(S)){ save(); render(); }
