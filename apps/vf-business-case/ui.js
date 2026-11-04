@@ -7,7 +7,7 @@ const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;
 const STORE = "bctool:";
 
 let S = load() || (typeof SEED_STATE !== "undefined" ? JSON.parse(JSON.stringify(SEED_STATE)) : vodafoneDefaults());
-let TAB = "asis";
+let TAB = "discuss";
 const NOTE = new Set();       // lines whose comment box is open
 const SHUT = new Set();       // To-be groups folded away
 
@@ -87,7 +87,7 @@ function render(){
   $("#client").textContent = S.client.project; $("#clientName").textContent = S.client.name;
   document.querySelectorAll("[data-tab]").forEach(b => b.setAttribute("aria-selected", b.dataset.tab === TAB));
   const m = compute(S);
-  $("#main").innerHTML = TAB === "discuss" ? discussHTML() : TAB === "asis" ? asIsHTML(m) : TAB === "tobe" ? toBeHTML(m) : bcHTML(m);
+  $("#main").innerHTML = TAB === "discuss" ? (typeof discussHTML === "function" ? discussHTML() : "") : TAB === "asis" ? asIsHTML(m) : TAB === "tobe" ? toBeHTML(m) : bcHTML(m);
   document.querySelectorAll("[data-count]").forEach(countTo);
 }
 
@@ -152,7 +152,7 @@ function railHTML(){
       const a = S.assets[id];
       return `<div class="it ${id === S.current ? "on" : ""} ${isMapped(a) ? "" : "blank"} ${a.optional ? "opt" : ""} ${a.parent ? "kid" : ""}" data-asset="${id}" draggable="true"${a.optional ? ` title="Optional"` : a.parent ? ` title="Part of ${esc((S.assets[a.parent] || {}).name || "")}: counted there"` : ""}>
         <span class="grip hov">${ic("grip", 12)}</span>
-        <span class="nm" data-ren-asset="${id}">${esc(a.name)}${a.later ? ' <em class="dai">with AI</em>' : ""}</span>
+        <span class="nm" data-ren-asset="${id}">${esc(a.name)}</span>
         ${a.parent ? "" : a.optional ? `<span class="dot opt" title="Optional"></span>` : madeToday(a) ? "" : `<span class="dot" title="Not made today"></span>`}
         <button class="mini hov" data-del-asset="${id}" aria-label="Remove ${esc(a.name)}" title="Remove asset">${ic("x", 12)}</button>
       </div>`;

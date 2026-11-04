@@ -36,8 +36,7 @@ const DREQ = DF.filter(f => !f.opt);
 /* the asset list is the app's own (S.sections), so both pages always match;
    parts of a block (a.parent) sit indented under it. AEO templates are left out. */
 const DSKIP = /AEO/;
-const PHNOTE = {"Market and customer research": "One research pack, approved by the cluster lead at the end"};
-const PH = () => S.sections.filter(sec => !DSKIP.test(sec.name)).map(sec => ({id: sec.id, name: sec.name, note: PHNOTE[sec.name]}));
+const PH = () => S.sections.filter(sec => !DSKIP.test(sec.name)).map(sec => ({id: sec.id, name: sec.name}));
 
 /* what was said on 2 Nov, so the cards open with it (Granola summary of the call) */
 const SEED = {
@@ -122,14 +121,14 @@ const dgap = (name, f) => { const v = dval(name, f.k); return v === "" || v == n
 const dcount = name => DREQ.filter(f => !dgap(name, f)).length;
 
 function discussHTML(){
-  const all = dAll(); if (!DCUR || !all.some(a => a.name === DCUR)) DCUR = all[0].name;
-  const rail = PH().map(p => {
-    const rows = all.filter(a => a.phase === p.id).map(a => {
-      return `<button class="drow d${a.depth}${a.name === DCUR ? " on" : ""}" data-dpick="${esc(a.name)}"><span>${esc(a.name)}${a.ai ? ' <em class="dai">with AI</em>' : ""}</span></button>`;
-    }).join("");
-    return `<div class="dph"><div class="dphh">${esc(p.name)}</div>${p.note ? `<div class="dphn">${esc(p.note)}</div>` : ""}${rows}
-      <button class="dadd" data-dadd="${p.id}">${ic("plus", 11)} Add asset</button></div>`;
-  }).join("");
+  /* the list on the left is the As-is list itself, so both pages always match */
+  const all = dAll();
+  if (!S.assets[S.current] || !all.some(x => x.name === S.assets[S.current].name)){
+    const first = Object.values(S.assets).find(x => x.name === all[0].name); if (first) S.current = first.id;
+  }
+  DCUR = S.assets[S.current].name;
+  const rail = RAIL_HIDE ? `<div class="askcol slim"><button class="railbtn" data-rail data-hover="Show the asset list" aria-label="Show the asset list">${ic("side", 16)}</button></div>`
+    : `<div class="askcol"><section class="ask">${railHTML()}</section></div>`;
   const a = all.find(x => x.name === DCUR), name = DCUR;
   const field = f => {
     const v = dval(name, f.k), gap = !f.opt && (v === "" || v == null), est = !gap && disEst(name, f.k), cls = `df${gap ? " gap" : ""}${est ? " est" : ""}`;
@@ -141,17 +140,16 @@ function discussHTML(){
   };
   const groups = [...new Set(DF.map(f => f.g))].map(g => `<div class="dgrp"><div class="dgh">${esc(g)}</div>
     <div class="dgrid g-${dkey(g)}">${DF.filter(f => f.g === g).map(field).join("")}</div></div>`).join("");
-  return `<div class="dwrap">
-    <aside class="drail">${rail}</aside>
+  return `<div class="grid${RAIL_HIDE ? " slimg" : ""}">${rail}<div class="answers">
     <section class="dcard">
       <div class="dhead"><div class="dcrumb">${esc((PH().find(p => p.id === a.phase) || {}).name || "")}${a.parent ? " · " + esc(a.parent) : ""}</div>
-        <h2>${esc(name)}</h2>${a.note ? `<p class="dsub">${esc(a.note)}</p>` : ""}</div>
+        <h2>${esc(name)}</h2></div>
       ${groups}
       <div class="dfoot"><label class="dwho">Typing as <input class="dinp" id="dwho" value="${esc(DWHO)}" placeholder="Your name"></label>
         <span class="dhint"><i class="sw gap"></i>Not captured yet <i class="sw est"></i>Estimate, please confirm</span>
         <span class="dsync" id="dsync"></span>
         <button class="btn" data-dnext>Next asset</button></div>
-    </section></div>`;
+    </section></div></div>`;
 }
 
 /* ---------- answers fill the detailed As-is page ----------
@@ -203,13 +201,9 @@ if (ONLINE){ dPull(); setInterval(dPull, 8000); }
 /* ---------- events ---------- */
 document.addEventListener("click", e => {
   const q = s => e.target.closest(s); let b;
-  if ((b = q("[data-dpick]"))){ DCUR = b.dataset.dpick; render(); return; }
   if ((b = q("[data-dset]"))){ const k = b.dataset.dset, v = b.dataset.dv; dPut(DCUR, k, dval(DCUR, k) === v && !disEst(DCUR, k) ? "" : v); render(); return; }
-  if ((b = q("[data-dnext]"))){ const all = dAll(), i = all.findIndex(a => a.name === DCUR); DCUR = all[(i + 1) % all.length].name; render(); scrollTo(0, 0); return; }
-  if ((b = q("[data-dadd]"))){
-    const name = (prompt("Asset name") || "").trim(); if (!name) return;
-    dPut(name, "_added", b.dataset.dadd); DCUR = name; render(); return;
-  }
+  if ((b = q("[data-dnext]"))){ const all = dAll(), i = all.findIndex(a => a.name === DCUR), nx = all[(i + 1) % all.length];
+    const id = Object.keys(S.assets).find(k => S.assets[k].name === nx.name); if (id) S.current = id; render(); save(); scrollTo(0, 0); return; }
 });
 document.addEventListener("input", e => {
   const t = e.target;
@@ -219,3 +213,6 @@ document.addEventListener("input", e => {
   const box = t.closest(".df"); box.classList.toggle("gap", v.trim() === ""); box.classList.remove("est");
   clearTimeout(dSaveT); dSaveT = setTimeout(() => dPut(name, k, v), 400);
 });
+
+/* the tool opens on this page, so draw it once this file has loaded */
+if (TAB === "discuss") render();
