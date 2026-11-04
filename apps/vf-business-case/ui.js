@@ -6,7 +6,7 @@ const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const STORE = "bctool:";
 
-let S = load() || vodafoneDefaults();
+let S = load() || (typeof SEED_STATE !== "undefined" ? JSON.parse(JSON.stringify(SEED_STATE)) : vodafoneDefaults());
 let TAB = "asis";
 const NOTE = new Set();       // lines whose comment box is open
 const SHUT = new Set();       // To-be groups folded away
@@ -137,7 +137,7 @@ function planHTML(){
 }
 /* top of the list: hide it, and how many assets and markets there are */
 function railTop(){
-  const n = S.sections.filter(s => s.toolkit !== false).reduce((t, s) => t + s.assets.filter(id => !S.assets[id].optional).length, 0);
+  const n = S.sections.filter(s => s.toolkit !== false).reduce((t, s) => t + s.assets.filter(id => !S.assets[id].optional && !S.assets[id].parent).length, 0);
   return `<div class="rtop"><button class="railbtn in" data-rail data-hover="Hide the list" aria-label="Hide the asset list">${ic("side", 15)}</button>
     <span><b>${n}</b> assets</span><span data-hover="DE, UK and VBI; cluster markets are in L3"><b>${val(S.plan ? S.plan.markets : "")}</b> lead markets</span></div>`;
 }
@@ -150,10 +150,10 @@ function railHTML(){
       <button class="mini hov" data-del-sec="${sec.id}" aria-label="Remove ${esc(sec.name)}" title="Remove section">${ic("x", 12)}</button>
     </div>` + (open ? sec.assets.map(id => {
       const a = S.assets[id];
-      return `<div class="it ${id === S.current ? "on" : ""} ${isMapped(a) ? "" : "blank"} ${a.optional ? "opt" : ""}" data-asset="${id}" draggable="true"${a.optional ? ` title="Optional"` : ""}>
+      return `<div class="it ${id === S.current ? "on" : ""} ${isMapped(a) ? "" : "blank"} ${a.optional ? "opt" : ""} ${a.parent ? "kid" : ""}" data-asset="${id}" draggable="true"${a.optional ? ` title="Optional"` : a.parent ? ` title="Part of ${esc((S.assets[a.parent] || {}).name || "")}: counted there"` : ""}>
         <span class="grip hov">${ic("grip", 12)}</span>
-        <span class="nm" data-ren-asset="${id}">${esc(a.name)}</span>
-        ${a.optional ? `<span class="dot opt" title="Optional"></span>` : madeToday(a) ? "" : `<span class="dot" title="Not made today"></span>`}
+        <span class="nm" data-ren-asset="${id}">${esc(a.name)}${a.later ? ' <em class="dai">with AI</em>' : ""}</span>
+        ${a.parent ? "" : a.optional ? `<span class="dot opt" title="Optional"></span>` : madeToday(a) ? "" : `<span class="dot" title="Not made today"></span>`}
         <button class="mini hov" data-del-asset="${id}" aria-label="Remove ${esc(a.name)}" title="Remove asset">${ic("x", 12)}</button>
       </div>`;
     }).join("") : ""); }).join("") +

@@ -22,27 +22,21 @@ const DF = [
   {k: "make", l: "Making it (hours)", t: "num"},
   {k: "review", l: "Review time (hours)", t: "num"},
   {k: "wait", l: "Start to finish (days)", t: "num"},
-  {k: "cost", l: "External cost (€)", t: "num"},
+  {k: "cost", l: "External cost (€): new, update, market version", t: "line", ph: "e.g. 403 / 201 / 184"},
+  {k: "mv", l: "Market versions", t: "line", ph: "How many markets adapt it, e.g. 1 to 3 of 10"},
+  {k: "upd", l: "Updates", t: "line", ph: "How often it is refreshed, e.g. every 6 months"},
+  {k: "var", l: "Variants", t: "line", ph: "e.g. per ICP group, per segment, sizes"},
   {k: "approvers", l: "Approvers", t: "line", ph: "e.g. Cluster lead, Brand, Legal"},
   {k: "approval", l: "Approval", t: "pick", o: ["Must approve", "Alignment only"]},
   {k: "notes", l: "Notes", t: "text", ph: "Anything else said", opt: true}
 ];
 const DREQ = DF.filter(f => !f.opt);
 
-/* phases agreed with Sally and Rik on 2 Nov; children sit indented under a block */
-const PH = [
-  {id: "p1", name: "One Brief", items: ["One Brief", "One-page summary", "Product spotlight"]},
-  {id: "p2", name: "Market and customer research", note: "One research pack, approved by the cluster lead at the end",
-    items: ["Market trends", "Customer research", "Ideal customer profile", "Market opportunity and vertical matrix", "Buying group and personas",
-      "Meet the Customer videos", "Research summaries", {name: "Buyer journey and discovery questions", ai: true}]},
-  {id: "p3", name: "Product naming", items: ["Product naming guide"]},
-  {id: "p4", name: "Positioning and messaging", items: ["Positioning statement", "Messaging house",
-    {name: "Copy kit", kids: ["Elevator pitches (short, medium, long)", "Product boilerplate", "Feature blocks (short and long)", "Social posts", "SEO keywords", "Useful stats"]},
-    {name: "Segment messaging", ai: true, note: "Positioning, messaging house and copy kit for each of the 3 ICP groups"}]},
-  {id: "p5", name: "Content and market enablement", items: ["Battlecard", "Portfolio marketing toolkit", "Marketing Hub page",
-    "Product factsheet", "Pitch deck", "Product brochure", "Customer FAQ", "Sales to customer email", "Onboarding content", "Technical content",
-    "PRM content (Impartner)", {name: "Viva Engage and market comms email", ai: true}]}
-];
+/* the asset list is the app's own (S.sections), so both pages always match;
+   parts of a block (a.parent) sit indented under it. AEO templates are left out. */
+const DSKIP = /AEO/;
+const PHNOTE = {"Market and customer research": "One research pack, approved by the cluster lead at the end"};
+const PH = () => S.sections.filter(sec => !DSKIP.test(sec.name)).map(sec => ({id: sec.id, name: sec.name, note: PHNOTE[sec.name]}));
 
 /* what was said on 2 Nov, so the cards open with it (Granola summary of the call) */
 const SEED = {
@@ -90,26 +84,46 @@ const TYPED = {
   "Product brochure": {format: "Brochure, 2 or 4 pages, PDF", inputs: "Product specs from Product, approved images from Brand"}
 };
 for (const [k, v] of Object.entries(TYPED)) SEED[k] = {...(SEED[k] || {}), ...v};
+const RENAME = {"Ideal customer profile": "Ideal customer profiles", "Market opportunity and vertical matrix": "Market Opportunity", "Meet the Customer videos": "Meet the customer",
+  "Product naming guide": "Product name", "Positioning statement": "Positioning Statement", "Messaging house": "Messaging House"};
+for (const [from, to] of Object.entries(RENAME)) if (SEED[from]){ SEED[to] = {...SEED[from], ...(SEED[to] || {})}; delete SEED[from]; }
+
+/* Digital Apple's FY27 rate card for Vodafone (DA_FY27_Quote.xlsx, standard rate, £ at 1.15):
+   new / update / market version, in euros */
+const RATE = {"Pitch deck": "4,025 / 2,013 / 1,380", "Product catalogue pages": "460 / 230 / 184", "Product brochure": "805 / 403 / 368",
+  "Product factsheet": "403 / 201 / 184", "Customer FAQ": "604 / 302 / 276", "Explainer video": "4,382 / 2,191 / 690", "Social pack": "690 / 345 / 345",
+  "Infographic": "604 / 302", "Blog or article": "1,035", "eBook": "4,025", "Recorded webinar": "2,070", "Excite video": "4,382 / 2,191 / 690",
+  "Interactive product tour": "11,500", "Interactive demo video": "17,250", "Decision and ROI tool": "20,125", "Portfolio catalogue": "4,025",
+  "Interactive use cases": "20,125", "Use case videos": "20,125", "Security and compliance pack": "403"};
+/* first guesses, from the factsheet we know: shown as estimates until someone confirms them */
+const EST = {};
+const FACT = {brief: 1, review: 1, wait: 13, approvers: "Product, Brand, Legal", approval: "Must approve"};
+function dEst(name){
+  if (EST[name]) return EST[name];
+  const e = {...FACT};
+  if (RATE[name]) Object.assign(e, {made: "External", maker: "Digital Apple", cost: RATE[name], template: "Yes"});
+  return EST[name] = e;
+}
 
 const dkey = name => name.toLowerCase().replace(/[^a-z0-9]+/g, "-");
 function dAll(){
   const out = [];
-  for (const p of PH) for (const it of p.items){
-    const o = typeof it === "string" ? {name: it} : it;
-    out.push({...o, phase: p.id, depth: 0});
-    for (const k of o.kids || []) out.push({name: k, phase: p.id, depth: 1, parent: o.name});
+  for (const sec of S.sections) if (!DSKIP.test(sec.name)) for (const id of sec.assets){
+    const a = S.assets[id]; if (!a) continue;
+    out.push({name: a.name, phase: sec.id, depth: a.parent ? 1 : 0, parent: a.parent ? (S.assets[a.parent] || {}).name : "", ai: a.later});
   }
   for (const [name, r] of Object.entries(D)) if (r && r._added && !out.some(x => x.name === name)) out.push({name, phase: r._added, depth: 0, added: true});
   return out;
 }
-const dval = (name, k) => { const r = D[name]; if (r && k in r) return r[k]; const s = SEED[name]; return s && k in s ? s[k] : ""; };
+const dval = (name, k) => { const r = D[name]; if (r && k in r) return r[k]; const s = SEED[name]; if (s && k in s) return s[k]; const e = dEst(name); return k in e ? e[k] : ""; };
+const disEst = (name, k) => { const r = D[name]; if (r && k in r) return false; const s = SEED[name]; if (s && k in s) return false; return k in dEst(name); };
 const dgap = (name, f) => { const v = dval(name, f.k); return v === "" || v == null; };
 const dcount = name => DREQ.filter(f => !dgap(name, f)).length;
 const dfiles = name => (D[name] && D[name]._files) || [];
 
 function discussHTML(){
   const all = dAll(); if (!DCUR || !all.some(a => a.name === DCUR)) DCUR = all[0].name;
-  const rail = PH.map(p => {
+  const rail = PH().map(p => {
     const rows = all.filter(a => a.phase === p.id).map(a => {
       const n = dcount(a.name), done = n === DREQ.length;
       return `<button class="drow d${a.depth}${a.name === DCUR ? " on" : ""}" data-dpick="${esc(a.name)}"><span>${esc(a.name)}${a.ai ? ' <em class="dai">with AI</em>' : ""}</span><span class="dn${done ? " ok" : ""}">${n}/${DREQ.length}</span></button>`;
@@ -119,25 +133,25 @@ function discussHTML(){
   }).join("");
   const a = all.find(x => x.name === DCUR), name = DCUR;
   const field = f => {
-    const v = dval(name, f.k), gap = !f.opt && (v === "" || v == null), cls = `df${gap ? " gap" : ""}`;
+    const v = dval(name, f.k), gap = !f.opt && (v === "" || v == null), est = !gap && disEst(name, f.k), cls = `df${gap ? " gap" : ""}${est ? " est" : ""}`;
     let ctl;
     if (f.t === "pick") ctl = `<div class="dpick">${f.o.map(o => `<button class="dchip" data-dset="${f.k}" data-dv="${esc(o)}" aria-pressed="${v === o}">${esc(o)}</button>`).join("")}</div>`;
     else if (f.t === "text") ctl = `<textarea data-dfield="${f.k}" rows="2" placeholder="${esc(f.ph || "")}">${esc(val(v))}</textarea>`;
     else ctl = `<input class="dinp" data-dfield="${f.k}" ${f.t === "num" ? 'inputmode="decimal"' : ""} value="${esc(val(v))}" placeholder="${esc(f.ph || "")}">`;
-    return `<label class="${cls} w-${f.t}"><span class="dl">${esc(f.l)}</span>${ctl}</label>`;
+    return `<label class="${cls} w-${f.t}"><span class="dl">${esc(f.l)}${est ? ' <em class="destt">estimate</em>' : ""}</span>${ctl}</label>`;
   };
   const files = dfiles(name).map((f, i) => `<a class="dfile" href="${esc(f.url)}" target="_blank" rel="noopener">${ic("clip", 12)} ${esc(f.name)}</a><button class="dx" data-dfdel="${i}" aria-label="Remove ${esc(f.name)}">${ic("x", 11)}</button>`).join("");
   const n = dcount(name);
   return `<div class="dwrap">
     <aside class="drail">${rail}</aside>
     <section class="dcard">
-      <div class="dhead"><div><div class="dcrumb">${esc(PH.find(p => p.id === a.phase).name)}${a.parent ? " · " + esc(a.parent) : ""}</div>
+      <div class="dhead"><div><div class="dcrumb">${esc((PH().find(p => p.id === a.phase) || {}).name || "")}${a.parent ? " · " + esc(a.parent) : ""}</div>
         <h2>${esc(name)}</h2>${a.note ? `<p class="dsub">${esc(a.note)}</p>` : ""}</div>
         <div class="dstat"><b>${n} of ${DREQ.length}</b> captured<span class="dsync" id="dsync">${ONLINE ? "Live copy" : "Saved in this browser"}</span></div></div>
       <div class="dgrid">${DF.map(field).join("")}</div>
       <div class="dfiles"><span class="dl">Template or sample</span>${files}<button class="add-btn" data-dup>${ic("plus", 11)} Attach</button></div>
       <div class="dfoot"><label class="dwho">Typing as <input class="dinp" id="dwho" value="${esc(DWHO)}" placeholder="Your name"></label>
-        <span class="dhint">Red outline: not captured yet</span>
+        <span class="dhint">Red outline: not captured yet. Grey: estimate, please confirm</span>
         <button class="btn" data-dnext>Next asset</button></div>
     </section></div>`;
 }
@@ -172,7 +186,7 @@ if (ONLINE){ dPull(); setInterval(dPull, 8000); }
 document.addEventListener("click", e => {
   const q = s => e.target.closest(s); let b;
   if ((b = q("[data-dpick]"))){ DCUR = b.dataset.dpick; render(); return; }
-  if ((b = q("[data-dset]"))){ const k = b.dataset.dset, v = b.dataset.dv; dPut(DCUR, k, dval(DCUR, k) === v ? "" : v); render(); return; }
+  if ((b = q("[data-dset]"))){ const k = b.dataset.dset, v = b.dataset.dv; dPut(DCUR, k, dval(DCUR, k) === v && !disEst(DCUR, k) ? "" : v); render(); return; }
   if ((b = q("[data-dnext]"))){ const all = dAll(), i = all.findIndex(a => a.name === DCUR); DCUR = all[(i + 1) % all.length].name; render(); scrollTo(0, 0); return; }
   if ((b = q("[data-dadd]"))){
     const name = (prompt("Asset name") || "").trim(); if (!name) return;
@@ -186,7 +200,7 @@ document.addEventListener("input", e => {
   if (t.id === "dwho"){ DWHO = t.value; try { localStorage.setItem(DSTORE + ":who", DWHO); } catch(_){} return; }
   if (!t.dataset.dfield) return;
   const k = t.dataset.dfield, v = t.value, name = DCUR;
-  t.closest(".df").classList.toggle("gap", v.trim() === "");
+  const box = t.closest(".df"); box.classList.toggle("gap", v.trim() === ""); box.classList.remove("est");
   clearTimeout(dSaveT); dSaveT = setTimeout(() => dPut(name, k, v), 400);
 });
 document.addEventListener("change", e => {

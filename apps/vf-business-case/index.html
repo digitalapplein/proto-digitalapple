@@ -103,6 +103,7 @@ header.site img{height:22px;display:block}
 .it:hover{background:var(--surface)}
 .it.on{background:var(--pale);color:var(--ink);font-weight:700}
 .it .nm{flex:1;min-width:0}
+.it.kid{padding-left:36px;color:var(--t2)}
 .it.blank .nm{color:var(--tert)}
 tr.blank td{color:var(--tert)}
 tr.blank .num{opacity:.8}
@@ -484,6 +485,8 @@ th.sh span{font:400 11px/15px var(--sans);color:var(--tert);margin-left:8px}
 .dgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px 12px}
 .df{display:flex;flex-direction:column;gap:4px;border:1.5px solid transparent;border-radius:10px;padding:6px 8px;min-width:0}
 .df.gap{border:1.5px dashed var(--red);background:#fff7f6}
+.df.est{border:1.5px dashed var(--t3);background:var(--cream)}
+.destt{font-style:normal;font-weight:400;font-size:10px;color:var(--t3);margin-left:4px}
 .df.w-text{grid-column:span 2}
 .df.w-line{grid-column:span 2}
 .df.w-pick{grid-column:span 2}
@@ -534,6 +537,7 @@ th.sh span{font:400 11px/15px var(--sans);color:var(--tert);margin-left:8px}
 <input type="file" id="attach" multiple hidden>
 <input type="file" id="dattach" multiple hidden>
 <script src="config-vodafone.js"></script>
+<script src="seed-vodafone.js"></script>
 <script src="engine.js"></script>
 <script src="ui.js"></script>
 <script src="discuss.js"></script>
