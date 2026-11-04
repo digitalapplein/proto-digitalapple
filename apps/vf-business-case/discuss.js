@@ -130,24 +130,106 @@ function discussHTML(){
   const rail = RAIL_HIDE ? `<div class="askcol slim"><button class="railbtn" data-rail data-hover="Show the asset list" aria-label="Show the asset list">${ic("side", 16)}</button></div>`
     : `<div class="askcol"><section class="ask">${railHTML()}</section></div>`;
   const a = all.find(x => x.name === DCUR), name = DCUR;
-  const made = dval(name, "made");
-  const box = b => {
-    const v = dbox(name, b), gap = !b.opt && !v.trim();
-    return `<label class="df${gap ? " gap" : ""}"><span class="dl">${esc(b.l)}</span><span class="dcov">${esc(b.ph)}</span>
-      <textarea data-dfield="${b.k}" rows="3" placeholder="Notes">${esc(v)}</textarea></label>`;
-  };
-  const phase = (PH().find(p => p.id === a.phase) || {}).name || "";
+  const made = dval(name, "made"), asset = S.assets[S.current], phase = (PH().find(p => p.id === a.phase) || {}).name || "";
+  const conv = CONV && CONV.name === name ? convHTML() : "";
   return `<div class="grid${RAIL_HIDE ? " slimg" : ""}">${rail}<div class="answers">
     <section class="dcard">
       <div class="dhead">${a.parent || phase !== name ? `<div class="dcrumb">${esc(a.parent || phase)}</div>` : ""}
         <div class="dtitle"><h2>${esc(name)}</h2>
-        <div class="tools"><div class="dpick">${["In-house", "External", "Not done"].map(o => `<button class="dchip" data-dset="made" data-dv="${o}" aria-pressed="${made === o}">${o}</button>`).join("")}</div>
-          <button class="cvbtn${S.assets[S.current].covered ? " y" : ""}" data-cover>${S.assets[S.current].covered ? ic("check", 12) + " Covered" : "Mark covered"}</button></div></div></div>
-      <div class="dboxes">${BOX.map(box).join("")}</div>
-      <div class="dfoot"><span class="dhint"><i class="sw gap"></i>Not covered</span>
-        <span class="dsync" id="dsync"></span>
-        <button class="btn" data-dnext>Next asset</button></div>
+        <div class="tools">
+          <button class="cvbtn${asset.covered ? " y" : ""}" data-cover>${asset.covered ? ic("check", 12) + " Covered" : "Mark covered"}</button>
+          <button class="cvbtn cvt2" data-convert>Convert to structured data</button></div></div></div>
+      ${conv}
+      <div class="dsplit">
+        <aside class="dcover"><div class="dl">To cover on this one</div>
+          <ul>${coverList(asset, name).map(c => `<li>${esc(c)}</li>`).join("")}</ul>
+          <button class="ad2" data-dknown>Add what we already know</button></aside>
+        <div class="dnotes"><textarea data-dfield="free" placeholder="Notes from the call, in your own words">${esc(dfree(name))}</textarea></div>
+      </div>
+      <span class="dsync" id="dsync"></span>
     </section></div></div>`;
+}
+
+/* what we will cover on every asset: short prompts for the presenter */
+/* what is still open on THIS asset, in the order the call runs; it shrinks as values are confirmed */
+function coverList(a, name){
+  const keys = uncKeys(a), st = lbl => (a.steps || []).find(x => lbl.test(x.label)), open = id => id && keys.has(id), out = [];
+  const draft = st(/^draft$|copy|design/i), brief = st(/brief/i), review = st(/review/i), appr = st(/approv/i);
+  const made = dval(name, "made"); if (!made || disEst(name, "made")) out.push("Who makes it today");
+  if ((a.inputs || []).some(it => !(it.label || "").trim() || DEFAULT_INPUTS.includes(it.label))) out.push("Inputs, and who gives them");
+  if ([draft, brief].some(x => x && open("h" + x.id))) out.push("Hours to brief and make");
+  if ((a.steps || []).some(x => open("d" + x.id))) out.push("Days start to finish");
+  if ([review, appr].some(x => x && (open("h" + x.id) || open("d" + x.id))) || !dval(name, "approvers") || disEst(name, "approvers")) out.push("Who approves, in what order");
+  if ((a.outputs || []).some(o => open("of" + o.id) || open("ol" + o.id)) || !(a.output || "").trim()) out.push("Output, format, template");
+  out.push("Markets, updates, variants");
+  return out;
+}
+/* the notes are one free-flow box; notes typed earlier in the six boxes are folded in the first time */
+const dfree = name => { const r = D[name] || {}; if ("free" in r) return String(r.free || ""); return BOX.map(b => (r[b.k] || "").trim() ? `${b.l}\n${r[b.k].trim()}` : "").filter(Boolean).join("\n\n"); };
+
+/* ---------- convert the notes to structured data ----------
+   A first version without AI: it reads hours, days, fees, who approves and
+   who makes it from the text and shows what it would change; nothing is
+   applied until you tick and apply. An AI step can replace parse() later. */
+let CONV = null;
+const PARTIES = ["Product (group)", "Product (local)", "Product", "Local GTM", "Propositions team", "Cluster lead", "Brand", "Legal", "Compliance", "Sustainability", "Markets", "VPC"];
+function parseNotes(text, a){
+  const items = [], used = new Set(), steps = a.steps || [];
+  const stepOf = re => steps.find(x => re.test(x.label)), draft = stepOf(/^draft$/i) || stepOf(/copy|design/i), brief = stepOf(/brief/i), review = stepOf(/review/i), appr = stepOf(/approv/i);
+  const lines = text.split(/\n+/).map(l => l.trim()).filter(Boolean), num = x => Math.round(parseFloat(x.replace(",", ".")) * 100) / 100;
+  const conf = k => { (a.conf = a.conf || {})[k] = 1; };
+  const add = (label, from, to, apply, line) => { items.push({label, from, to, apply, on: true}); if (line != null) used.add(line); };
+  /* which kind of step a number belongs to: the nearest keyword before it, else one in the line */
+  const kind = (low, at) => {
+    const cut = Math.max(low.lastIndexOf(". ", at), low.lastIndexOf("; ", at)), pre = low.slice(cut >= 0 ? cut + 1 : 0, at), pos = {brief: pre.lastIndexOf("brief"), review: pre.lastIndexOf("review"), approval: Math.max(pre.lastIndexOf("approv"), pre.lastIndexOf("sign off"), pre.lastIndexOf("sign-off"), pre.lastIndexOf("cluster"))};
+    const best = Object.entries(pos).sort((x, y) => y[1] - x[1])[0];
+    if (best[1] >= 0) return best[0];
+    return /brief/.test(low) ? "brief" : /review/.test(low) ? "review" : /approv|sign.?off/.test(low) ? "approval" : "make";
+  };
+  const seen = new Set(), once = key => !seen.has(key) && seen.add(key);
+  const approvers = [], pushP = ps => ps.forEach(p => { if (!approvers.includes(p)) approvers.push(p); });
+  let madeBy = null;
+  lines.forEach((ln, li) => {
+    const low = ln.toLowerCase(); let m;
+    const hre = /(\d+(?:[.,]\d+)?)\s*(?:h\b|hrs?\b|hours?\b)/gi;
+    while ((m = hre.exec(ln))){
+      const v = num(m[1]), k = kind(low, m.index);
+      if (k === "brief" && brief && once("bh")) add("Brief, hours", brief.hours, v, () => { brief.hours = v; conf("h" + brief.id); }, li);
+      else if (k === "review" && review && once("rh")) add("Review, hours", review.hours, v, () => { review.hours = v; conf("h" + review.id); }, li);
+      else if (k === "approval" && appr && once("ah")) add("Approval, hours", appr.hours, v, () => { appr.hours = v; conf("h" + appr.id); }, li);
+      else if (k === "make" && draft && once("mh")) add("Making, hours", draft.hours, v, () => { draft.hours = v; conf("h" + draft.id); }, li);
+    }
+    const dre = /(\d+(?:[.,]\d+)?)\s*(days?|weeks?|wks?)\b/gi;
+    while ((m = dre.exec(ln))){
+      const v = num(m[1]) * (/^w/i.test(m[2]) ? 7 : 1), k = kind(low, m.index);
+      if (k === "review" && review && once("rd")) add("Review, days", review.days, v, () => { review.days = v; conf("d" + review.id); }, li);
+      else if (k === "approval" && appr && once("ad")) add("Approval, days", appr.days, v, () => { appr.days = v; conf("d" + appr.id); }, li);
+    }
+    if ((m = /([€£])\s?(\d[\d,]*(?:\.\d+)?)/.exec(ln)) && /fee|agency|cost|charge/.test(low) && draft && once("fee")){
+      const v = Math.round(num(m[2].replace(/,/g, "")) * (m[1] === "£" ? 1.15 : 1)); add("Agency fee, €", draft.fee || 0, v, () => { draft.fee = v; }, li);
+    }
+    if (/approv|sign.?off|align|review/.test(low)){
+      const ps = PARTIES.filter(p => low.includes(p.toLowerCase())).filter((p, i, all) => !all.some(q => q !== p && q.length > p.length && q.toLowerCase().includes(p.toLowerCase())));
+      if (ps.length){ pushP(ps); used.add(li); }
+    }
+    if (!madeBy){
+      if (/(not done|don'?t do|do not do|not made today)/.test(low)) madeBy = "Not done";
+      else if (/(in-house|inhouse|by pmm|portfolio marketing|made internally)/.test(low) && !/agency|external/.test(low)) madeBy = "In-house";
+      else if (/\b(made|done|produced|created|built|designed)\b.*\b(agency|externally|external|digital apple)\b|\b(agency|externally|external|digital apple)\b.*\b(makes|made|does|produces|designs)\b/.test(low)) madeBy = "External";
+      if (madeBy) used.add(li);
+    }
+  });
+  if (approvers.length && review){ const who = approvers.join(", "); add("Who approves", review.who, who, () => { review.who = who; }); }
+  if (madeBy) add("Made by", dval(a.name, "made") || "", madeBy, () => dPut(a.name, "made", madeBy));
+  const rest = lines.filter((_, i) => !used.has(i));
+  if (rest.length){ const txt = rest.join("\n"); add("Notes (everything else)", (a.nuances || "").slice(0, 60), txt.length > 80 ? txt.slice(0, 80) + "…" : txt, () => { a.nuances = ((a.nuances || "") + ((a.nuances || "") ? "\n" : "") + txt).trim(); }); }
+  return items.filter(it => String(it.from) !== String(it.to));
+}
+function convHTML(){
+  if (!CONV.items.length) return `<div class="dconv"><b>Nothing to convert yet.</b> Type notes on the right, then press Convert again. <button class="cvbtn" data-conv-x>Close</button></div>`;
+  return `<div class="dconv"><div class="dch"><b>Proposed changes to the detailed page</b><span>Untick anything you do not want. Nothing changes until you apply.</span></div>
+    ${CONV.items.map((it, i) => `<label class="dci"><input type="checkbox" data-conv-i="${i}" ${it.on ? "checked" : ""}><span class="dcl">${esc(it.label)}</span><span class="dcf">${esc(String(it.from ?? "") || "empty")}</span><span class="dca">→</span><span class="dct">${esc(String(it.to))}</span></label>`).join("")}
+    <div class="dcb"><button class="btn lime" data-conv-go>Apply ${CONV.items.filter(x => x.on).length}</button><button class="cvbtn" data-conv-x>Cancel</button></div></div>`;
 }
 
 /* six free-text boxes in the order the call runs; each opens with what is
@@ -203,14 +285,19 @@ if (ONLINE){ dPull(); setInterval(dPull, 8000); }
 document.addEventListener("click", e => {
   const q = s => e.target.closest(s); let b;
   if ((b = q("[data-dset]"))){ const k = b.dataset.dset, v = b.dataset.dv; dPut(DCUR, k, dval(DCUR, k) === v && !disEst(DCUR, k) ? "" : v); render(); return; }
+  if ((b = q("[data-convert]"))){ const as = S.assets[S.current]; CONV = {name: DCUR, items: parseNotes(dfree(DCUR), as)}; render(); return; }
+  if ((b = q("[data-conv-x]"))){ CONV = null; render(); return; }
+  if ((b = q("[data-conv-go]"))){ const n = CONV.items.filter(x => x.on); n.forEach(x => x.apply()); CONV = null; save(); render(); const t = $("#saved"); if (t){ t.textContent = `Applied ${n.length} change${n.length === 1 ? "" : "s"}`; setTimeout(() => { t.textContent = ""; }, 3500); } return; }
+  if ((b = q("[data-dknown]"))){ const k = BOX.map(x => { const v = dboxSeed(DCUR)[x.k]; return v ? `${x.l}\n${v}` : ""; }).filter(Boolean).join("\n\n"); const cur = dfree(DCUR); dPut(DCUR, "free", (cur ? cur + "\n\n" : "") + "Already known\n" + k); render(); return; }
   if ((b = q("[data-dnext]"))){ const all = dAll(), i = all.findIndex(a => a.name === DCUR), nx = all[(i + 1) % all.length];
     const id = Object.keys(S.assets).find(k => S.assets[k].name === nx.name); if (id) S.current = id; render(); save(); scrollTo(0, 0); return; }
 });
+document.addEventListener("change", e => { const t = e.target; if (t.dataset && t.dataset.convI != null && CONV){ CONV.items[+t.dataset.convI].on = t.checked; const g = document.querySelector("[data-conv-go]"); if (g) g.textContent = "Apply " + CONV.items.filter(x => x.on).length; } });
 document.addEventListener("input", e => {
   const t = e.target;
   if (!t.dataset.dfield) return;
   const k = t.dataset.dfield, v = t.value, name = DCUR;
-  const box = t.closest(".df"); box.classList.toggle("gap", v.trim() === ""); box.classList.remove("est");
+  const box = t.closest(".df"); if (box){ box.classList.toggle("gap", v.trim() === ""); box.classList.remove("est"); }
   clearTimeout(dSaveT); dSaveT = setTimeout(() => dPut(name, k, v), 400);
 });
 
