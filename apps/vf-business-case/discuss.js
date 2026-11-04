@@ -1,7 +1,8 @@
 /* Discussion page: one card per asset, filled live in the meeting.
    Kept apart from the business case model: answers live in D, saved to
    the server (/api/discuss) when the tool is hosted, and to this browser
-   as a backup. Empty fields show a red outline so gaps are visible. */
+   as a backup. Empty fields are tinted red so gaps are visible, and what is
+   typed also fills the detailed As-is page. */
 
 const DSTORE = STORE + "discuss";
 const ONLINE = location.protocol.startsWith("http");
@@ -11,24 +12,24 @@ try { DWHO = localStorage.getItem(DSTORE + ":who") || ""; } catch(_){}
 
 /* the fields asked on every asset, in the order they are discussed */
 const DF = [
-  {k: "made", l: "Who makes it today", t: "pick", o: ["In-house", "External", "Not done"]},
-  {k: "maker", l: "Team or agency", t: "line", ph: "e.g. Portfolio marketing, agency name"},
-  {k: "what", l: "What is it", t: "text", ph: "One or two lines: what it is and who it is for"},
-  {k: "how", l: "How it is produced", t: "text", ph: "The steps, in order"},
-  {k: "inputs", l: "Inputs, and from whom", t: "text", ph: "e.g. One Brief from Product, analyst reports"},
-  {k: "format", l: "Output format and length", t: "line", ph: "e.g. PowerPoint, 1 page"},
-  {k: "template", l: "Template", t: "pick", o: ["Yes", "Partly", "No"]},
-  {k: "brief", l: "Briefing (hours)", t: "num"},
-  {k: "make", l: "Making it (hours)", t: "num"},
-  {k: "review", l: "Review time (hours)", t: "num"},
-  {k: "wait", l: "Start to finish (days)", t: "num"},
-  {k: "cost", l: "External cost (€): new, update, market version", t: "line", ph: "e.g. 403 / 201 / 184"},
-  {k: "mv", l: "Market versions", t: "line", ph: "How many markets adapt it, e.g. 1 to 3 of 10"},
-  {k: "upd", l: "Updates", t: "line", ph: "How often it is refreshed, e.g. every 6 months"},
-  {k: "var", l: "Variants", t: "line", ph: "e.g. per ICP group, per segment, sizes"},
-  {k: "approvers", l: "Approvers", t: "line", ph: "e.g. Cluster lead, Brand, Legal"},
-  {k: "approval", l: "Approval", t: "pick", o: ["Must approve", "Alignment only"]},
-  {k: "notes", l: "Notes", t: "text", ph: "Anything else said", opt: true}
+  {g: "What it is", k: "what", l: "What it is, and who it is for", t: "text", ph: "One or two lines"},
+  {g: "What it is", k: "made", l: "Who makes it today", t: "pick", o: ["In-house", "External", "Not done"]},
+  {g: "What it is", k: "maker", l: "Team or agency", t: "line", ph: "e.g. Portfolio marketing, Digital Apple"},
+  {g: "What it is", k: "template", l: "Template", t: "pick", o: ["Yes", "Partly", "No"]},
+  {g: "How it is made", k: "inputs", l: "Inputs, and from whom", t: "text", ph: "e.g. One Brief from Product, analyst reports"},
+  {g: "How it is made", k: "how", l: "Steps, in order", t: "text", ph: "e.g. Brief, draft, product review, approval"},
+  {g: "How it is made", k: "format", l: "Output: format and length", t: "line", ph: "e.g. PowerPoint, 1 page"},
+  {g: "Time and cost", k: "brief", l: "Briefing (hours)", t: "num"},
+  {g: "Time and cost", k: "make", l: "Making it (hours)", t: "num"},
+  {g: "Time and cost", k: "review", l: "Review (hours)", t: "num"},
+  {g: "Time and cost", k: "wait", l: "Start to finish (days)", t: "num"},
+  {g: "Time and cost", k: "cost", l: "External cost (€): new / update / market", t: "line", ph: "e.g. 403 / 201 / 184"},
+  {g: "Approval", k: "approvers", l: "Approvers", t: "line", ph: "e.g. Cluster lead, Brand, Legal"},
+  {g: "Approval", k: "approval", l: "Approval or alignment", t: "pick", o: ["Must approve", "Alignment only"]},
+  {g: "Versions", k: "mv", l: "Market versions", t: "line", ph: "e.g. 3 of 10 markets"},
+  {g: "Versions", k: "upd", l: "Updates", t: "line", ph: "e.g. every 6 months"},
+  {g: "Versions", k: "var", l: "Variants", t: "line", ph: "e.g. per ICP group"},
+  {g: "Notes", k: "notes", l: "Notes", t: "text", ph: "Anything else said", opt: true}
 ];
 const DREQ = DF.filter(f => !f.opt);
 
@@ -119,14 +120,12 @@ const dval = (name, k) => { const r = D[name]; if (r && k in r) return r[k]; con
 const disEst = (name, k) => { const r = D[name]; if (r && k in r) return false; const s = SEED[name]; if (s && k in s) return false; return k in dEst(name); };
 const dgap = (name, f) => { const v = dval(name, f.k); return v === "" || v == null; };
 const dcount = name => DREQ.filter(f => !dgap(name, f)).length;
-const dfiles = name => (D[name] && D[name]._files) || [];
 
 function discussHTML(){
   const all = dAll(); if (!DCUR || !all.some(a => a.name === DCUR)) DCUR = all[0].name;
   const rail = PH().map(p => {
     const rows = all.filter(a => a.phase === p.id).map(a => {
-      const n = dcount(a.name), done = n === DREQ.length;
-      return `<button class="drow d${a.depth}${a.name === DCUR ? " on" : ""}" data-dpick="${esc(a.name)}"><span>${esc(a.name)}${a.ai ? ' <em class="dai">with AI</em>' : ""}</span><span class="dn${done ? " ok" : ""}">${n}/${DREQ.length}</span></button>`;
+      return `<button class="drow d${a.depth}${a.name === DCUR ? " on" : ""}" data-dpick="${esc(a.name)}"><span>${esc(a.name)}${a.ai ? ' <em class="dai">with AI</em>' : ""}</span></button>`;
     }).join("");
     return `<div class="dph"><div class="dphh">${esc(p.name)}</div>${p.note ? `<div class="dphn">${esc(p.note)}</div>` : ""}${rows}
       <button class="dadd" data-dadd="${p.id}">${ic("plus", 11)} Add asset</button></div>`;
@@ -138,22 +137,41 @@ function discussHTML(){
     if (f.t === "pick") ctl = `<div class="dpick">${f.o.map(o => `<button class="dchip" data-dset="${f.k}" data-dv="${esc(o)}" aria-pressed="${v === o}">${esc(o)}</button>`).join("")}</div>`;
     else if (f.t === "text") ctl = `<textarea data-dfield="${f.k}" rows="2" placeholder="${esc(f.ph || "")}">${esc(val(v))}</textarea>`;
     else ctl = `<input class="dinp" data-dfield="${f.k}" ${f.t === "num" ? 'inputmode="decimal"' : ""} value="${esc(val(v))}" placeholder="${esc(f.ph || "")}">`;
-    return `<label class="${cls} w-${f.t}"><span class="dl">${esc(f.l)}${est ? ' <em class="destt">estimate</em>' : ""}</span>${ctl}</label>`;
+    return `<label class="${cls} w-${f.t}"><span class="dl">${esc(f.l)}</span>${ctl}</label>`;
   };
-  const files = dfiles(name).map((f, i) => `<a class="dfile" href="${esc(f.url)}" target="_blank" rel="noopener">${ic("clip", 12)} ${esc(f.name)}</a><button class="dx" data-dfdel="${i}" aria-label="Remove ${esc(f.name)}">${ic("x", 11)}</button>`).join("");
-  const n = dcount(name);
+  const groups = [...new Set(DF.map(f => f.g))].map(g => `<div class="dgrp"><div class="dgh">${esc(g)}</div>
+    <div class="dgrid g-${dkey(g)}">${DF.filter(f => f.g === g).map(field).join("")}</div></div>`).join("");
   return `<div class="dwrap">
     <aside class="drail">${rail}</aside>
     <section class="dcard">
-      <div class="dhead"><div><div class="dcrumb">${esc((PH().find(p => p.id === a.phase) || {}).name || "")}${a.parent ? " · " + esc(a.parent) : ""}</div>
+      <div class="dhead"><div class="dcrumb">${esc((PH().find(p => p.id === a.phase) || {}).name || "")}${a.parent ? " · " + esc(a.parent) : ""}</div>
         <h2>${esc(name)}</h2>${a.note ? `<p class="dsub">${esc(a.note)}</p>` : ""}</div>
-        <div class="dstat"><b>${n} of ${DREQ.length}</b> captured<span class="dsync" id="dsync">${ONLINE ? "Live copy" : "Saved in this browser"}</span></div></div>
-      <div class="dgrid">${DF.map(field).join("")}</div>
-      <div class="dfiles"><span class="dl">Template or sample</span>${files}<button class="add-btn" data-dup>${ic("plus", 11)} Attach</button></div>
+      ${groups}
       <div class="dfoot"><label class="dwho">Typing as <input class="dinp" id="dwho" value="${esc(DWHO)}" placeholder="Your name"></label>
-        <span class="dhint">Red outline: not captured yet. Grey: estimate, please confirm</span>
+        <span class="dhint"><i class="sw gap"></i>Not captured yet <i class="sw est"></i>Estimate, please confirm</span>
+        <span class="dsync" id="dsync"></span>
         <button class="btn" data-dnext>Next asset</button></div>
     </section></div>`;
+}
+
+/* ---------- answers fill the detailed As-is page ----------
+   Only what was typed in the discussion (not estimates) is copied across,
+   into the asset of the same name; the As-is page stays editable after. */
+const dnum = v => { const n = parseFloat(String(v).replace(",", ".")); return isFinite(n) ? n : null; };
+function dApply(name, k, v){
+  const a = Object.values(S.assets).find(x => x.name === name); if (!a) return false;
+  const steps = a.steps || [], made = steps.filter(x => x.phase !== "market");
+  const st = re => made.find(x => re.test(x.label));
+  let s;
+  if (k === "what" && v) a.desc = v;
+  else if (k === "format" && v) a.output = v;
+  else if (k === "notes" && v) a.nuances = v;
+  else if (k === "brief" && (s = st(/brief/i)) && dnum(v) != null) s.hours = dnum(v);
+  else if (k === "make" && (s = made.find(x => x.phase === "create" && !/brief/i.test(x.label))) && dnum(v) != null) s.hours = dnum(v);
+  else if (k === "review" && (s = st(/review/i)) && dnum(v) != null) s.hours = dnum(v);
+  else if (k === "approvers" && v && (s = st(/approv/i))) s.who = v;
+  else return false;
+  return true;
 }
 
 /* ---------- saving: this browser always, the server when hosted ---------- */
@@ -161,11 +179,11 @@ let dSaveT;
 function dLocal(){ try { localStorage.setItem(DSTORE, JSON.stringify(D)); } catch(_){} }
 function dPut(name, k, v){
   (D[name] = D[name] || {})[k] = v; dLocal();
+  if (dApply(name, k, v)) save();
   if (!ONLINE) return;
-  const s = $("#dsync"); if (s) s.textContent = "Saving";
   fetch("api/discuss", {method: "POST", headers: {"content-type": "application/json"}, body: JSON.stringify({asset: name, field: k, value: v, by: DWHO})})
-    .then(r => { if (!r.ok) throw 0; const e = $("#dsync"); if (e) e.textContent = "Saved, live copy"; })
-    .catch(() => { const e = $("#dsync"); if (e) e.textContent = "Not saved online: kept in this browser"; });
+    .then(r => { if (!r.ok) throw 0; const e = $("#dsync"); if (e) e.textContent = ""; })
+    .catch(() => { const e = $("#dsync"); if (e) e.textContent = "Not saved online, kept in this browser"; });
 }
 function dPull(){
   if (!ONLINE) return Promise.resolve();
@@ -175,7 +193,7 @@ function dPull(){
     for (const [name, r] of Object.entries(remote || {})) for (const [k, v] of Object.entries(r)){
       if (editing && name === DCUR && k === editing) continue;
       const cur = D[name] && D[name][k];
-      if (JSON.stringify(cur) !== JSON.stringify(v)){ (D[name] = D[name] || {})[k] = v; changed = true; }
+      if (JSON.stringify(cur) !== JSON.stringify(v)){ (D[name] = D[name] || {})[k] = v; changed = true; if (dApply(name, k, v)) save(); }
     }
     if (changed){ dLocal(); if (TAB === "discuss" && !editing) render(); }
   }).catch(() => {});
@@ -192,8 +210,6 @@ document.addEventListener("click", e => {
     const name = (prompt("Asset name") || "").trim(); if (!name) return;
     dPut(name, "_added", b.dataset.dadd); DCUR = name; render(); return;
   }
-  if ((b = q("[data-dfdel]"))){ const list = dfiles(DCUR).slice(); list.splice(+b.dataset.dfdel, 1); dPut(DCUR, "_files", list); render(); return; }
-  if ((b = q("[data-dup]"))){ $("#dattach").click(); return; }
 });
 document.addEventListener("input", e => {
   const t = e.target;
@@ -202,16 +218,4 @@ document.addEventListener("input", e => {
   const k = t.dataset.dfield, v = t.value, name = DCUR;
   const box = t.closest(".df"); box.classList.toggle("gap", v.trim() === ""); box.classList.remove("est");
   clearTimeout(dSaveT); dSaveT = setTimeout(() => dPut(name, k, v), 400);
-});
-document.addEventListener("change", e => {
-  const t = e.target; if (t.id !== "dattach" || !t.files.length) return;
-  const name = DCUR, list = dfiles(name).slice();
-  const done = () => { dPut(name, "_files", list); render(); t.value = ""; };
-  if (!ONLINE){
-    for (const f of t.files) list.push({name: f.name, url: URL.createObjectURL(f), local: true});
-    done(); return;
-  }
-  Promise.all([...t.files].map(f => fetch("api/upload?name=" + encodeURIComponent(f.name), {method: "POST", body: f})
-    .then(r => r.json()).then(j => list.push({name: f.name, url: j.url}))))
-    .then(done).catch(() => alert("Upload failed. Try again."));
 });

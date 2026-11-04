@@ -145,7 +145,7 @@ function railHTML(){
   return railTop() + `<div class="it kit ${S.current === "toolkit" ? "on" : ""}" data-kit><span class="nm">Digital toolkit</span></div>` +
     S.sections.map(sec => { const open = railOpen(sec);
       return `<div class="sec" data-sec="${sec.id}">
-      <button class="secbtn" data-rsec="${sec.id}" aria-expanded="${open}"><span class="chev">${ic("chev", 11)}</span><span class="nm" data-ren-sec="${sec.id}">${esc(sec.name)}</span><span class="cnt">${sec.assets.length}</span></button>
+      <button class="secbtn" data-rsec="${sec.id}" aria-expanded="${open}"><span class="chev">${ic("chev", 11)}</span><span class="nm" data-ren-sec="${sec.id}">${esc(sec.name)}</span></button>
       <button class="mini hov" data-add-asset="${sec.id}" aria-label="Add an asset to ${esc(sec.name)}" title="Add an asset">${ic("plus", 12)}</button>
       <button class="mini hov" data-del-sec="${sec.id}" aria-label="Remove ${esc(sec.name)}" title="Remove section">${ic("x", 12)}</button>
     </div>` + (open ? sec.assets.map(id => {
