@@ -894,6 +894,7 @@ document.addEventListener("click", e => {
   if ((b = q("[data-del-oo]"))){ snap("Removed a line"); S.bc.oneOff = S.bc.oneOff.filter(l => l.id !== b.dataset.delOo); render(); save(); return; }
   if (q("#save")){ download(`${S.client.id}-business-case.json`, JSON.stringify(S, null, 1), "application/json"); return; }
   if (q("#open")){ $("#openFile").click(); return; }
+  if (q("#share")){ fetch("api/share").then(r => r.json()).then(j => navigator.clipboard.writeText(j.url).then(() => toast("Link copied: anyone with it can open the tool"))).catch(() => toast("Could not copy. Copy the address from the browser bar instead.")); return; }
   if (q("#xls")){ exportExcel(); return; }
 });
 

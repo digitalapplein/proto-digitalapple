@@ -17,16 +17,21 @@ function saveStore(){ const tmp = DB + ".tmp"; fs.writeFileSync(tmp, JSON.string
 function body(req, limit){ return new Promise((ok, no) => { const c = []; let n = 0;
   req.on("data", d => { n += d.length; if (n > limit){ no(new Error("too big")); req.destroy(); } else c.push(d); });
   req.on("end", () => ok(Buffer.concat(c))); req.on("error", no); }); }
-const send = (res, code, data, type = "application/json") => { res.writeHead(code, {"content-type": type, "x-robots-tag": "noindex"}); res.end(data); };
+const send = (res, code, data, type = "application/json", extra = {}) => { res.writeHead(code, {"content-type": type, "x-robots-tag": "noindex", ...extra}); res.end(data); };
 const authed = req => !KEY || (req.headers.cookie || "").split(/;\s*/).includes("k=" + KEY);
 
 http.createServer(async (req, res) => {
   const u = new URL(req.url, "http://x");
-  if (KEY && u.searchParams.get("k") === KEY){
-    res.writeHead(302, {"set-cookie": `k=${KEY}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=31536000`, location: u.pathname}); return res.end();
-  }
+  /* a link with the key sets the cookie and opens the page as it is: the key stays in the address bar,
+     so a link copied from the browser keeps working for whoever receives it */
+  const cookie = KEY && u.searchParams.get("k") === KEY ? {"set-cookie": `k=${KEY}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=31536000`} : {};
+  if (Object.keys(cookie).length) req.headers.cookie = (req.headers.cookie ? req.headers.cookie + "; " : "") + "k=" + KEY;
   if (!authed(req)) return send(res, 401, "<p style='font-family:sans-serif;padding:40px'>Open the link you were sent to use this page.</p>", "text/html");
   try {
+    if (u.pathname === "/api/share"){
+      const proto = req.headers["x-forwarded-proto"] || "http", host = req.headers["x-forwarded-host"] || req.headers.host;
+      return send(res, 200, JSON.stringify({url: `${proto}://${host}/${KEY ? "?k=" + KEY : ""}`}));
+    }
     if (u.pathname === "/api/discuss" && req.method === "GET") return send(res, 200, JSON.stringify(store));
     if (u.pathname === "/api/discuss" && req.method === "POST"){
       const p = JSON.parse(await body(req, 1e6));
@@ -60,6 +65,6 @@ http.createServer(async (req, res) => {
     const full = path.normalize(path.join(base, f));
     if (!full.startsWith(base) || full.includes(`${path.sep}_data`) || /server\.js$|package\.json$/.test(full)) return send(res, 404, "not found", "text/plain");
     fs.readFile(full, (err, d) => err ? send(res, 404, "not found", "text/plain")
-      : send(res, 200, d, TYPES[path.extname(full).toLowerCase()] || "application/octet-stream"));
+      : send(res, 200, d, TYPES[path.extname(full).toLowerCase()] || "application/octet-stream", cookie));
   } catch(e){ send(res, 500, JSON.stringify({error: String(e.message || e)})); }
 }).listen(PORT, () => console.log("listening on " + PORT));
