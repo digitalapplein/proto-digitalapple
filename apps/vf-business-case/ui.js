@@ -161,6 +161,22 @@ function applyBatch5(st){
   }
   (st.applied = st.applied || []).push("batch5"); return true;
 }
+/* Batch 6 (9 Nov): notes read as plain statements, with no names or dates in brackets. */
+const TIDY = [[/\s*\((?:Sally and Mohit|Sally|Mohit)[^)]*\)/g, ""], [/,\s*Sally,\s*4 Nov/g, ""], [/ \(default, to confirm\)/g, ""],
+  [/not made by her team today/g, "not made by the team today"], [/Sally will give an illustrative agency cost/g, "An illustrative agency cost is to come"],
+  [/Sally's very optimistic target/g, "the target"], [/Sally's team/g, "the team"], [/volume to come from Sally/g, "volume to confirm"], [/Sally to confirm/g, "to confirm"],
+  [/the one-page format Sally shared/g, "the shared one-page format"], [/Sally shared/g, "shared"],
+  [/one email today\. Should be one per ICP cohort \(3\)\. (Known customers only, sent through Highspot\.) Volume planned at 3 a launch, one per ICP cohort\./g, "one email today, planned at 3 a launch, one per ICP cohort. $1"], [/Hours not given yet\./g, "Hours to confirm."]];
+const tidy = t => typeof t === "string" ? TIDY.reduce((x, [re, r]) => x.replace(re, r), t).replace(/\s{2,}/g, " ").replace(/\s+([.,])/g, "$1").trim() : t;
+function applyBatch6(st){
+  if (!st || !st.assets || (st.applied || []).includes("batch6")) return false;
+  for (const a of Object.values(st.assets)){
+    a.nuances = tidy(a.nuances); a.desc = tidy(a.desc);
+    (a.steps || []).forEach(x => { x.comment = tidy(x.comment); }); (a.inputs || []).forEach(x => { x.example = tidy(x.example); });
+    (Array.isArray(a.outputs) ? a.outputs : []).forEach(o => { if (o && typeof o === "object") o.example = tidy(o.example); });
+  }
+  (st.applied = st.applied || []).push("batch6"); return true;
+}
 /* hosted: one shared copy of the whole tool; the newest save wins */
 const SHARED = location.protocol.startsWith("http");
 function pullState(){
@@ -169,7 +185,7 @@ function pullState(){
   fetch("api/state").then(r => r.json()).then(R => {
     if (!R || !R.assets || (R.version || 0) < 16) return;
     if ((R.savedAt || 0) > (S.savedAt || 0)){
-      S = R; cleanState(S); applyBatch1(S); applyBatch2(S); applyBatch3(S); applyBatch4(S); applyBatch5(S); try { localStorage.setItem(STORE + S.client.id, JSON.stringify(S)); } catch(_){}
+      S = R; cleanState(S); applyBatch1(S); applyBatch2(S); applyBatch3(S); applyBatch4(S); applyBatch5(S); applyBatch6(S); try { localStorage.setItem(STORE + S.client.id, JSON.stringify(S)); } catch(_){}
       const y = scrollY; render(); scrollTo(0, y);
     }
   }).catch(() => {});
@@ -342,12 +358,12 @@ function railHTML(){
       const a = S.assets[id];
       return `<div class="it ${id === S.current ? "on" : ""} ${isMapped(a) ? "" : "blank"} ${a.optional ? "opt" : ""} ${a.parent ? "kid" : ""}" data-asset="${id}" draggable="true"${a.optional ? ` title="Optional"` : a.parent ? ` title="Part of ${esc((S.assets[a.parent] || {}).name || "")}: counted there"` : ""}>
         <span class="grip hov">${ic("grip", 12)}</span>
-        <span class="nm" data-ren-asset="${id}">${esc(a.name)}</span><span class="cvt${a.covered ? " y" : ""}" title="${a.covered ? "Covered" : "Not covered yet"}">${a.covered ? ic("check", 9) : ""}</span>
-        ${a.parent ? "" : a.optional ? `<span class="dot opt" title="Optional"></span>` : madeToday(a) ? "" : `<span class="dot" title="Not made today"></span>`}
+        <span class="nm" data-ren-asset="${id}">${esc(a.name)}</span>${TAB === "discuss" ? `<span class="cvt${a.covered ? " y" : ""}" title="${a.covered ? "Covered" : "Not covered yet"}">${a.covered ? ic("check", 9) : ""}</span>` : ""}
+        
         <button class="mini hov" data-del-asset="${id}" aria-label="Remove ${esc(a.name)}" title="Remove asset">${ic("x", 12)}</button>
       </div>`;
     }).join("") : ""); }).join("") +
-    `<div class="rlegend"><span><i class="dot"></i>Not made today</span><span><i class="dot opt"></i>Optional</span></div><div class="addrow"><button data-new="asset">${ic("plus", 11)} Asset</button><button data-new="section">${ic("plus", 11)} Section</button></div>`;
+    `<div class="addrow"><button data-new="asset">${ic("plus", 11)} Asset</button><button data-new="section">${ic("plus", 11)} Section</button></div>`;
 }
 
 let VIEW = "old";            // toolkit timeline: today or with AI
@@ -441,8 +457,8 @@ function asIsHTML(m){
       <section class="hero">
         <input class="title" data-f="name" data-k="title" value="${esc(a.name)}" aria-label="Asset name">
         <input class="hdesc top" data-f="desc" data-k="desc" value="${esc(a.desc || "")}" placeholder="What this asset is for, in one line" aria-label="What this asset is for">
-        <label class="stsel"><span class="tocf" id="tocf"></span>Status <select class="cell sel" data-status="${a.id}" aria-label="Status of this asset">${[["required", "Required"], ["new", "New"], ["optional", "Optional"]].map(([k, l]) =>
-          `<option value="${k}" ${statusOf(a) === k ? "selected" : ""}>${l}</option>`).join("")}</select></label>
+        <span class="stsel"><span class="tocf" id="tocf"></span>Status <span class="pillrow">${[["required", "Required"], ["new", "New"], ["optional", "Optional"]].map(([k, l]) =>
+          `<button class="pill" data-set-status="${k}" aria-pressed="${statusOf(a) === k}">${l}</button>`).join("")}</span></span>
         <div class="twin">
           <div class="blk">
             <div class="fig"><span data-count="c${a.id}" data-to="${money(c0)}">${eur(money(c0))}</span><span class="to">→</span><span class="ai">${eur(money(c1))}</span><small>per asset</small></div>
@@ -898,6 +914,7 @@ document.addEventListener("input", e => {
   }
 });
 /* labels and notes only redraw the sums once the field is left */
+document.addEventListener("click", e => { const b = e.target.closest && e.target.closest("[data-set-status]"); if (!b) return; const a = S.assets[S.current]; if (a){ setStatus(a, b.dataset.setStatus); render(); save(); } });
 document.addEventListener("change", e => { if (e.target.dataset.status){ const a = S.assets[e.target.dataset.status]; if (a){ setStatus(a, e.target.value); render(); save(); } return; } });
 document.addEventListener("change", e => { if (e.target.dataset.s || e.target.dataset.sai || e.target.dataset.tl || e.target.dataset.f === "name") { const y = scrollY; render(); scrollTo(0, y); } });
 
@@ -1149,4 +1166,4 @@ window.__bc = {S: () => S, compute, render};
 
 if (SHARED){ pullState(); setInterval(pullState, 15000); }
 
-if (cleanState(S) | applyBatch1(S) | applyBatch2(S) | applyBatch3(S) | applyBatch4(S) | applyBatch5(S)){ save(); render(); }
+if (cleanState(S) | applyBatch1(S) | applyBatch2(S) | applyBatch3(S) | applyBatch4(S) | applyBatch5(S) | applyBatch6(S)){ save(); render(); }

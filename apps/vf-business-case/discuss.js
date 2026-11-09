@@ -105,24 +105,24 @@ function dEst(name){
   return EST[name] = e;
 }
 
-/* what Sally said on 4 Nov, so a card opens with it; anything typed on the card replaces it */
+/* what was said on the 4 Nov call, so a card opens with it; anything typed on the card replaces it */
 const CALL4 = {
   "Pitch deck": "Out of the case for now. Too bespoke to template today. Second stage if products group into 4 or 5 cohorts. First win: one standard look and feel (imagery, illustration style), so sales stop mixing slides that do not match.",
-  "Product catalogue pages": "New and templated: 2 pages per product family, an opening paragraph, line listings and a picture. Done for mobile, started for UC. Sales use it with customers. 3 hours of team time for 2 pages. Families per portfolio still to come from Sally.",
+  "Product catalogue pages": "New and templated: 2 pages per product family, an opening paragraph, line listings and a picture. Done for mobile, started for UC. Sales use it with customers. 3 hours of team time for 2 pages. Families per portfolio to confirm.",
   "Product brochure": "4-page PDF, made in PowerPoint, no edits outside the markets. 4 hours of team time for briefing, writing and approval, plus the agency design. Template exists.",
   "Product factsheet": "2 pages, same as the brochure with different content. 3 hours of team time. Template exists.",
   "Customer FAQ": "New. About 20 questions, generic for now. Goes to markets and sales, feeds AEO and the web.",
-  "Interactive demo video": "Navattic is close to approval with IT. Used for MP4 videos: marketing, sales training, sales in front of customers. 15 hours of team time a video. One per product with a portal, volume to come. Licence €15,000 a year, due end of March; the platform could make the MP4s instead.",
+  "Interactive demo video": "Navattic is close to approval with IT. Used for MP4 videos: marketing, sales training, sales in front of customers. 15 hours of team time a video. One per product with a portal, volume to confirm. Licence €15,000 a year, due end of March; the platform could make the MP4s instead.",
   "Explainer video": "15 hours of team time, mostly scripting and feedback loops. Should come down with a proper brief and script. 60 seconds wanted (a 5-minute one was too long). Social cutdowns go in the price.",
   "Sales to customer email": "Copy only, no HTML. 2 hours an email, one today. Should be one per ICP cohort. Known customers, sent from Outlook or Highspot.",
   "Social pack": "3 static posts, about 1 hour for all three, in-house only. Sits with the copy kit and the messaging house, not the cohorts. Image selection with the copy on top is possible.",
   ".com presence": "A couple of sentences for the portfolio page, about 1 hour. Anything longer is bespoke per market.",
   "Video cutdowns": "New. Not done today. 3 or 4 short cuts of each long video for LinkedIn and YouTube Shorts.",
-  "Blog or article": "Written in-house (the agency budget was cut), authored by a subject matter expert, then brand and external comms review. 2 hours for Sally's team and 3 for the expert. At least one a month, every two weeks if possible. Later: the tool watches the market and suggests topics.",
+  "Blog or article": "Written in-house (the agency budget was cut), authored by a subject matter expert, then brand and external comms review. 2 hours for the team and 3 for the expert. At least one a month, every two weeks if possible. Later: the tool watches the market and suggests topics.",
   "eBook": "Heavy copy and glossy design. 12 hours today, target 4. One a quarter today; 12 a year is the optimistic target. The tool can help with the copy, design stays heavy.",
-  "Solution architecture pack": "Paused. Not made by Sally's team: solution architects and pre-sales hold the raw content. We brand and scale it. Sally will give an illustrative agency cost.",
+  "Solution architecture pack": "Paused. Not made by the team: solution architects and pre-sales hold the raw content. We brand and scale it. An illustrative agency cost is to come.",
   "Messaging House": "3 ICP cohorts give 3 messaging houses; markets pick the closest and adapt. Approved by product, market, brand, sustainability, legal and compliance (varies by product) before any content is made. Needs the new tone of voice and brand guidelines.",
-  "Product name": "Rules to come from Sally: at most 5 words, starts with Vodafone Business, descriptive. 3 to 5 names go to legal. A naming brief template exists. Kept off any shared platform for now.",
+  "Product name": "Rules to come: at most 5 words, starts with Vodafone Business, descriptive. 3 to 5 names go to legal. A naming brief template exists. Kept off any shared platform for now.",
   "SEO keywords": "No keyword tools today (Brand Path exists, no access). We add an AEO audit and search volumes by market, on consumption. The cost model still to agree."
 };
 const dkey = name => name.toLowerCase().replace(/[^a-z0-9]+/g, "-");
