@@ -198,7 +198,7 @@ function discussHTML(){
             <button class="rtbtn" data-rt="h3" data-hover="Heading" aria-label="Heading">${ic("head", 14)}</button>
             <span class="rtsp"></span>
             <button class="rtbtn${REC ? " rec" : ""}" data-voice data-hover="${REC ? "Stop recording" : "Record your voice"}" aria-label="Record your voice">${ic("mic", 15)}${REC ? "<i>Recording</i>" : ""}</button>
-            <button class="rtbtn go" data-convert data-hover="Turn the notes into the detailed page" aria-label="Analyze">${ic("spark", 14)}<i>Analyze</i></button>
+            <button class="rtbtn go" data-convert data-hover="Analyze" aria-label="Analyze">${ic("spark", 14)}</button>
           </div>
           <div class="rtx" contenteditable="true" data-dfield="free" data-ph="Notes from the call, in your own words" role="textbox" aria-multiline="true">${toHtml(dfree(name))}</div></div></div>
       </div>
@@ -278,24 +278,31 @@ function parseNotes(text, a){
   if (approvers.length && review){ const who = approvers.join(", "); add("Who approves", review.who, who, () => { review.who = who; }); }
   if (madeBy) add("Made by", dval(a.name, "made") || "", madeBy, () => dPut(a.name, "made", madeBy));
   const rest = lines.filter((_, i) => !used.has(i));
-  if (rest.length){ const txt = rest.join("\n"); add("Notes (everything else)", (a.nuances || "").slice(0, 60), txt.length > 80 ? txt.slice(0, 80) + "…" : txt, () => { a.nuances = ((a.nuances || "") + ((a.nuances || "") ? "\n" : "") + txt).trim(); }); }
-  return items.filter(it => String(it.from) !== String(it.to));
+  const out = items.filter(it => String(it.from) !== String(it.to)); out.rest = rest; return out;
 }
 function convHTML(){
   const done = CONV.done || [], open = CONV.open || [];
-  return `<div class="dconv"><div class="dch"><b>${done.length ? `Added ${done.length} to the detailed page` : "Nothing new found in the notes"}</b></div>
+  return `<div class="dconv"><button class="dx" data-conv-x aria-label="Close" data-hover="Close">${ic("x", 14)}</button>
+    <div class="dch"><b>Brief processed</b></div>
     ${done.map(it => `<div class="dci2"><span class="dcl">${esc(it.label)}</span><span class="dct">${esc(String(it.to))}</span></div>`).join("")}
-    <div class="dch"><b>${open.length ? "Still open" : "Nothing open"}</b></div>
-    ${open.length ? `<ul class="dopen">${open.map(o => `<li>${esc(o)}</li>`).join("")}</ul>` : ""}
-    <div class="dcb"><button class="btn lime" data-dnext>Next asset</button><button class="cvbtn" data-conv-x>Close</button></div></div>`;
+    ${open.length ? `<div class="dch"><b>Please cover the following</b></div><ul class="dopen">${open.map(o => `<li>${esc(o)}</li>`).join("")}</ul>` : ""}</div>`;
 }
 /* Analyze: read the notes, apply what they say to the detailed page, then list what is still open */
 function analyze(){
   const as = S.assets[S.current], name = DCUR, ed = document.querySelector(".rtx");
   if (ed){ clearTimeout(dSaveT); dPut(name, "free", ed.innerHTML); }
-  const items = parseNotes(toPlain(dfree(name)), as);
+  const items = parseNotes(toPlain(dfree(name)), as), rest = items.rest || [];
   snap("Analyzed " + name);
   items.forEach(x => { if (x.on) x.apply(); });
+  /* what is left is the overview: the first line becomes the asset's description, the rest goes to its notes */
+  if (rest.length){
+    const txt = rest.map(l => l.replace(/^[-•]\s*/, "").trim()).filter(Boolean);
+    if (txt.length){
+      if (!(as.desc || "").trim()){ as.desc = txt.shift(); items.push({label: "Asset overview", to: as.desc, on: true}); }
+      if (txt.length) as.nuances = ((as.nuances || "") + ((as.nuances || "") ? " " : "") + txt.join(" ")).trim();
+    }
+  }
+  dPut(name, "free", "");   /* the notes are processed: the box starts clean for the next call */
   CONV = {name, done: items.filter(x => x.on), open: coverList(as, name)}; save(); render();
 }
 function placeCaretEnd(el){ const r = document.createRange(); r.selectNodeContents(el); r.collapse(false); const s = getSelection(); s.removeAllRanges(); s.addRange(r); }
