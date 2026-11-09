@@ -97,6 +97,46 @@ function applyBatch2(st){
   }
   (st.applied = st.applied || []).push("batch2"); return true;
 }
+/* Batch 3 (9 Nov): what Sally said on the 4 Nov call. Hours are her team's time, quoted by her; the quote
+   goes into the first step the team works on and is marked confirmed. Anything she did not give is left alone. */
+function applyBatch3(st){
+  if (!st || !st.assets || (st.applied || []).includes("batch3")) return false;
+  const by = n => Object.values(st.assets).find(x => (x.name || "").trim() === n);
+  const step = (a, re) => (a.steps || []).find(x => re.test(x.label));
+  const hrs = (a, re, v, who, fee) => { const x = step(a, re); if (!x) return; const conf = a.conf = a.conf || {};
+    if (!conf["h" + x.id]){ x.hours = v; conf["h" + x.id] = 1; } if (who) x.who = who; if (fee != null) x.fee = fee; };
+  const zero = (a, re) => { const x = step(a, re); if (x && !(a.conf || {})["h" + x.id]) x.hours = 0; };
+  const note = (a, t) => { a.nuances = (a.nuances ? a.nuances + " " : "") + t; };
+  let a;
+  if ((a = by("Product catalogue pages"))){ hrs(a, /^brief$/i, 3); note(a, "3 hours of team time for 2 pages (one product family), Sally, 4 Nov. How many families per portfolio: Sally to confirm."); }
+  if ((a = by("Product brochure"))){ hrs(a, /^brief$/i, 4); zero(a, /^copy$/i); note(a, "4 hours of team time for briefing, writing and approval, plus the agency design (Sally, 4 Nov). 4 pages, PDF."); }
+  if ((a = by("Product factsheet"))){ hrs(a, /^copy$/i, 3); note(a, "3 hours of team time for the 2-page factsheet (Sally, 4 Nov). Template exists."); }
+  if ((a = by("Customer FAQ"))){ note(a, "New. About 20 questions, generic for now. Feeds AEO and Highspot (Sally, 4 Nov). Hours not given yet."); }
+  if ((a = by("Interactive demo video"))){ hrs(a, /^brief$/i, 15); note(a, "15 hours of team time per video (Sally, 4 Nov). Navattic approval is close; one demo per product with a portal, volume to come from Sally."); }
+  if ((a = by("Explainer video"))){ zero(a, /script brief/i); hrs(a, /^script$/i, 15); note(a, "15 hours of team time today, mostly scripting and feedback loops (Sally, 4 Nov). Social cutdowns go in the same price. 60 seconds is the length wanted."); }
+  if ((a = by("Sales to customer email"))){ zero(a, /^brief$/i); hrs(a, /^draft$/i, 2); note(a, "2 hours an email, one email today. Should be one per ICP cohort (3). Known customers only, sent through Highspot (Sally, 4 Nov)."); }
+  if ((a = by("Social pack"))){ zero(a, /^brief$/i); hrs(a, /^draft$/i, 1, "PMM", 0); const mv = step(a, /market version/i); if (mv) mv.fee = 0;
+    note(a, "3 static posts, about 1 hour for all three, done in-house only (Sally, 4 Nov)."); }
+  if ((a = by(".com presence"))){ zero(a, /^brief$/i); hrs(a, /^draft$/i, 1); note(a, "A couple of sentences for the portfolio page, about 1 hour (Sally, 4 Nov). Anything longer is bespoke per market."); }
+  if ((a = by("Video cutdowns"))){ note(a, "New: not done today. 3 or 4 cutdowns per long video for LinkedIn and YouTube Shorts (Sally, 4 Nov)."); }
+  if ((a = by("Blog or article"))){ zero(a, /^brief$/i); hrs(a, /^draft$/i, 2, "PMM", 0); hrs(a, /product review/i, 3, "Subject matter expert");
+    note(a, "2 hours for Sally's team and 3 for the subject matter expert who authors it. Written in-house now, the agency budget was cut. Wanted: at least one a month, ideally every two weeks (Sally, 4 Nov)."); }
+  if ((a = by("eBook"))){ a.optional = false; a.tiers = null; a.today = {n: 4, u: 0, m: 0}; a.want = {n: 12, u: 0, m: 0}; hrs(a, /^brief$/i, 12);
+    note(a, "12 hours of team time today, the target is 4. One a quarter today, 12 a year is Sally's very optimistic target. Design is the heavy part (Sally, 4 Nov)."); }
+  if ((a = by("Pitch deck"))){ a.optional = true; a.tiers = []; a.today = {n: 0, u: 0, m: 0}; a.want = {n: 0, u: 0, m: 0};
+    note(a, "Out of the case for now (Sally and Mohit, 4 Nov): too bespoke. A second stage, if products can be grouped into 4 or 5 cohorts. A standard look and feel can come first."); }
+  const TECH = ["Solution architecture pack", "Technical factsheet", "Security and compliance pack", "API and integration factsheet", "Service guide", "Migration guide", "Implementation guide", "Customer welcome email", "Welcome FAQ", "How-to guide, PDF", "How-to guides, interactive"];
+  for (const n of TECH) if ((a = by(n))){ a.optional = true; a.tiers = []; a.today = {n: 0, u: 0, m: 0}; a.want = {n: 0, u: 0, m: 0};
+    note(a, "Paused (Sally, 4 Nov): not made by her team today; pre-sales and solution architects hold the raw content. Sally will give an illustrative agency cost, so it shows as new work AI makes possible."); }
+  for (const n of ["Demo video", "Customer guide", "Educational videos"]){ const x = by(n); if (!x) continue;
+    st.sections.forEach(s => s.assets = s.assets.filter(id => id !== x.id)); delete st.assets[x.id]; }
+  const sp = by("Social pack"), to = (st.sections || []).find(x => x.name === "Positioning and messaging"), from = sp && (st.sections || []).find(x => x.assets.includes(sp.id));
+  if (sp && to && from && from !== to){ from.assets = from.assets.filter(id => id !== sp.id); const ck = by("Copy kit"), at = ck ? to.assets.indexOf(ck.id) : -1; to.assets.splice(at >= 0 ? at + 1 : to.assets.length, 0, sp.id); }
+  const B = st.benefits = st.benefits || {lines: [], strategic: []};
+  if (!(B.lines || []).some(l => /Navattic/.test(l.label))) (B.lines = B.lines || []).push({id: "bnav" + Date.now().toString(36), label: "Interactive demo licence (Navattic)", now: "€15,000 a year for the whole team, due end of March", ai: "Not needed if the platform makes the MP4 demos", how: "Sally's figure, 4 Nov. Not in the totals."});
+  if (!st.assets[st.current]) st.current = st.sections.flatMap(x => x.assets)[0];
+  (st.applied = st.applied || []).push("batch3"); return true;
+}
 /* hosted: one shared copy of the whole tool; the newest save wins */
 const SHARED = location.protocol.startsWith("http");
 function pullState(){
@@ -105,7 +145,7 @@ function pullState(){
   fetch("api/state").then(r => r.json()).then(R => {
     if (!R || !R.assets || (R.version || 0) < 16) return;
     if ((R.savedAt || 0) > (S.savedAt || 0)){
-      S = R; cleanState(S); applyBatch1(S); applyBatch2(S); try { localStorage.setItem(STORE + S.client.id, JSON.stringify(S)); } catch(_){}
+      S = R; cleanState(S); applyBatch1(S); applyBatch2(S); applyBatch3(S); try { localStorage.setItem(STORE + S.client.id, JSON.stringify(S)); } catch(_){}
       const y = scrollY; render(); scrollTo(0, y);
     }
   }).catch(() => {});
@@ -1066,4 +1106,4 @@ window.__bc = {S: () => S, compute, render};
 
 if (SHARED){ pullState(); setInterval(pullState, 15000); }
 
-if (cleanState(S) | applyBatch1(S) | applyBatch2(S)){ save(); render(); }
+if (cleanState(S) | applyBatch1(S) | applyBatch2(S) | applyBatch3(S)){ save(); render(); }
