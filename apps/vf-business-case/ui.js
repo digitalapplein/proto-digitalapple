@@ -191,6 +191,42 @@ function applyBatch7(st){
   }
   (st.applied = st.applied || []).push("batch7"); return true;
 }
+/* Batch 8 (9 Nov): the list follows what was agreed on the 4 Nov call: One Brief on its own, a Product brief of two outputs,
+   Discovery and research, buyer items split, the copy kit as one asset with its contents as outputs, social and .com with the messaging. */
+function applyBatch8(st){
+  if (!st || !st.assets || (st.applied || []).includes("batch8")) return false;
+  const by = n => Object.values(st.assets).find(x => (x.name || "").trim() === n);
+  const sec = n => st.sections.find(x => x.name === n), secOf = id => st.sections.find(x => x.assets.includes(id));
+  const drop = x => { if (!x) return; st.sections.forEach(z => z.assets = z.assets.filter(id => id !== x.id)); delete st.assets[x.id]; };
+  const outs = (a, list) => { a.outputs = list.map(([label, format]) => ({id: uid("o"), label, format, example: "", files: []})); syncOut(a); };
+  const after = (z, id, ref) => { z.assets = z.assets.filter(x => x !== id); const at = ref ? z.assets.indexOf(ref) : -1; z.assets.splice(at >= 0 ? at + 1 : z.assets.length, 0, id); };
+  let a;
+  if ((a = by("One-page summary"))) a.name = "Product exec summary";
+  const ob = by("One Brief"), ex = by("Product exec summary"), sp = by("Product spotlight"), s1 = ob && secOf(ob.id);
+  if (s1 && ex && sp && s1.assets.includes(ex.id)){
+    s1.assets = s1.assets.filter(id => id !== ex.id && id !== sp.id);
+    st.sections.splice(st.sections.indexOf(s1) + 1, 0, {...s1, id: uid("p"), name: "Product brief", assets: [ex.id, sp.id]});
+  }
+  const rs = sec("Market and customer research"); if (rs) rs.name = "Discovery and research";
+  const split = (n, [n1, f1], [n2, f2]) => { const o = by(n); if (!o) return; const z = secOf(o.id);
+    const half = x => { x.hours = Math.round((+x.hours || 0) * 50) / 100; if (+x.fee) x.fee = Math.round(+x.fee / 2); };
+    const c = JSON.parse(JSON.stringify(o)); c.id = uid("a"); c.name = n2; c.conf = {}; c.covered = false;
+    c.steps.forEach(x => { x.id = uid("s"); half(x); }); (c.inputs || []).forEach(x => { x.id = uid("i"); });
+    o.steps.forEach(half); o.name = n1; o.conf = o.conf || {}; outs(o, [[n1, f1]]); outs(c, [[n2, f2]]);
+    st.assets[c.id] = c; if (z) after(z, c.id, o.id); };
+  split("Buying group and personas", ["Buying group", "Who is in the decision-making unit and their roles"], ["Buyer personas", "Persona cards: what matters to each role"]);
+  split("Buyer journey and discovery questions", ["Buyer journey", "How buyers research and buy"], ["Discovery questions", "What to ask along the journey, high level and detailed"]);
+  const ck = by("Copy kit");
+  if (ck){
+    outs(ck, [["Elevator pitches", "3 versions: short, medium, long"], ["Product boilerplate", ""], ["Feature blocks", "Short and long copy for each feature"], ["Social posts", "3 static posts, about 1 hour for the three"], ["Useful stats", "Stats sheet"]]);
+    ["Product feature blocks", "Product long and short copy", "Useful stats", "Social pack", "Bite-size content"].forEach(n => drop(by(n)));
+    if ((a = by("SEO keywords"))){ delete a.parent; a.tiers = ["L1", "L2", "L3"]; a.rows = "n"; a.today = {n: 22, u: 0, m: 0}; a.want = {n: 22, u: 0, m: 0};
+      a.nuances = "No keyword tools today. An AEO audit and search volumes by market are added, on consumption."; const z = secOf(ck.id); if (z) after(z, a.id, ck.id); }
+    if ((a = by(".com presence"))){ const z = sec("Positioning and messaging"), seo = by("SEO keywords"); if (z){ after(z, a.id, seo ? seo.id : ck.id); } st.sections.forEach(q => { if (q !== z) q.assets = q.assets.filter(id => id !== a.id); }); }
+  }
+  if (!st.assets[st.current]) st.current = st.sections.flatMap(x => x.assets)[0];
+  (st.applied = st.applied || []).push("batch8"); return true;
+}
 /* hosted: one shared copy of the whole tool; the newest save wins */
 const SHARED = location.protocol.startsWith("http");
 function pullState(){
@@ -199,7 +235,7 @@ function pullState(){
   fetch("api/state").then(r => r.json()).then(R => {
     if (!R || !R.assets || (R.version || 0) < 16) return;
     if ((R.savedAt || 0) > (S.savedAt || 0)){
-      S = R; cleanState(S); applyBatch1(S); applyBatch2(S); applyBatch3(S); applyBatch4(S); applyBatch5(S); applyBatch6(S); applyBatch7(S); try { localStorage.setItem(STORE + S.client.id, JSON.stringify(S)); } catch(_){}
+      S = R; cleanState(S); applyBatch1(S); applyBatch2(S); applyBatch3(S); applyBatch4(S); applyBatch5(S); applyBatch6(S); applyBatch7(S); applyBatch8(S); try { localStorage.setItem(STORE + S.client.id, JSON.stringify(S)); } catch(_){}
       const y = scrollY; render(); scrollTo(0, y);
     }
   }).catch(() => {});
@@ -512,26 +548,35 @@ function asIsHTML(m){
 
 /* ---------- Whole toolkit: one launch, sections fold open ---------- */
 /* Summary tab: one row an asset, grouped by section. Figures are the FY27 plan made the way it is made today,
-   the same "old way" the business case starts from, so the totals always agree. Pick an asset on the left to see its section. */
+   the same "old way" the business case starts from, so the totals always agree. Pick an asset on the left to see its section.
+   Hours a piece is the team's time on one new piece; typing a number rescales that asset's team steps to match. */
+const teamHours = a => (a.steps || []).filter(x => x.phase !== "market" && !(+x.fee > 0)).reduce((t, x) => t + (+x.hours || 0), 0);
+function setTeamHours(a, v){
+  const steps = (a.steps || []).filter(x => x.phase !== "market" && !(+x.fee > 0)), cur = steps.reduce((t, x) => t + (+x.hours || 0), 0), conf = a.conf = a.conf || {};
+  if (!steps.length) return;
+  if (cur > 0) steps.forEach(x => { x.hours = Math.round((+x.hours || 0) * v / cur * 1000) / 1000; conf["h" + x.id] = 1; });
+  else { steps[0].hours = v; conf["h" + steps[0].id] = 1; }
+}
 function summaryHTML(m){
   const rail = RAIL_HIDE ? `<div class="askcol slim"><button class="railbtn" data-rail data-hover="Show the asset list" aria-label="Show the asset list">${ic("side", 16)}</button></div>`
     : `<div class="askcol"><section class="ask">${railHTML()}</section></div>`;
-  const fig = x => ({vol: x.pieces.plan, agency: x.year.old.agency, vf: x.year.old.central + x.year.old.market, hrs: x.year.old.hCentral + x.year.old.hMarket, other: x.year.old.other});
-  const zero0 = () => ({vol: 0, agency: 0, vf: 0, hrs: 0, other: 0});
+  const fig = x => ({vol: x.pieces.plan, agency: x.year.old.agency + x.year.old.other, vf: x.year.old.central + x.year.old.market, hrs: x.year.old.hCentral + x.year.old.hMarket});
+  const zero0 = () => ({vol: 0, agency: 0, vf: 0, hrs: 0});
   const add = (t, f) => { for (const k in t) t[k] += f[k]; return t; };
-  const cell = f => `<td class="n">${f.vol ? n0(f.vol) : "–"}</td><td class="n">${f.agency ? eur(f.agency) : "–"}</td><td class="n">${f.hrs ? `${eur(f.vf)}<small>${n0(f.hrs)} h</small>` : "–"}</td><td class="n">${f.other ? eur(f.other) : "–"}</td>`;
-  const cur = S.assets[S.current], scope = cur ? cur.name && (S.sections.find(sec => sec.assets.includes(S.current)) || {}).id : null;
+  const cell = f => `<td class="n">${f.vol ? n0(f.vol) : "–"}</td>`;
+  const money3 = f => `<td class="n">${f.hrs || f.vf ? `${eur(f.vf)}<small>${n0(f.hrs)} h a year</small>` : "–"}</td><td class="n">${f.agency ? eur(f.agency) : "–"}</td><td class="n"><b>${f.vf + f.agency ? eur(f.vf + f.agency) : "–"}</b></td>`;
+  const cur = S.assets[S.current], scope = cur ? (S.sections.find(sec => sec.assets.includes(S.current)) || {}).id : null;
   const T = zero0();
   const body = S.sections.filter(sec => !scope || sec.id === scope).map(sec => {
     const xs = m.assets.filter(x => x.sectionId === sec.id && (x.pieces.today > 0 || x.pieces.plan > 0)); if (!xs.length) return "";
-    const sub = xs.reduce((t, x) => add(t, fig(x)), zero0()); add(T, sub);
-    return `<tr class="grp"><td>${esc(sec.name)}</td><td></td>${cell(sub)}<td></td></tr>` + xs.map(x => `<tr class="${x.id === S.current ? "on" : ""}${(S.assets[x.id] || {}).parent ? " kid" : ""}"><td><button class="aname" data-goto="${x.id}" title="Open ${esc(x.name)}">${esc(x.name)}</button></td><td class="st">${x.made ? "Existing" : "New"}</td>${cell(fig(x))}<td class="n">${x.sched.old.elapsed ? n0(x.sched.old.elapsed) + " d" : "–"}</td></tr>`).join("");
+    xs.forEach(x => add(T, fig(x)));
+    return `<tr class="grp"><td colspan="8">${esc(sec.name)}</td></tr>` + xs.map(x => { const a = S.assets[x.id] || {}, f = fig(x);
+      return `<tr class="${x.id === S.current ? "on" : ""}"><td><button class="aname" data-goto="${x.id}" title="Open ${esc(x.name)}">${esc(x.name)}</button></td><td class="st">${x.made ? "Existing" : "New"}</td>${cell(f)}<td class="n"><span class="pair"><input class="num sm" data-sumh="${x.id}" inputmode="decimal" value="${val(Math.round(teamHours(a) * 10) / 10)}" aria-label="Team hours for one ${esc(x.name)}"><i>h</i></span></td>${money3(f)}<td class="n">${x.sched.old.elapsed ? n0(x.sched.old.elapsed) + " d" : "–"}</td></tr>`; }).join("");
   }).join("");
-  const where = scope ? (S.sections.find(x => x.id === scope) || {}).name : "all sections";
-  return `<div class="grid${RAIL_HIDE ? " slimg" : ""}">${rail}<div class="answers"><section class="detail sumtab"><div class="tabbar"><h3>Summary</h3><div class="tools">${esc(where)} · the FY27 plan, made the way it is made today</div></div>
-    <div class="tscroll"><table class="sm"><thead><tr><th>Asset</th><th>Status</th><th class="n">Volume</th><th class="n">Agency</th><th class="n">Vodafone</th><th class="n">Other</th><th class="n">Cycle time</th></tr></thead><tbody>${body}
-    <tr class="tot"><td>Total</td><td></td>${cell(T)}<td></td></tr></tbody></table></div>
-    <p class="smnote">Volume is pieces a year. New assets are not made today; their cost is what an agency would charge. Vodafone is team time: hours at the rate set in Assumptions. Cycle time is start to finish for one piece. Choose Digital toolkit on the left to see everything.</p></section></div></div>`;
+  const where = scope ? (S.sections.find(x => x.id === scope) || {}).name : "All sections";
+  return `<div class="grid${RAIL_HIDE ? " slimg" : ""}">${rail}<div class="answers"><section class="detail sumtab"><div class="tabbar"><h3>Summary</h3><div class="tools">${esc(where)}</div></div>
+    <div class="tscroll"><table class="sm"><thead><tr><th>Asset</th><th>Status</th><th class="n">Volume</th><th class="n">Hours a piece</th><th class="n">Vodafone cost</th><th class="n">Agency cost</th><th class="n">Total</th><th class="n">Cycle time</th></tr></thead><tbody>${body}
+    <tr class="tot"><td>Total</td><td></td>${cell(T)}<td></td>${money3(T)}<td></td></tr></tbody></table></div></section></div></div>`;
 }
 function toolkitHTML(m){
   const k0 = toolkit(S, m, false), k1 = toolkit(S, m, true);
@@ -935,7 +980,7 @@ document.addEventListener("input", e => {
 });
 /* labels and notes only redraw the sums once the field is left */
 document.addEventListener("click", e => { const b = e.target.closest && e.target.closest("[data-set-status]"); if (!b) return; const a = S.assets[S.current]; if (a){ setStatus(a, b.dataset.setStatus); render(); save(); } });
-document.addEventListener("change", e => { if (e.target.dataset.status){ const a = S.assets[e.target.dataset.status]; if (a){ setStatus(a, e.target.value); render(); save(); } return; } });
+document.addEventListener("change", e => { if (e.target.dataset.sumh){ const a = S.assets[e.target.dataset.sumh], v = parseFloat(String(e.target.value).replace(",", ".")); if (a && v >= 0){ snap(`Hours for ${a.name}`); setTeamHours(a, v); render(); save(); } return; } if (e.target.dataset.status){ const a = S.assets[e.target.dataset.status]; if (a){ setStatus(a, e.target.value); render(); save(); } return; } });
 document.addEventListener("change", e => { if (e.target.dataset.s || e.target.dataset.sai || e.target.dataset.tl || e.target.dataset.f === "name") { const y = scrollY; render(); scrollTo(0, y); } });
 
 document.addEventListener("click", e => {
@@ -1186,4 +1231,4 @@ window.__bc = {S: () => S, compute, render};
 
 if (SHARED){ pullState(); setInterval(pullState, 15000); }
 
-if (cleanState(S) | applyBatch1(S) | applyBatch2(S) | applyBatch3(S) | applyBatch4(S) | applyBatch5(S) | applyBatch6(S) | applyBatch7(S)){ save(); render(); }
+if (cleanState(S) | applyBatch1(S) | applyBatch2(S) | applyBatch3(S) | applyBatch4(S) | applyBatch5(S) | applyBatch6(S) | applyBatch7(S) | applyBatch8(S)){ save(); render(); }

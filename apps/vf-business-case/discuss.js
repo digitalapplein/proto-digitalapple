@@ -84,6 +84,8 @@ const TYPED = {
   "Product brochure": {format: "Brochure, 2 or 4 pages, PDF", inputs: "Product specs from Product, approved images from Brand"}
 };
 for (const [k, v] of Object.entries(TYPED)) SEED[k] = {...(SEED[k] || {}), ...v};
+const ALIAS = {"Product exec summary": "One-page summary", "Buying group": "Buying group and personas", "Buyer personas": "Buying group and personas",
+  "Buyer journey": "Buyer journey and discovery questions", "Discovery questions": "Buyer journey and discovery questions"};
 const RENAME = {"Ideal customer profile": "Ideal customer profiles", "Market opportunity and vertical matrix": "Market Opportunity", "Meet the Customer videos": "Meet the customer",
   "Product naming guide": "Product name", "Positioning statement": "Positioning Statement", "Messaging house": "Messaging House"};
 for (const [from, to] of Object.entries(RENAME)) if (SEED[from]){ SEED[to] = {...SEED[from], ...(SEED[to] || {})}; delete SEED[from]; }
@@ -135,7 +137,7 @@ function dAll(){
   for (const [name, r] of Object.entries(D)) if (r && r._added && !out.some(x => x.name === name)) out.push({name, phase: r._added, depth: 0, added: true});
   return out;
 }
-const dval = (name, k) => { const r = D[name]; if (r && k in r) return r[k]; const s = SEED[name]; if (s && k in s) return s[k]; const e = dEst(name); return k in e ? e[k] : ""; };
+const dval = (name, k) => { const r = D[name]; if (r && k in r) return r[k]; const s = SEED[name]; if (s && k in s) return s[k]; const al = ALIAS[name]; if (al){ const ra = D[al], sa = SEED[al]; if (ra && k in ra) return ra[k]; if (sa && k in sa) return sa[k]; } const e = dEst(name); return k in e ? e[k] : ""; };
 const disEst = (name, k) => { const r = D[name]; if (r && k in r) return false; const s = SEED[name]; if (s && k in s) return false; return k in dEst(name); };
 const dgap = (name, f) => { const v = dval(name, f.k); return v === "" || v == null; };
 const dcount = name => DREQ.filter(f => !dgap(name, f)).length;
@@ -184,7 +186,7 @@ function coverList(a, name){
   return out;
 }
 /* the notes are one free-flow box; notes typed earlier in the six boxes are folded in the first time */
-const dfree = name => { const r = D[name] || {}; if ("free" in r) return String(r.free || ""); if (CALL4[name] && !BOX.some(b => (r[b.k] || "").trim())) return CALL4[name]; return BOX.map(b => (r[b.k] || "").trim() ? `${b.l}\n${r[b.k].trim()}` : "").filter(Boolean).join("\n\n"); };
+const dfree = name => { const r = D[name] || {}; if (!("free" in r) && ALIAS[name] && D[ALIAS[name]] && "free" in D[ALIAS[name]]) return String(D[ALIAS[name]].free || ""); if ("free" in r) return String(r.free || ""); if (CALL4[name] && !BOX.some(b => (r[b.k] || "").trim())) return CALL4[name]; return BOX.map(b => (r[b.k] || "").trim() ? `${b.l}\n${r[b.k].trim()}` : "").filter(Boolean).join("\n\n"); };
 
 /* ---------- convert the notes to structured data ----------
    A first version without AI: it reads hours, days, fees, who approves and
