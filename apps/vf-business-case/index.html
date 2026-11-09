@@ -613,14 +613,17 @@ table.adapt tbody tr.row td .grip{display:none}
 .c-saved{background:#DDF3CF;box-shadow:inset 0 0 0 1px #A9DE8C}
 .trow.ai .stack{background:transparent}
 .legend i.c-saved{width:9px;height:9px;border-radius:2px;display:inline-block;box-shadow:inset 0 0 0 1px #A9DE8C}
-.amycard{margin:16px 16px 4px;border:1px solid #B7DCA6;background:#EEF8E7;border-radius:12px;padding:12px 16px}
-.amyh{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}.amyh b{font:700 13px/18px var(--display);color:#25631A}
-.amyg{display:grid;grid-template-columns:1fr auto auto auto;gap:22px;align-items:center}
-.amyd{font-size:14px;color:var(--second)}
-.amyf{display:grid;gap:3px;justify-items:end}.amyf small{font:600 11px/14px var(--display);color:#25631A}.amyf b{font:700 16px/22px var(--display);color:#1C1D1C}
 .adempty{display:flex;align-items:center;justify-content:space-between;padding:14px 16px 10px;font:700 15px/20px var(--display)}
 .twin .fig{margin-top:2px;margin-bottom:2px}.eyb{margin-bottom:0}.twin .trow{margin-top:7px}
-.amycard+.tscroll{margin-top:26px}
+.steps2{display:grid;grid-template-columns:minmax(0,1fr) 250px;gap:16px;align-items:start;padding-right:16px}
+.amycard{margin:14px 0 4px;border:1px solid #B7DCA6;background:#EEF8E7;border-radius:12px;padding:12px 14px}
+.amyh{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:10px}.amyh b{font:700 13px/18px var(--display);color:#25631A}
+.amyd{font-size:13px;line-height:19px;color:var(--second);padding-bottom:8px;border-bottom:1px solid #CFE6C2;margin-bottom:6px}
+.amyl{display:flex;align-items:center;justify-content:space-between;padding:5px 0;font-size:13px;color:var(--second)}.amyl b{font:700 14px/20px var(--display);color:var(--ink)}
+.amyl.tot{border-top:1px solid #CFE6C2;margin-top:4px;padding-top:8px}.amyl.tot span{font-weight:700;color:var(--ink)}
+.steps2+.tscroll{margin-top:26px}
+@media (max-width:1240px){.steps2{grid-template-columns:1fr}.steps2 .amycard{margin-left:16px}}
+.steps2 .amycard{margin-top:0}
 </style>
 </head>
 <body>

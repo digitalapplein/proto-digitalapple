@@ -560,13 +560,14 @@ function rolesHTML(){
 }
 /* With Amy an asset is one step: Vodafone's review time, the days, and Amy's price for its size */
 function amyCard(a){
-  const kind = routeOf(S, a).kind, price = runsOf(S, a) * runPriceOf(S, a);
+  const kind = routeOf(S, a).kind, price = runsOf(S, a) * runPriceOf(S, a), vf = amyHours(a) * (lever(S, "rate") || 0);
   return `<div class="amycard"><div class="amyh"><b>With Amy</b>
       <span class="pillrow" role="group" aria-label="How Amy makes it">${[["self", "Self-service"], ["dfy", "Done-for-you"]].map(([k, l]) => `<button class="pill" data-amy-route="${k}" aria-pressed="${kind === k}">${l}</button>`).join("")}</span></div>
-    <div class="amyg"><span class="amyd">Amy reads, writes and designs in one step</span>
-      <label class="amyf"><small>Vodafone hours</small><span class="pair"><input class="num sm" data-amy="hours" inputmode="decimal" value="${val(amyHours(a))}" aria-label="Vodafone hours with Amy"><i>h</i></span></label>
-      <label class="amyf"><small>Days</small><span class="pair"><input class="num sm" data-amy="days" inputmode="decimal" value="${val(amyDays(a))}" aria-label="Days with Amy"><i>d</i></span></label>
-      <span class="amyf"><small>Amy price</small><b>${eur(price)}</b></span></div></div>`;
+    <div class="amyd">Amy reads, writes and designs in one step</div>
+    <div class="amyl"><span>Vodafone hours</span><span class="pair"><input class="num sm" data-amy="hours" inputmode="decimal" value="${val(amyHours(a))}" aria-label="Vodafone hours with Amy"><i>h</i></span></div>
+    <div class="amyl"><span>Days</span><span class="pair"><input class="num sm" data-amy="days" inputmode="decimal" value="${val(amyDays(a))}" aria-label="Days with Amy"><i>d</i></span></div>
+    <div class="amyl"><span>Amy price</span><b>${eur(price)}</b></div>
+    <div class="amyl tot"><span>Total</span><b>${eur(vf + price)} · ${dd(amyDays(a))} ${dayw(amyDays(a))}</b></div></div>`;
 }
 function asIsHTML(m){
   const rail = RAIL_HIDE ? `<div class="askcol slim"><button class="railbtn" data-rail data-hover="Show the asset list" aria-label="Show the asset list">${ic("side", 16)}</button></div>`
@@ -650,11 +651,11 @@ function asIsHTML(m){
             noteRow(o.id, 4, `data-outf="example" data-outid="${o.id}"`, o.example, "A template or notes: what good looks like", o.files)).join("")}</tbody></table></div>
         <div class="tscroll"><table class="tin"><colgroup><col style="width:48%"><col style="width:28%"><col style="width:12%"><col style="width:12%"></colgroup>
           <thead><tr><th class="sh">Inputs</th><th>From</th><th class="n">Takes</th><th class="n"><button class="add-btn" data-add-input>${ic("plus", 11)} Add</button></th></tr></thead><tbody>${ins}</tbody></table></div>
-        <div class="tscroll"><table>${cols}${thead(true, "Steps", "data-add-step")}<tbody>${make.map((s, i) => stepRow(s, i, false)).join("")}
+        ${byAmy ? `<div class="steps2">` : ""}        <div class="tscroll"><table>${cols}${thead(true, "Steps", "data-add-step")}<tbody>${make.map((s, i) => stepRow(s, i, false)).join("")}
           ${tot(make, money(c0))}
 
         </tbody></table></div>
-        ${byAmy ? amyCard(a) : ""}
+        ${byAmy ? amyCard(a) + `</div>` : ""}
         ${mkt.length ? `<div class="tscroll"><table class="adapt">${cols}${thead(false, "Adaptations", `data-none hidden`)}<tbody>${mkt.slice(0, 1).map((s, i) => stepRow(s, 0, true)).join("")}
         </tbody></table></div>` : `<div class="tscroll"><div class="adempty"><span>Adaptations</span><button class="add-btn" data-add-step="market">${ic("plus", 11)} Add</button></div></div>`}
         ${stakeHTML(a, noteRow)}
