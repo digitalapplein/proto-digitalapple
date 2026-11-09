@@ -1,4 +1,4 @@
-# Vodafone business case tool, hosted
+# Vodafone business case, hosted (v2: Marketing Digital Toolkit; v1 kept at /v1/)
 
 A Render web service (not the static proto site) runs `node server.js` from this folder.
 It serves the tool and saves the Discussion page answers and attachments on the service disk (`DATA_DIR`, mounted at /data):

@@ -7,7 +7,8 @@ const ROOT = __dirname, DATA = process.env.DATA_DIR || path.join(ROOT, "_data"),
 const KEY = process.env.ACCESS_KEY || "", PORT = process.env.PORT || 8866;
 fs.mkdirSync(FILES, {recursive: true});
 const DB = path.join(DATA, "discuss.json"), LOG = path.join(DATA, "discuss-log.jsonl");
-const STATE = path.join(DATA, "state.json"), SNAPS = path.join(DATA, "state-history"); let lastSnap = 0;
+const STATE = path.join(DATA, "state.json"), SNAPS = path.join(DATA, "state-history"); let lastSnap = 0, lastToolkitSnap = 0;
+const TOOLKIT = path.join(DATA, "toolkit.json");
 fs.mkdirSync(SNAPS, {recursive: true});
 let store = {}; try { store = JSON.parse(fs.readFileSync(DB, "utf8")); } catch(_){}
 const TYPES = {".html": "text/html; charset=utf-8", ".js": "text/javascript", ".css": "text/css", ".svg": "image/svg+xml", ".png": "image/png",
@@ -27,7 +28,19 @@ http.createServer(async (req, res) => {
   const cookie = KEY && u.searchParams.get("k") === KEY ? {"set-cookie": `k=${KEY}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=31536000`} : {};
   if (Object.keys(cookie).length) req.headers.cookie = (req.headers.cookie ? req.headers.cookie + "; " : "") + "k=" + KEY;
   if (!authed(req)) return send(res, 401, "<p style='font-family:sans-serif;padding:40px'>Open the link you were sent to use this page.</p>", "text/html");
+  /* version 1 of the tool lives under /v1/ and keeps using the same api and files */
+  if (u.pathname === "/v1") return send(res, 302, "", "text/plain", {location: "/v1/" + u.search});
+  if (/^\/v1\/(api|files)\//.test(u.pathname)) u.pathname = u.pathname.slice(3);
   try {
+    if (u.pathname === "/api/toolkit" && req.method === "GET"){
+      try { return send(res, 200, fs.readFileSync(TOOLKIT)); } catch(_){ return send(res, 200, "{}"); }
+    }
+    if (u.pathname === "/api/toolkit" && req.method === "POST"){
+      const raw = await body(req, 8e6); JSON.parse(raw);
+      const tmp = TOOLKIT + ".tmp"; fs.writeFileSync(tmp, raw); fs.renameSync(tmp, TOOLKIT);
+      const now = Date.now(); if (now - lastToolkitSnap > 10 * 60e3){ lastToolkitSnap = now; fs.writeFileSync(path.join(SNAPS, "toolkit-" + new Date(now).toISOString().replace(/[:.]/g, "-") + ".json"), raw); }
+      return send(res, 200, '{"ok":true}');
+    }
     if (u.pathname === "/api/share"){
       const proto = req.headers["x-forwarded-proto"] || "http", host = req.headers["x-forwarded-host"] || req.headers.host;
       return send(res, 200, JSON.stringify({url: `${proto}://${host}/${KEY ? "?k=" + KEY : ""}`}));
@@ -61,7 +74,7 @@ http.createServer(async (req, res) => {
     let f = decodeURIComponent(u.pathname);
     const base = f.startsWith("/files/") ? FILES : ROOT;
     if (f.startsWith("/files/")) f = f.slice(6);
-    if (f === "/") f = "/index.html";
+    if (f.endsWith("/")) f += "index.html";
     const full = path.normalize(path.join(base, f));
     if (!full.startsWith(base) || full.includes(`${path.sep}_data`) || /server\.js$|package\.json$/.test(full)) return send(res, 404, "not found", "text/plain");
     fs.readFile(full, (err, d) => err ? send(res, 404, "not found", "text/plain")
