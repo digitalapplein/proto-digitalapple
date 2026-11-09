@@ -246,7 +246,7 @@ function render(){
   $("#client").textContent = S.client.project; $("#clientName").textContent = S.client.name;
   document.querySelectorAll("[data-tab]").forEach(b => b.setAttribute("aria-selected", b.dataset.tab === TAB));
   const m = compute(S);
-  $("#main").innerHTML = TAB === "discuss" ? (typeof discussHTML === "function" ? discussHTML() : "") : TAB === "asis" ? asIsHTML(m) : TAB === "tobe" ? toBeHTML(m) : bcHTML(m);
+  $("#main").innerHTML = TAB === "discuss" ? (typeof discussHTML === "function" ? discussHTML() : "") : TAB === "asis" ? asIsHTML(m) : TAB === "summary" ? summaryHTML(m) : TAB === "tobe" ? toBeHTML(m) : bcHTML(m);
   document.querySelectorAll("[data-count]").forEach(countTo);
   if (TAB === "asis") markUnconfirmed();
 }
@@ -511,23 +511,24 @@ function asIsHTML(m){
 }
 
 /* ---------- Whole toolkit: one launch, sections fold open ---------- */
-/* As-is at a glance: today's facts only, one row a section. Spend is the FY27 plan made the way it is made today,
+/* Summary tab: one row an asset, grouped by section. Spend is the FY27 plan made the way it is made today,
    the same "old way" the business case starts from, so the totals always agree. */
-function summaryHTML(m, k0){
-  const rows = S.sections.map(sec => {
-    const xs = m.assets.filter(x => x.sectionId === sec.id && (x.pieces.today > 0 || x.pieces.plan > 0)); if (!xs.length) return null;
-    const sum = f => xs.reduce((t, x) => t + f(x), 0), rs = k0.rows.filter(r => xs.some(x => x.id === r.id));
-    return {id: sec.id, name: sec.name, made: xs.filter(x => x.made).length, fresh: xs.filter(x => !x.made).length,
-      today: sum(x => x.pieces.today), plan: sum(x => x.pieces.plan), spend: sum(x => x.year.old.agency + x.year.old.other),
-      hours: sum(x => x.year.old.hCentral + x.year.old.hMarket), day: rs.length ? Math.max(...rs.map(r => r.end)) : null};
-  }).filter(Boolean).sort((a, b) => b.spend - a.spend);
-  const T = rows.reduce((t, r) => ({made: t.made + r.made, fresh: t.fresh + r.fresh, today: t.today + r.today, plan: t.plan + r.plan, spend: t.spend + r.spend, hours: t.hours + r.hours}), {made: 0, fresh: 0, today: 0, plan: 0, spend: 0, hours: 0});
-  const assets = r => `${r.made}${r.fresh ? ` <span class="na">+ ${r.fresh} new</span>` : ""}`;
-  return `<section class="detail sumtab"><div class="tabbar"><h3>At a glance</h3><div class="tools">made the way it is today, FY27 plan</div></div>
-    <div class="tscroll"><table class="sm"><thead><tr><th>Section</th><th class="n">Assets</th><th class="n">Pieces a year today</th><th class="n">FY27 plan</th><th class="n">Agency and outside spend</th><th class="n">Team hours</th><th class="n">Ready by day</th></tr></thead><tbody>
-    ${rows.map(r => `<tr><td><button class="sectbtn" data-ksec="${r.id}" title="Show its assets below">${esc(r.name)}</button></td><td class="n">${assets(r)}</td><td class="n">${n0(r.today)}</td><td class="n">${n0(r.plan)}</td><td class="n">${r.spend ? eur(r.spend) : "–"}</td><td class="n">${r.hours ? n0(r.hours) : "–"}</td><td class="n">${r.day == null ? "–" : n0(r.day)}</td></tr>`).join("")}
-    <tr class="tot"><td>Total</td><td class="n">${assets(T)}</td><td class="n">${n0(T.today)}</td><td class="n">${n0(T.plan)}</td><td class="n">${eur(T.spend)}</td><td class="n">${n0(T.hours)}</td><td class="n">${n0(k0.end)}</td></tr>
-    </tbody></table></div><p class="smnote">New assets are not made today; their spend is what an agency would charge. Spend is the agency and outside cost only: team time is in hours.</p></section>`;
+function summaryHTML(m){
+  const rail = RAIL_HIDE ? `<div class="askcol slim"><button class="railbtn" data-rail data-hover="Show the asset list" aria-label="Show the asset list">${ic("side", 16)}</button></div>`
+    : `<div class="askcol"><section class="ask">${railHTML()}</section></div>`;
+  const fig = x => ({today: x.pieces.today, plan: x.pieces.plan, spend: x.year.old.agency + x.year.old.other, hours: x.year.old.hCentral + x.year.old.hMarket});
+  const add = (t, f) => { t.today += f.today; t.plan += f.plan; t.spend += f.spend; t.hours += f.hours; return t; };
+  const cell = f => `<td class="n">${n0(f.today)}</td><td class="n">${n0(f.plan)}</td><td class="n">${f.spend ? eur(f.spend) : "–"}</td><td class="n">${f.hours ? n0(f.hours) : "–"}</td>`;
+  const T = {today: 0, plan: 0, spend: 0, hours: 0};
+  const body = S.sections.map(sec => {
+    const xs = m.assets.filter(x => x.sectionId === sec.id && (x.pieces.today > 0 || x.pieces.plan > 0)); if (!xs.length) return "";
+    const sub = xs.reduce((t, x) => add(t, fig(x)), {today: 0, plan: 0, spend: 0, hours: 0}); add(T, sub);
+    return `<tr class="grp"><td>${esc(sec.name)}</td>${cell(sub)}<td></td></tr>` + xs.map(x => `<tr class="${x.id === S.current ? "on" : ""}${(S.assets[x.id] || {}).parent ? " kid" : ""}"><td><button class="aname" data-goto="${x.id}" title="Open ${esc(x.name)}">${esc(x.name)}</button>${x.made ? "" : ` <span class="newtag on sm">New</span>`}</td>${cell(fig(x))}<td class="n">${x.sched.old.elapsed ? n0(x.sched.old.elapsed) : "–"}</td></tr>`).join("");
+  }).join("");
+  return `<div class="grid${RAIL_HIDE ? " slimg" : ""}">${rail}<div class="answers"><section class="detail sumtab"><div class="tabbar"><h3>Summary</h3><div class="tools">made the way it is today, FY27 plan</div></div>
+    <div class="tscroll"><table class="sm"><thead><tr><th>Asset</th><th class="n">Today a year</th><th class="n">FY27 plan</th><th class="n">Agency spend</th><th class="n">Team hours</th><th class="n">Days</th></tr></thead><tbody>${body}
+    <tr class="tot"><td>Total</td>${cell(T)}<td></td></tr></tbody></table></div>
+    <p class="smnote">New assets are not made today; their spend is what an agency would charge. Spend is the agency and outside cost for the year; team time is in hours. Days are start to finish for one piece. Parts of a block sit indented.</p></section></div></div>`;
 }
 function toolkitHTML(m){
   const k0 = toolkit(S, m, false), k1 = toolkit(S, m, true);
@@ -557,7 +558,7 @@ function toolkitHTML(m){
     return `<div class="grow gsec"><span class="l"><button class="sectbtn" data-ksec="${sec.id}" aria-expanded="${open}"><span class="chev">${ic("chev", 12)}</span>${esc(sec.name)}<span class="cnt">${xs.length}</span></button></span><span class="t">${bars}</span><span class="v">${v}</span></div>` +
       (open ? xs.map(assetRow).join("") : "");
   }).join("");
-  return summaryHTML(m, k0) + `<section class="hero">
+  return `<section class="hero">
       <div class="headline"><span class="n"><span data-count="kit" data-to="${faster}" data-fmt="d">${faster}</span>%</span><span class="u">faster cycle time: ${Math.round(k1.end)} days to launch a toolkit with AI, against ${Math.round(k0.end)} today${info("kit")}</span></div>
       <div class="kitbars">${twoBars("Today", k0, "With AI", k1, scale, timeBar, Math.round(k0.end) + " d", Math.round(k1.end) + " d")}${legend([...TIME, ["c-ai-key", "With AI"]])}</div>
       <div class="gantt${VIEW === "ai" ? " ai" : ""}"><h3>Section by section${viewPills()}</h3>${secs}</div>
@@ -937,7 +938,7 @@ document.addEventListener("change", e => { if (e.target.dataset.s || e.target.da
 document.addEventListener("click", e => {
   const q = sel => e.target.closest(sel);
   let b;
-  if ((b = q("[data-tab]"))){ if (b.dataset.tab === "asis" && TAB !== "asis") S.current = "toolkit"; TAB = b.dataset.tab; render(); scrollTo(0, 0); return; }
+  if ((b = q("[data-tab]"))){ TAB = b.dataset.tab; render(); scrollTo(0, 0); return; }
   if (!q("#exportWrap")) $("#exportMenu").hidden = true;
   if ((b = q("#exportBtn"))){ const mnu = $("#exportMenu"); mnu.hidden = !mnu.hidden; b.setAttribute("aria-expanded", !mnu.hidden); return; }
   if ((b = q("[data-rail]"))){ RAIL_HIDE = !RAIL_HIDE; try { localStorage.setItem(STORE + "railHidden", RAIL_HIDE ? "1" : "0"); } catch(_){} hideTip(); render(); return; }
@@ -1173,7 +1174,7 @@ function exportExcel(){
     if (a.nuances) map.push([sec.name, a.name, "Nuances", a.nuances]);
   }
   const xml = `<?xml version="1.0"?><?mso-application progid="Excel.Sheet"?><Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">` +
-    sheet("Business case", bc) + sheet("Budget with AI", tco) + sheet("Other benefits", bens) + sheet("To-be", tb) + sheet("Per asset", per) + sheet("As-is map", map) + `</Workbook>`;
+    sheet("Business case", bc) + sheet("Budget with AI", tco) + sheet("Other benefits", bens) + sheet("Assumptions", tb) + sheet("Per asset", per) + sheet("As-is map", map) + `</Workbook>`;
   download(`${S.client.id}-business-case.xls`, xml, "application/vnd.ms-excel");
 }
 
