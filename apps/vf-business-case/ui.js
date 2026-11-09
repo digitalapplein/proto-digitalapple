@@ -177,6 +177,20 @@ function applyBatch6(st){
   }
   (st.applied = st.applied || []).push("batch6"); return true;
 }
+/* Batch 7 (9 Nov): outputs that were known but empty are filled in. */
+const OUT7 = {"One Brief": ["One Brief", "Word document, 70 to 80 pages"], "Market Opportunity": ["Market opportunity and vertical matrix", "Vertical matrix template"],
+  "Meet the customer": ["Meet the customer videos", "3 videos per market, made in Synthesia"], "Messaging House": ["Messaging house", "3 versions, one per ICP cohort"],
+  "Product long and short copy": ["Long and short product copy", "Feature blogs, long and short copy"], "Marketing Hub page": ["Marketing Hub page", "One page per portfolio or product, from the agreed template"],
+  "Comms": ["Email to the markets", "Email"]};
+function applyBatch7(st){
+  if (!st || !st.assets || (st.applied || []).includes("batch7")) return false;
+  for (const a of Object.values(st.assets)){
+    const f = OUT7[(a.name || "").trim()]; if (!f) continue;
+    const o = outsOf(a); if (o.some(x => (x.label || "").trim())) continue;
+    o[0].label = f[0]; o[0].format = f[1]; syncOut(a);
+  }
+  (st.applied = st.applied || []).push("batch7"); return true;
+}
 /* hosted: one shared copy of the whole tool; the newest save wins */
 const SHARED = location.protocol.startsWith("http");
 function pullState(){
@@ -185,7 +199,7 @@ function pullState(){
   fetch("api/state").then(r => r.json()).then(R => {
     if (!R || !R.assets || (R.version || 0) < 16) return;
     if ((R.savedAt || 0) > (S.savedAt || 0)){
-      S = R; cleanState(S); applyBatch1(S); applyBatch2(S); applyBatch3(S); applyBatch4(S); applyBatch5(S); applyBatch6(S); try { localStorage.setItem(STORE + S.client.id, JSON.stringify(S)); } catch(_){}
+      S = R; cleanState(S); applyBatch1(S); applyBatch2(S); applyBatch3(S); applyBatch4(S); applyBatch5(S); applyBatch6(S); applyBatch7(S); try { localStorage.setItem(STORE + S.client.id, JSON.stringify(S)); } catch(_){}
       const y = scrollY; render(); scrollTo(0, y);
     }
   }).catch(() => {});
@@ -455,10 +469,12 @@ function asIsHTML(m){
   return intro + `<div class="grid${RAIL_HIDE ? " slimg" : ""}">${rail}
     <div class="answers">
       <section class="hero">
+        <div class="ahead2">
         <input class="title" data-f="name" data-k="title" value="${esc(a.name)}" aria-label="Asset name">
-        <input class="hdesc top" data-f="desc" data-k="desc" value="${esc(a.desc || "")}" placeholder="What this asset is for, in one line" aria-label="What this asset is for">
-        <span class="stsel"><span class="tocf" id="tocf"></span>Status <span class="pillrow">${[["required", "Required"], ["new", "New"], ["optional", "Optional"]].map(([k, l]) =>
+        <span class="stsel"><span class="tocf" id="tocf"></span><span class="pillrow" role="group" aria-label="Status of this asset">${[["required", "Required"], ["new", "New"], ["optional", "Optional"]].map(([k, l]) =>
           `<button class="pill" data-set-status="${k}" aria-pressed="${statusOf(a) === k}">${l}</button>`).join("")}</span></span>
+        </div>
+        <input class="hdesc top" data-f="desc" data-k="desc" value="${esc(a.desc || "")}" placeholder="What this asset is for, in one line" aria-label="What this asset is for">
         <div class="twin">
           <div class="blk">
             <div class="fig"><span data-count="c${a.id}" data-to="${money(c0)}">${eur(money(c0))}</span><span class="to">→</span><span class="ai">${eur(money(c1))}</span><small>per asset</small></div>
@@ -921,7 +937,7 @@ document.addEventListener("change", e => { if (e.target.dataset.s || e.target.da
 document.addEventListener("click", e => {
   const q = sel => e.target.closest(sel);
   let b;
-  if ((b = q("[data-tab]"))){ TAB = b.dataset.tab; render(); scrollTo(0, 0); return; }
+  if ((b = q("[data-tab]"))){ if (b.dataset.tab === "asis" && TAB !== "asis") S.current = "toolkit"; TAB = b.dataset.tab; render(); scrollTo(0, 0); return; }
   if (!q("#exportWrap")) $("#exportMenu").hidden = true;
   if ((b = q("#exportBtn"))){ const mnu = $("#exportMenu"); mnu.hidden = !mnu.hidden; b.setAttribute("aria-expanded", !mnu.hidden); return; }
   if ((b = q("[data-rail]"))){ RAIL_HIDE = !RAIL_HIDE; try { localStorage.setItem(STORE + "railHidden", RAIL_HIDE ? "1" : "0"); } catch(_){} hideTip(); render(); return; }
@@ -1166,4 +1182,4 @@ window.__bc = {S: () => S, compute, render};
 
 if (SHARED){ pullState(); setInterval(pullState, 15000); }
 
-if (cleanState(S) | applyBatch1(S) | applyBatch2(S) | applyBatch3(S) | applyBatch4(S) | applyBatch5(S) | applyBatch6(S)){ save(); render(); }
+if (cleanState(S) | applyBatch1(S) | applyBatch2(S) | applyBatch3(S) | applyBatch4(S) | applyBatch5(S) | applyBatch6(S) | applyBatch7(S)){ save(); render(); }
