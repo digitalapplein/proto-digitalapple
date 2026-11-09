@@ -464,6 +464,24 @@ function asIsHTML(m){
 }
 
 /* ---------- Whole toolkit: one launch, sections fold open ---------- */
+/* As-is at a glance: today's facts only, one row a section. Spend is the FY27 plan made the way it is made today,
+   the same "old way" the business case starts from, so the totals always agree. */
+function summaryHTML(m, k0){
+  const rows = S.sections.map(sec => {
+    const xs = m.assets.filter(x => x.sectionId === sec.id && (x.pieces.today > 0 || x.pieces.plan > 0)); if (!xs.length) return null;
+    const sum = f => xs.reduce((t, x) => t + f(x), 0), rs = k0.rows.filter(r => xs.some(x => x.id === r.id));
+    return {id: sec.id, name: sec.name, made: xs.filter(x => x.made).length, fresh: xs.filter(x => !x.made).length,
+      today: sum(x => x.pieces.today), plan: sum(x => x.pieces.plan), spend: sum(x => x.year.old.agency + x.year.old.other),
+      hours: sum(x => x.year.old.hCentral + x.year.old.hMarket), day: rs.length ? Math.max(...rs.map(r => r.end)) : null};
+  }).filter(Boolean).sort((a, b) => b.spend - a.spend);
+  const T = rows.reduce((t, r) => ({made: t.made + r.made, fresh: t.fresh + r.fresh, today: t.today + r.today, plan: t.plan + r.plan, spend: t.spend + r.spend, hours: t.hours + r.hours}), {made: 0, fresh: 0, today: 0, plan: 0, spend: 0, hours: 0});
+  const assets = r => `${r.made}${r.fresh ? ` <span class="na">+ ${r.fresh} new</span>` : ""}`;
+  return `<section class="detail sumtab"><div class="tabbar"><h3>At a glance</h3><div class="tools">made the way it is today, FY27 plan</div></div>
+    <div class="tscroll"><table class="sm"><thead><tr><th>Section</th><th class="n">Assets</th><th class="n">Pieces a year today</th><th class="n">FY27 plan</th><th class="n">Agency and outside spend</th><th class="n">Team hours</th><th class="n">Ready by day</th></tr></thead><tbody>
+    ${rows.map(r => `<tr><td><button class="sectbtn" data-ksec="${r.id}" title="Show its assets below">${esc(r.name)}</button></td><td class="n">${assets(r)}</td><td class="n">${n0(r.today)}</td><td class="n">${n0(r.plan)}</td><td class="n">${r.spend ? eur(r.spend) : "–"}</td><td class="n">${r.hours ? n0(r.hours) : "–"}</td><td class="n">${r.day == null ? "–" : n0(r.day)}</td></tr>`).join("")}
+    <tr class="tot"><td>Total</td><td class="n">${assets(T)}</td><td class="n">${n0(T.today)}</td><td class="n">${n0(T.plan)}</td><td class="n">${eur(T.spend)}</td><td class="n">${n0(T.hours)}</td><td class="n">${n0(k0.end)}</td></tr>
+    </tbody></table></div><p class="smnote">New assets are not made today; their spend is what an agency would charge. Spend is the agency and outside cost only: team time is in hours.</p></section>`;
+}
 function toolkitHTML(m){
   const k0 = toolkit(S, m, false), k1 = toolkit(S, m, true);
   const scale = niceScale(Math.max(k0.end, k1.end)), w = d => (d / scale * 100).toFixed(2);
@@ -492,7 +510,7 @@ function toolkitHTML(m){
     return `<div class="grow gsec"><span class="l"><button class="sectbtn" data-ksec="${sec.id}" aria-expanded="${open}"><span class="chev">${ic("chev", 12)}</span>${esc(sec.name)}<span class="cnt">${xs.length}</span></button></span><span class="t">${bars}</span><span class="v">${v}</span></div>` +
       (open ? xs.map(assetRow).join("") : "");
   }).join("");
-  return `<section class="hero">
+  return summaryHTML(m, k0) + `<section class="hero">
       <div class="headline"><span class="n"><span data-count="kit" data-to="${faster}" data-fmt="d">${faster}</span>%</span><span class="u">faster cycle time: ${Math.round(k1.end)} days to launch a toolkit with AI, against ${Math.round(k0.end)} today${info("kit")}</span></div>
       <div class="kitbars">${twoBars("Today", k0, "With AI", k1, scale, timeBar, Math.round(k0.end) + " d", Math.round(k1.end) + " d")}${legend([...TIME, ["c-ai-key", "With AI"]])}</div>
       <div class="gantt${VIEW === "ai" ? " ai" : ""}"><h3>Section by section${viewPills()}</h3>${secs}</div>
