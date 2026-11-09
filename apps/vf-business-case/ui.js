@@ -511,24 +511,27 @@ function asIsHTML(m){
 }
 
 /* ---------- Whole toolkit: one launch, sections fold open ---------- */
-/* Summary tab: one row an asset, grouped by section. Spend is the FY27 plan made the way it is made today,
-   the same "old way" the business case starts from, so the totals always agree. */
+/* Summary tab: one row an asset, grouped by section. Figures are the FY27 plan made the way it is made today,
+   the same "old way" the business case starts from, so the totals always agree. Pick an asset on the left to see its section. */
 function summaryHTML(m){
   const rail = RAIL_HIDE ? `<div class="askcol slim"><button class="railbtn" data-rail data-hover="Show the asset list" aria-label="Show the asset list">${ic("side", 16)}</button></div>`
     : `<div class="askcol"><section class="ask">${railHTML()}</section></div>`;
-  const fig = x => ({today: x.pieces.today, plan: x.pieces.plan, spend: x.year.old.agency + x.year.old.other, hours: x.year.old.hCentral + x.year.old.hMarket});
-  const add = (t, f) => { t.today += f.today; t.plan += f.plan; t.spend += f.spend; t.hours += f.hours; return t; };
-  const cell = f => `<td class="n">${n0(f.today)}</td><td class="n">${n0(f.plan)}</td><td class="n">${f.spend ? eur(f.spend) : "–"}</td><td class="n">${f.hours ? n0(f.hours) : "–"}</td>`;
-  const T = {today: 0, plan: 0, spend: 0, hours: 0};
-  const body = S.sections.map(sec => {
+  const fig = x => ({vol: x.pieces.plan, agency: x.year.old.agency, vf: x.year.old.central + x.year.old.market, hrs: x.year.old.hCentral + x.year.old.hMarket, other: x.year.old.other});
+  const zero0 = () => ({vol: 0, agency: 0, vf: 0, hrs: 0, other: 0});
+  const add = (t, f) => { for (const k in t) t[k] += f[k]; return t; };
+  const cell = f => `<td class="n">${f.vol ? n0(f.vol) : "–"}</td><td class="n">${f.agency ? eur(f.agency) : "–"}</td><td class="n">${f.hrs ? `${eur(f.vf)}<small>${n0(f.hrs)} h</small>` : "–"}</td><td class="n">${f.other ? eur(f.other) : "–"}</td>`;
+  const cur = S.assets[S.current], scope = cur ? cur.name && (S.sections.find(sec => sec.assets.includes(S.current)) || {}).id : null;
+  const T = zero0();
+  const body = S.sections.filter(sec => !scope || sec.id === scope).map(sec => {
     const xs = m.assets.filter(x => x.sectionId === sec.id && (x.pieces.today > 0 || x.pieces.plan > 0)); if (!xs.length) return "";
-    const sub = xs.reduce((t, x) => add(t, fig(x)), {today: 0, plan: 0, spend: 0, hours: 0}); add(T, sub);
-    return `<tr class="grp"><td>${esc(sec.name)}</td>${cell(sub)}<td></td></tr>` + xs.map(x => `<tr class="${x.id === S.current ? "on" : ""}${(S.assets[x.id] || {}).parent ? " kid" : ""}"><td><button class="aname" data-goto="${x.id}" title="Open ${esc(x.name)}">${esc(x.name)}</button>${x.made ? "" : ` <span class="newtag on sm">New</span>`}</td>${cell(fig(x))}<td class="n">${x.sched.old.elapsed ? n0(x.sched.old.elapsed) : "–"}</td></tr>`).join("");
+    const sub = xs.reduce((t, x) => add(t, fig(x)), zero0()); add(T, sub);
+    return `<tr class="grp"><td>${esc(sec.name)}</td><td></td>${cell(sub)}<td></td></tr>` + xs.map(x => `<tr class="${x.id === S.current ? "on" : ""}${(S.assets[x.id] || {}).parent ? " kid" : ""}"><td><button class="aname" data-goto="${x.id}" title="Open ${esc(x.name)}">${esc(x.name)}</button></td><td class="st">${x.made ? "Existing" : "New"}</td>${cell(fig(x))}<td class="n">${x.sched.old.elapsed ? n0(x.sched.old.elapsed) + " d" : "–"}</td></tr>`).join("");
   }).join("");
-  return `<div class="grid${RAIL_HIDE ? " slimg" : ""}">${rail}<div class="answers"><section class="detail sumtab"><div class="tabbar"><h3>Summary</h3><div class="tools">made the way it is today, FY27 plan</div></div>
-    <div class="tscroll"><table class="sm"><thead><tr><th>Asset</th><th class="n">Today a year</th><th class="n">FY27 plan</th><th class="n">Agency spend</th><th class="n">Team hours</th><th class="n">Days</th></tr></thead><tbody>${body}
-    <tr class="tot"><td>Total</td>${cell(T)}<td></td></tr></tbody></table></div>
-    <p class="smnote">New assets are not made today; their spend is what an agency would charge. Spend is the agency and outside cost for the year; team time is in hours. Days are start to finish for one piece. Parts of a block sit indented.</p></section></div></div>`;
+  const where = scope ? (S.sections.find(x => x.id === scope) || {}).name : "all sections";
+  return `<div class="grid${RAIL_HIDE ? " slimg" : ""}">${rail}<div class="answers"><section class="detail sumtab"><div class="tabbar"><h3>Summary</h3><div class="tools">${esc(where)} · the FY27 plan, made the way it is made today</div></div>
+    <div class="tscroll"><table class="sm"><thead><tr><th>Asset</th><th>Status</th><th class="n">Volume</th><th class="n">Agency</th><th class="n">Vodafone</th><th class="n">Other</th><th class="n">Cycle time</th></tr></thead><tbody>${body}
+    <tr class="tot"><td>Total</td><td></td>${cell(T)}<td></td></tr></tbody></table></div>
+    <p class="smnote">Volume is pieces a year. New assets are not made today; their cost is what an agency would charge. Vodafone is team time: hours at the rate set in Assumptions. Cycle time is start to finish for one piece. Choose Digital toolkit on the left to see everything.</p></section></div></div>`;
 }
 function toolkitHTML(m){
   const k0 = toolkit(S, m, false), k1 = toolkit(S, m, true);
@@ -938,7 +941,7 @@ document.addEventListener("change", e => { if (e.target.dataset.s || e.target.da
 document.addEventListener("click", e => {
   const q = sel => e.target.closest(sel);
   let b;
-  if ((b = q("[data-tab]"))){ TAB = b.dataset.tab; render(); scrollTo(0, 0); return; }
+  if ((b = q("[data-tab]"))){ if (b.dataset.tab === "summary" && TAB !== "summary") S.current = "toolkit"; TAB = b.dataset.tab; render(); scrollTo(0, 0); return; }
   if (!q("#exportWrap")) $("#exportMenu").hidden = true;
   if ((b = q("#exportBtn"))){ const mnu = $("#exportMenu"); mnu.hidden = !mnu.hidden; b.setAttribute("aria-expanded", !mnu.hidden); return; }
   if ((b = q("[data-rail]"))){ RAIL_HIDE = !RAIL_HIDE; try { localStorage.setItem(STORE + "railHidden", RAIL_HIDE ? "1" : "0"); } catch(_){} hideTip(); render(); return; }
