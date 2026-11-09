@@ -500,6 +500,7 @@ const dd = n => n >= 3 ? n0(n) : d1(n);
 /* Stakeholders: who approves or aligns on an asset, in what order. Same step number = at the same time. */
 const DEFAULT_ROLES = ["Portfolio marketing", "Product (group)", "Product (local)", "Local GTM", "Propositions team", "Cluster lead", "Brand", "Legal", "Compliance", "Sustainability", "Markets", "Pre-sales", "VPC"];
 const rolesOf = () => Array.isArray(S.roles) && S.roles.length ? S.roles : DEFAULT_ROLES;
+const reduPill = (a, b) => a > 0.01 ? `<span class="redu">${b <= a ? "−" : "+"}${Math.abs(Math.round((1 - b / a) * 100))}%</span>` : "";
 const stakesOf = a => Array.isArray(a.stake) ? a.stake : (a.stake = []);
 function chainHTML(rows){
   const by = {};
@@ -511,18 +512,19 @@ function chainHTML(rows){
   const arrow = `<span class="cha">${ic("arrow", 14)}</span>`;
   return `<div class="chain"><span class="ch end">Draft</span>${keys.map(k => arrow + group(k)).join("")}${keys.length ? arrow : ""}<span class="ch end">Final</span></div>`;
 }
-function stakeHTML(a){
-  const rows = stakesOf(a);
+function stakeHTML(a, noteRow){
+  const rows = stakesOf(a), roles = rolesOf();
   const tr = rows.map(r => `<tr class="row">
-      <td><input class="cell" list="rolelist" data-stk="who" data-stkid="${r.id}" data-k="sw${r.id}" value="${esc(r.who)}" placeholder="Role or person" aria-label="Role or person"></td>
+      <td><div class="cbx"><input class="cell" data-stk="who" data-stkid="${r.id}" data-k="sw${r.id}" value="${esc(r.who)}" placeholder="Role or person" aria-label="Role or person"><button class="cbxb" data-cbx-toggle aria-label="Choose a role" data-hover="Choose a role">${ic("chev", 12)}</button>
+        <span class="cbxm">${roles.map(x => `<button class="cbxo" data-cbx-set="${r.id}" data-v="${esc(x)}">${esc(x)}</button>`).join("")}</span></div></td>
       <td class="n"><button class="newtag" data-stk-inv="${r.id}" title="Click to change: Approves, Aligns"><i class="sdot ${r.inv === "align" ? "s-enhance" : "s-required"}"></i>${r.inv === "align" ? "Aligns" : "Approves"}</button></td>
       <td class="n"><input class="num sm" data-stk="step" data-stkid="${r.id}" data-k="ss${r.id}" inputmode="numeric" value="${val(r.step)}" aria-label="Step in the chain: the same number happens together"></td>
-      <td><input class="cell" data-stk="comment" data-stkid="${r.id}" data-k="sc${r.id}" value="${esc(r.comment || "")}" placeholder="Comment" aria-label="Comment"></td>
-      <td class="acts"><button class="ic hov" data-del-stk="${r.id}" title="Remove" aria-label="Remove">${ic("x")}</button></td></tr>`).join("");
-  return `<div class="tscroll"><table class="tin"><colgroup><col style="width:34%"><col style="width:16%"><col style="width:8%"><col style="width:34%"><col style="width:8%"></colgroup>
-    <thead><tr><th class="sh">Stakeholders</th><th class="n">Involvement</th><th class="n" data-hover="Same number: they review at the same time">Step</th><th>Comment</th><th class="n"><button class="add-btn" data-add-stk>${ic("plus", 11)} Add</button></th></tr></thead><tbody>${tr}</tbody></table>
-    ${rows.some(r => (r.who || "").trim()) ? chainHTML(rows) : ""}</div>
-    <datalist id="rolelist">${rolesOf().map(r => `<option value="${esc(r)}"></option>`).join("")}</datalist>`;
+      <td class="acts"><button class="ic ${r.comment ? "on" : "hov"}" data-note="${r.id}" title="Notes" aria-label="Notes">${ic("note")}</button>
+        <button class="ic hov" data-del-stk="${r.id}" title="Remove" aria-label="Remove">${ic("x")}</button></td></tr>` +
+      noteRow(r.id, 4, `data-stk="comment" data-stkid="${r.id}"`, r.comment, "A comment: for example, only some products need sustainability", [])).join("");
+  return `<div class="tscroll"><table class="tin"><colgroup><col style="width:46%"><col style="width:20%"><col style="width:12%"><col style="width:22%"></colgroup>
+    <thead><tr><th class="sh">Stakeholders</th><th class="n">Involvement</th><th class="n" data-hover="Same number: they review at the same time">Step</th><th class="n"><button class="add-btn" data-add-stk>${ic("plus", 11)} Add</button></th></tr></thead><tbody>${tr}</tbody></table>
+    ${rows.some(r => (r.who || "").trim()) ? chainHTML(rows) : ""}</div>`;
 }
 function rolesHTML(){
   const roles = rolesOf();
@@ -588,19 +590,20 @@ function asIsHTML(m){
         <input class="hdesc top" data-f="desc" data-k="desc" value="${esc(a.desc || "")}" placeholder="What this asset is for, in one line" aria-label="What this asset is for">
         <div class="twin">
           <div class="blk">
-            <div class="fig"><span data-count="c${a.id}" data-to="${money(c0)}">${eur(money(c0))}</span><span class="to">→</span><span class="ai">${eur(money(c1))}</span><small>per asset</small></div>
+            <div class="eyb">Cost</div>
+            <div class="fig"><span data-count="c${a.id}" data-to="${money(c0)}">${eur(money(c0))}</span><span class="to">→</span><span class="ai">${eur(money(c1))}</span>${reduPill(money(c0), money(c1))}</div>
             ${twoBars("Today", c0, "With AI", c1, cs, (c, sc) => bar(payParts(c), sc), "", "")}
             ${legend(PAY.filter(([k]) => (c0[k] || 0) + (c1[k] || 0) > 0.01).map(([, l, c]) => [c, l]))}
           </div>
           <div class="blk">
-            <div class="fig">${dd(O.elapsed)}<span class="to">→</span><span class="ai">${dd(A.elapsed)}</span><small>days, start to finish</small></div>
+            <div class="eyb">Cycle time</div>
+            <div class="fig">${dd(O.elapsed)}<small class="u">d</small><span class="to">→</span><span class="ai">${dd(A.elapsed)}</span><small class="u ai">d</small>${reduPill(O.elapsed, A.elapsed)}</div>
             ${twoBars("Today", O, "With AI", A, tSc, (s, sc) => timeBar({...s, dep: s.held}, sc), "", "")}
             ${legend([...TIME, ["c-ai-key", "With AI"]])}
           </div>
         </div>
       </section>
       <section class="detail">
-        <div class="tabbar"><h3>How it's made</h3></div>
         <div class="tscroll"><table class="tin"><colgroup><col style="width:48%"><col style="width:28%"><col style="width:12%"><col style="width:12%"></colgroup>
           <thead><tr><th class="sh">Outputs</th><th>Format and length</th><th class="n">Tag</th><th class="n"><button class="add-btn" data-add-out>${ic("plus", 11)} Add</button></th></tr></thead><tbody>${outsOf(a).map(o => `<tr class="row">
             <td><input class="cell" data-outf="label" data-outid="${o.id}" data-k="ol${o.id}" value="${esc(o.label)}" placeholder="Output" aria-label="Output"></td>
@@ -616,7 +619,7 @@ function asIsHTML(m){
         </tbody></table></div>
         <div class="tscroll"><table class="adapt">${cols}${thead(false, "Adaptations", mkt.length ? `data-none hidden` : `data-add-step="market"`)}<tbody>${mkt.slice(0, 1).map((s, i) => stepRow(s, 0, true)).join("")}
         </tbody></table></div>
-        ${stakeHTML(a)}
+        ${stakeHTML(a, noteRow)}
         <div class="nuance"><textarea data-f="nuances" data-k="nu" placeholder="Cover anything important for this asset: what changes how it is made, approved or adapted">${esc(a.nuances)}</textarea></div>
       </section>
     </div></div>`;
@@ -1058,7 +1061,13 @@ document.addEventListener("input", e => {
   }
 });
 /* labels and notes only redraw the sums once the field is left */
-document.addEventListener("click", e => { const tg = e.target.closest && e.target.closest("[data-sdd-toggle]");
+document.addEventListener("click", e => { const cb = e.target.closest && e.target.closest("[data-cbx-toggle]");
+  document.querySelectorAll(".cbx.open").forEach(x => { if (!cb || x !== cb.parentElement) x.classList.remove("open"); });
+  if (cb){ const box = cb.parentElement, open = box.classList.toggle("open");
+    if (open){ const m = box.querySelector(".cbxm"), r = box.getBoundingClientRect(); m.style.left = r.left + "px"; m.style.top = (r.bottom + 4) + "px"; m.style.minWidth = Math.max(220, r.width) + "px";
+      if (r.bottom + 270 > innerHeight) m.style.top = Math.max(8, r.top - 4 - Math.min(260, m.scrollHeight)) + "px"; }
+    return; }
+  const tg = e.target.closest && e.target.closest("[data-sdd-toggle]");
   document.querySelectorAll(".sdd.open").forEach(x => { if (!tg || x !== tg.parentElement){ x.classList.remove("open"); x.firstElementChild.setAttribute("aria-expanded", "false"); } });
   if (tg){ const open = tg.parentElement.classList.toggle("open"); tg.setAttribute("aria-expanded", String(open)); return; }
   const sb = e.target.closest && e.target.closest("[data-sumst]"); if (sb){ const a = S.assets[sb.dataset.sumst]; if (a){ setStatus(a, STNEXT[statusOf(a)]); render(); save(); } return; }
@@ -1088,6 +1097,7 @@ document.addEventListener("click", e => {
   if ((b = q("[data-out-new]"))){ const a = S.assets[S.current], o = a && outsOf(a).find(x => x.id === b.dataset.outNew); if (o){ o.tag = OUTNEXT[outTag(o)]; o.isNew = o.tag === "new"; render(); save(); } return; }
   if ((b = q("[data-add-out]"))){ const a = S.assets[S.current], o = {id: uid("o"), label: "", format: "", example: "", files: []}; outsOf(a).push(o); syncOut(a); render(); save(); document.querySelector(`[data-k="ol${o.id}"]`)?.focus(); return; }
   if ((b = q("[data-del-out]"))){ snap("Removed an output"); const a = S.assets[S.current]; a.outputs = outsOf(a).filter(x => x.id !== b.dataset.delOut); if (!a.outputs.length) a.outputs = [{id: uid("o"), label: "", format: "", example: "", files: []}]; syncOut(a); render(); save(); return; }
+  if ((b = q("[data-cbx-set]"))){ const a = S.assets[S.current], r = a && stakesOf(a).find(x => x.id === b.dataset.cbxSet); if (r){ r.who = b.dataset.v; render(); save(); } return; }
   if ((b = q("[data-stk-inv]"))){ const a = S.assets[S.current], r = a && stakesOf(a).find(x => x.id === b.dataset.stkInv); if (r){ r.inv = r.inv === "align" ? "approve" : "align"; render(); save(); } return; }
   if ((b = q("[data-add-stk]"))){ const a = S.assets[S.current], rows = stakesOf(a), nx = rows.reduce((t, r) => Math.max(t, parseInt(r.step) || 0), 0) + 1; const r = {id: uid("k"), who: "", inv: "approve", step: nx, comment: ""}; rows.push(r); render(); save(); document.querySelector(`[data-k="sw${r.id}"]`)?.focus(); return; }
   if ((b = q("[data-del-stk]"))){ snap("Removed a stakeholder"); const a = S.assets[S.current]; a.stake = stakesOf(a).filter(x => x.id !== b.dataset.delStk); render(); save(); return; }
