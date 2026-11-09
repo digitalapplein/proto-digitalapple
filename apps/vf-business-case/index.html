@@ -152,6 +152,9 @@ input.cell[type=number]{width:72px}
 
 <script>
 window.SHARE=true;
+window.KEYPARAM=new URLSearchParams(location.search).get("k")||"";
+window.kurl=function(u){return window.KEYPARAM&&!/^(https?:)?\/\//.test(u)?u+(u.indexOf("?")<0?"?":"&")+"k="+encodeURIComponent(window.KEYPARAM):u};
+if(window.KEYPARAM){var _f=window.fetch;window.fetch=function(u,o){return _f.call(window,typeof u==="string"?window.kurl(u):u,o)}}
 (function(){
   var D={assets:{},batches:{},settings:{main:{}}},rev=0,ls=[],timer=null,pending=false;
   function snap(c){return {docs:Object.keys(D[c]).map(function(id){return {id:id,data:function(){return JSON.parse(JSON.stringify(D[c][id]))}}})}}
@@ -306,7 +309,7 @@ function cpMap(){var m={};list(batches).forEach(function(b){if(b.id!=="b0")m[b.i
 function tbox(a,f,label,rows,extra){return '<div class="box"><label class="bl" for="f_'+a.id+f+'">'+label+'</label><textarea id="f_'+a.id+f+'" rows="'+(rows||2)+'" data-d="assets" data-id="'+a.id+'" data-f="'+f+'">'+esc(a[f])+'</textarea>'+(extra||'')+'</div>'}
 function fileChips(a){
   var fs=a.files||[];
-  return '<div class="chips">'+fs.map(function(f,i){return '<span class="fchip"><a href="'+esc(f.url)+'" target="_blank" rel="noopener">'+esc(f.name)+'</a><button class="fx" data-rmfile="'+a.id+':'+i+'" aria-label="Remove '+esc(f.name)+'">×</button></span>'}).join("")+
+  return '<div class="chips">'+fs.map(function(f,i){return '<span class="fchip"><a href="'+esc(window.kurl?window.kurl(f.url):f.url)+'" target="_blank" rel="noopener">'+esc(f.name)+'</a><button class="fx" data-rmfile="'+a.id+':'+i+'" aria-label="Remove '+esc(f.name)+'">×</button></span>'}).join("")+
     (canUpload?'<label class="attach"><input type="file" data-attach="'+a.id+'" hidden>Upload attachment</label>':'')+'</div>';
 }
 function detail(a){
