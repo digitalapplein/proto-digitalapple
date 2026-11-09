@@ -181,7 +181,7 @@ window.SHARE=true;
 var STATUS={existing:"Existing",enhance:"Enhance",new:"New",optional:"Optional"};
 var SCOPE={in:"In scope",out:"Out of scope"};
 var TYPE={output:"Output",input:"Input",document:"Supporting document"};
-var collapsed={},amyOpt="self",canUpload=false,assetsApi=null;
+var openCp={},amyOpt="self",canUpload=false,assetsApi=null;
 var SRC={said:"Confirmed",recommended:"Recommended",open:"Open"};
 var KIND={step:"In sequence",with:"With the batch before",track:"Runs alongside everything"};
 var db=null, assets={}, batches={}, settings={}, tab="assets", filter="all", q="", openId=null, editing=false, dirty=false, saveState="";
@@ -352,7 +352,7 @@ function assetsView(){
   bs.forEach(function(b){
     var rs=rows.filter(function(a){return a.batch===b.id});
     if(!rs.length)return;
-    var open=!collapsed[b.id]||!!q;
+    var open=!!openCp[b.id]||!!q;
     body+='<tr id="g_'+b.id+'" class="grp'+(open?" open":"")+'"><td colspan="8"><div class="ghead"><button id="t_'+b.id+'" class="gtog" data-tog="'+b.id+'" aria-expanded="'+open+'"><span class="chev">›</span>'+esc(b.name)+'</button><span class="gp">'+pills(parseAppr(b.approvers))+'</span></div>'+
       '<div class="gline">'+(open?'<span>Cycle time '+tin(b,"daysToday")+' → '+tin(b,"daysAmy")+' days</span><span>Approval rounds '+tin(b,"apprToday")+' → '+tin(b,"apprAmy")+'</span>'+(b.kind==="step"?'':'<span>'+(b.kind==="with"?"Runs alongside the checkpoint before":"Runs alongside everything")+'</span>'):'')+'<span class="gs" data-sub="sum:'+b.id+'">'+subTxt("sum",b.id)+'</span></div></td></tr>';
     if(!open)return;
@@ -415,8 +415,8 @@ document.addEventListener("click",function(e){
   var rf=e.target.closest("[data-rmfile]");if(rf){var pr=rf.dataset.rmfile.split(":"),ra=assets[pr[0]];if(ra&&ra.files){var nf=ra.files.filter(function(x,i){return i!==+pr[1]});ra.files=nf;queue("assets",pr[0],{files:nf});render()}return}
   if(e.target.closest("[data-share]")){fetch("api/share").then(function(r){return r.json()}).then(function(j){return navigator.clipboard.writeText(j.url)}).then(function(){stamp("Link copied")}).catch(function(){stamp("Could not copy the link","err")});return}
   var op=e.target.closest("[data-opt]");if(op){amyOpt=op.dataset.opt;render();return}
-  var tg=e.target.closest("[data-tog]");if(tg){collapsed[tg.dataset.tog]=!collapsed[tg.dataset.tog];render();return}
-  var fo=e.target.closest("[data-fold]");if(fo){list(batches).forEach(function(b){collapsed[b.id]=fo.dataset.fold==="in"});render();return}
+  var tg=e.target.closest("[data-tog]");if(tg){openCp[tg.dataset.tog]=!openCp[tg.dataset.tog];render();return}
+  var fo=e.target.closest("[data-fold]");if(fo){list(batches).forEach(function(b){openCp[b.id]=fo.dataset.fold!=="in"});render();return}
   var d=e.target.closest("[data-del]");if(d){if(d.classList.contains("arm")){openId=null;db.collection("assets").doc(d.dataset.del).delete().catch(function(){stamp("Not deleted","err")})}else{d.classList.add("arm");d.textContent="Click again to delete";setTimeout(function(){d.classList.remove("arm");d.textContent="Delete this row"},2500)}return}
   if(e.target.closest("[data-csv]"))csv();
 });
