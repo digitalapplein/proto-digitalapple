@@ -266,6 +266,25 @@ function applyBatch12(st){
   }
   (st.applied = st.applied || []).push("batch12"); return true;
 }
+/* Batch 13 (9 Nov): Amy prices (self-service 50/100/200, done-for-you 200/400/800), templates 3/4/5 thousand by size,
+   "done-for-you" for managed, and the portfolio lead is who does the work. Prices change only while still at the old starting values. */
+function applyBatch13(st){
+  if (!st || !st.assets || (st.applied || []).includes("batch13")) return false;
+  (st.routes || []).forEach(r => { if (r.kind === "dfy") r.label = "Amy done-for-you"; });
+  const PR = {selfSmall: [30, 50], selfMedium: [60, 100], selfLarge: [120, 200], dfySmall: [180, 200], dfyMedium: [360, 400], dfyLarge: [720, 800]};
+  for (const g of st.tobe.groups){
+    if (/managed/i.test(g.name)) g.name = g.name.replace(/managed/i, "done-for-you");
+    for (const l of g.lines){ const p = PR[l.key]; if (p && +l.value === p[0]) l.value = p[1]; }
+    const t = g.lines.findIndex(l => l.key === "templatePrice");
+    if (t >= 0){ const mk = (label, v, key) => ({id: uid("l"), label, value: v, unit: "€", key, comment: ""});
+      g.lines.splice(t, 1, mk("Template, small asset", 3000, "templateSmall"), mk("Template, medium asset", 4000, "templateMedium"), mk("Template, large asset", 5000, "templateLarge")); }
+  }
+  for (const a of Object.values(st.assets)){
+    const sw = x => typeof x === "string" ? x.replace(/\bPMM\b/g, "Portfolio lead") : x;
+    (a.steps || []).forEach(x => { x.who = sw(x.who); }); (a.inputs || []).forEach(x => { x.from = sw(x.from); });
+  }
+  (st.applied = st.applied || []).push("batch13"); return true;
+}
 /* hosted: one shared copy of the whole tool; the newest save wins */
 const SHARED = location.protocol.startsWith("http");
 function pullState(){
@@ -274,7 +293,7 @@ function pullState(){
   fetch("api/state").then(r => r.json()).then(R => {
     if (!R || !R.assets || (R.version || 0) < 16) return;
     if ((R.savedAt || 0) > (S.savedAt || 0)){
-      S = R; cleanState(S); applyBatch1(S); applyBatch2(S); applyBatch3(S); applyBatch4(S); applyBatch5(S); applyBatch6(S); applyBatch7(S); applyBatch8(S); applyBatch9(S); applyBatch10(S); applyBatch11(S); applyBatch12(S); try { localStorage.setItem(STORE + S.client.id, JSON.stringify(S)); } catch(_){}
+      S = R; cleanState(S); applyBatch1(S); applyBatch2(S); applyBatch3(S); applyBatch4(S); applyBatch5(S); applyBatch6(S); applyBatch7(S); applyBatch8(S); applyBatch9(S); applyBatch10(S); applyBatch11(S); applyBatch12(S); applyBatch13(S); try { localStorage.setItem(STORE + S.client.id, JSON.stringify(S)); } catch(_){}
       const y = scrollY; render(); scrollTo(0, y);
     }
   }).catch(() => {});
@@ -305,7 +324,7 @@ const TIPS = {
   withai: {t:"With AI", what:"AI saves part of the team's hours and waiting on each step. The agency fee stays."},
   withamy:{t:"With Amy", what:"Amy drafts, designs and makes market versions; each of those steps takes about 15 minutes of team time. The rest is the brief and the reviews."},
   reviews:{t:"Reviews", what:"With AI the team's time goes into review. An update or a market version needs about half the review of a new asset."},
-  price:  {t:"Amy price per asset", what:"What Amy charges for one asset, by size. Self-service: Vodafone's team works in Amy. Managed: Digital Apple runs Amy for Vodafone. Updates and market versions cost the same."},
+  price:  {t:"Amy price per asset", what:"What Amy charges for one asset, by size. Self-service: Vodafone's team works in Amy. Done-for-you: Digital Apple runs Amy for Vodafone. Updates and market versions cost the same."},
   today:  {t:"Today", what:"Who makes the asset now: an agency, the in-house team, or no one yet."},
   saved:  {t:"Saved", what:"How much less the asset costs a year with AI, at its plan volume.", how:"1 − with AI a year ÷ old way a year"},
   saving: {t:"Cash saved", what:"What Vodafone would pay for the FY27 plan the old way, less what it pays with AI over the same years. The one-off is included.", how:"old way × years − (with AI × years + one-off)"},
@@ -406,15 +425,17 @@ function outsOf(a){
 }
 const outTag = o => o.tag || (o.isNew ? "new" : "required");
 const OUTLAB = {required: "Existing", enhance: "Enhance", new: "New"}, OUTNEXT = {required: "enhance", enhance: "new", new: "required"};
+const outDD = o => `<span class="sdd"><button class="sddb" data-sdd-toggle aria-haspopup="listbox" aria-expanded="false"><i class="sdot s-${outTag(o)}"></i>${OUTLAB[outTag(o)]}${ic("chev", 11)}</button>
+  <span class="sddm" role="listbox">${Object.entries(OUTLAB).map(([k, l]) => `<button class="sddo${outTag(o) === k ? " on" : ""}" role="option" data-out-set="${o.id}" data-v="${k}"><i class="sdot s-${k}"></i>${l}</button>`).join("")}</span></span>`;
 const syncOut = a => { a.output = outsOf(a).map(o => [o.label, o.format].map(x => (x || "").trim()).filter(Boolean).join(", ")).filter(Boolean).join("; "); };
 const madeToday = a => { const t = a.today || {}; return (+t.n || 0) + (+t.u || 0) + (+t.m || 0) > 0; };
 const SIZE_OPTS = (cur, attrs) => `<select class="cell sel sz" ${attrs}>${Object.entries(SIZES).map(([k, l]) => `<option value="${k}" ${k === cur ? "selected" : ""}>${l}</option>`).join("")}</select>`;
 const ROUTE_OPTS = a => `<select class="cell sel" data-route="${a.id}" aria-label="Made by, with AI">${(S.routes || []).map(r => `<option value="${r.key}" ${r.key === a.route ? "selected" : ""}>${esc(r.label)}</option>`).join("")}</select>`;
 
 /* who is paid, in the joint case's colours: the old way in greys,
-   what is paid to Amy (managed, self-service, platform) in Amy's coral */
-const PAY = [["central", "Vodafone team", "k-team"], ["market", "Market team", "k-market"], ["agency", "Agency", "k-agency"], ["other", "Other outside costs", "k-other"],
-  ["dfy", "Amy managed", "k-dfy"], ["self", "Amy self-service", "k-self"], ["platform", "Amy platform", "k-platform"]];
+   what is paid to Amy (done-for-you, self-service, platform) in Amy's coral */
+const PAY = [["central", "Vodafone team", "k-team"], ["market", "Market team", "k-market"], ["agency", "Agency", "k-agency"],
+  ["dfy", "Amy done-for-you", "k-dfy"], ["self", "Amy self-service", "k-self"], ["other", "Other outside costs", "k-other"], ["platform", "Amy platform", "k-platform"]];
 const KCLASS = Object.fromEntries(PAY.map(p => [p[0], p[2]]));
 /* one stacked bar; parts = [[class, label, value]], width relative to scale */
 const bar = (parts, scale, fmt = eur) => `<div class="stack">${parts.filter(p => p[2] > 0.01).map(([c, l, v]) =>
@@ -494,15 +515,17 @@ const twoBars = (lblA, a, lblB, b, scale, fn, totA, totB, sv = 0) => {
 /* a step with AI, as plain numbers: hours of work and days start to finish */
 const HPD = () => lever(S, "hoursPerDay") || 7;
 function aiStep(s, a){
+  if (a && amyBlock(S, a) && s.phase !== "market"){ const first = (a.steps.find(x => x.phase !== "market") || {}).id === s.id; return {h: first ? amyHours(a) : 0, d: first ? amyDays(a) : 0, amy: true}; }
   if (a && amyMakes(S, a, s, true)) return {h: AMY_H, d: AMY_H / HPD(), amy: true};
   const hpd = HPD(), h = +s.hours || 0, idle = Math.max(0, (+s.days || 0) - h / hpd);
   const ha = h * (1 - (+s.ai || 0) / 100);
   return {h: ha, d: ha / hpd + idle * (1 - (+s.aiWait || 0) / 100)};
 }
+const dayw = n => Math.round(n * 10) / 10 === 1 ? "day" : "days";
 const dd = n => n >= 3 ? n0(n) : d1(n);
 
 /* Stakeholders: who approves or aligns on an asset, in what order. Same step number = at the same time. */
-const DEFAULT_ROLES = ["Portfolio marketing", "Product (group)", "Product (local)", "Local GTM", "Propositions team", "Cluster lead", "Brand", "Legal", "Compliance", "Sustainability", "Markets", "Pre-sales", "VPC"];
+const DEFAULT_ROLES = ["Portfolio lead", "Product (group)", "Product (local)", "Local GTM", "Propositions team", "Cluster lead", "Brand", "Legal", "Compliance", "Sustainability", "Markets", "Pre-sales", "VPC"];
 const rolesOf = () => Array.isArray(S.roles) && S.roles.length ? S.roles : DEFAULT_ROLES;
 const reduPill = (a, b) => a > 0.01 ? `<span class="redu">${b <= a ? "−" : "+"}${Math.abs(Math.round((1 - b / a) * 100))}%</span>` : "";
 const stakesOf = a => Array.isArray(a.stake) ? a.stake : (a.stake = []);
@@ -535,6 +558,16 @@ function rolesHTML(){
   return `<section class="detail rolesec"><div class="tabbar"><h3>Stakeholder roles</h3><div class="tools"><button class="add-btn" data-add-role>${ic("plus", 11)} Add</button></div></div>
     <div class="roles">${roles.map((r, i) => `<span class="role"><input class="cell" data-role="${i}" value="${esc(r)}" aria-label="Role"><button class="ic hov" data-del-role="${i}" title="Remove" aria-label="Remove">${ic("x", 12)}</button></span>`).join("")}</div></section>`;
 }
+/* With Amy an asset is one step: Vodafone's review time, the days, and Amy's price for its size */
+function amyCard(a){
+  const kind = routeOf(S, a).kind, price = runsOf(S, a) * runPriceOf(S, a);
+  return `<div class="amycard"><div class="amyh"><b>With Amy</b>
+      <span class="pillrow" role="group" aria-label="How Amy makes it">${[["self", "Self-service"], ["dfy", "Done-for-you"]].map(([k, l]) => `<button class="pill" data-amy-route="${k}" aria-pressed="${kind === k}">${l}</button>`).join("")}</span></div>
+    <div class="amyg"><span class="amyd">Amy reads, writes and designs in one step</span>
+      <label class="amyf"><small>Vodafone hours</small><span class="pair"><input class="num sm" data-amy="hours" inputmode="decimal" value="${val(amyHours(a))}" aria-label="Vodafone hours with Amy"><i>h</i></span></label>
+      <label class="amyf"><small>Days</small><span class="pair"><input class="num sm" data-amy="days" inputmode="decimal" value="${val(amyDays(a))}" aria-label="Days with Amy"><i>d</i></span></label>
+      <span class="amyf"><small>Amy price</small><b>${eur(price)}</b></span></div></div>`;
+}
 function asIsHTML(m){
   const rail = RAIL_HIDE ? `<div class="askcol slim"><button class="railbtn" data-rail data-hover="Show the asset list" aria-label="Show the asset list">${ic("side", 16)}</button></div>`
     : `<div class="askcol"><section class="ask">${railHTML()}</section></div>`;
@@ -542,7 +575,7 @@ function asIsHTML(m){
   if (S.current !== "toolkit" && !S.assets[S.current]) S.current = "toolkit";
   if (S.current === "toolkit") return intro + `<div class="grid${RAIL_HIDE ? " slimg" : ""}">${rail}<div class="answers">${toolkitHTML(m)}</div></div>`;
 
-  const a = S.assets[S.current], x = m.assets.find(r => r.id === a.id), O = x.sched.old, A = x.sched.ai;
+  const a = S.assets[S.current], x = m.assets.find(r => r.id === a.id), O = x.sched.old, A = x.sched.ai, byAmy = amyBlock(S, a);
   const c0 = x.unit.old.n, c1 = x.unit.ai.n, cs = Math.max(money(c0), money(c1));
   const tSc = Math.max(O.elapsed, A.elapsed);
   const acts = (id, files, note, del, extra = "", attachTip = "Attach a sample", need = false) => `<td class="acts">${extra}
@@ -569,20 +602,20 @@ function asIsHTML(m){
         <input class="cell" data-s="label" data-k="l${s.id}" value="${esc(s.label)}" placeholder="Step" aria-label="Step"></div></td>
       <td><input class="cell" data-s="who" data-k="w${s.id}" value="${esc(s.who)}" placeholder="Who" aria-label="Who"></td>
       <td class="n gT">${pair(hd("hours", s.id, s.hours, "Hours today"), hd("days", s.id, s.days, "Days today"))}</td>
-      <td class="n ai gA">${q.amy ? pair(`<input class="num sm fixd" value="0.25" disabled data-hover="Amy makes this step" aria-label="Hours with Amy">`, `<input class="num sm fixd" value="0" disabled aria-label="Days with Amy">`) : pair(`<input class="num sm" data-sai="h" data-k="xh${s.id}" inputmode="decimal" value="${+s.hours ? h1(q.h) : ""}" ${+s.hours ? "" : "disabled"} aria-label="Hours with AI">`,
-        `<input class="num sm" data-sai="d" data-k="xd${s.id}" inputmode="decimal" value="${d1(q.d)}" aria-label="Days with AI">`)}</td>
+      ${byAmy ? "" : `<td class="n ai gA">${q.amy ? pair(`<input class="num sm fixd" value="0.25" disabled data-hover="Amy makes this step" aria-label="Hours with Amy">`, `<input class="num sm fixd" value="0" disabled aria-label="Days with Amy">`) : pair(`<input class="num sm" data-sai="h" data-k="xh${s.id}" inputmode="decimal" value="${+s.hours ? h1(q.h) : ""}" ${+s.hours ? "" : "disabled"} aria-label="Hours with AI">`,
+        `<input class="num sm" data-sai="d" data-k="xd${s.id}" inputmode="decimal" value="${d1(q.d)}" aria-label="Days with AI">`)}</td>`}
       <td class="n gF"><input class="num" data-s="fee" data-k="f${s.id}" inputmode="decimal" placeholder="–" value="${s.fee ? s.fee : ""}" aria-label="Agency fee"></td>
       <td class="n">${eur(stepCost(S, s))}</td>
       ${acts(s.id, s.files, has, "data-del-step", i ? `<button class="ic ${s.parallel ? "on" : "hov"}" data-par="${s.id}" aria-pressed="${!!s.parallel}" title="${s.parallel ? "Runs alongside the step above" : "Run alongside the step above"}">${ic("par")}</button>` : "")}</tr>` +
-      noteRow(s.id, 7, `data-s="comment" data-step-id="${s.id}"`, s.comment, "What happens here, who chases, what goes wrong", s.files); };
+      noteRow(s.id, byAmy ? 6 : 7, `data-s="comment" data-step-id="${s.id}"`, s.comment, "What happens here, who chases, what goes wrong", s.files); };
 
   const make = a.steps.filter(s => s.phase !== "market"), mkt = a.steps.filter(s => s.phase === "market");
   const span = (sc, list) => { const rs = sc.steps.filter(r => list.some(x => x.id === r.id)); return rs.length ? Math.max(...rs.map(r => r.stop)) - Math.min(...rs.map(r => r.begin)) : 0; };
   const tot = (list, cost) => { const h = list.reduce((t, s) => t + (+s.hours || 0), 0), ha = list.reduce((t, s) => t + aiStep(s, a).h, 0), f = list.reduce((t, s) => t + (+s.fee || 0), 0);
-    return `<tr class="tot"><td colspan="2">Total</td><td class="n gT">${h1(h)} h · ${dd(span(O, list))} d</td><td class="n ai gA">${h1(ha)} h · ${dd(span(A, list))} d</td><td class="n gF">${f ? eur(f) : ""}</td><td class="n">${eur(cost)}</td><td></td></tr>`; };
-  const cols = `<colgroup><col style="width:29%"><col style="width:16%"><col style="width:13%"><col style="width:13%"><col style="width:10%"><col style="width:8%"><col style="width:11%"></colgroup>`;
-  const byAmy = ["self", "dfy"].includes(routeOf(S, a).kind);
-  const thead = (tip, title, add, sub = "") => `<thead><tr><th class="sh">${title}${sub ? `<span>${sub}</span>` : ""}</th><th>Who</th><th class="n gT">Today</th><th class="n gA">${byAmy ? "With Amy" : "With AI"}${tip ? info(byAmy ? "withamy" : "withai") : ""}</th><th class="n gF">Agency fee</th><th class="n">Cost</th><th class="n"><button class="add-btn" ${add}>${ic("plus", 11)} Add</button></th></tr></thead>`;
+    return `<tr class="tot"><td colspan="2">Total</td><td class="n gT">${h1(h)} h · ${dd(span(O, list))} d</td>${byAmy ? "" : `<td class="n ai gA">${h1(ha)} h · ${dd(span(A, list))} d</td>`}<td class="n gF">${f ? eur(f) : ""}</td><td class="n">${eur(cost)}</td><td></td></tr>`; };
+  const cols = byAmy ? `<colgroup><col style="width:36%"><col style="width:20%"><col style="width:17%"><col style="width:11%"><col style="width:8%"><col style="width:8%"></colgroup>`
+    : `<colgroup><col style="width:29%"><col style="width:16%"><col style="width:13%"><col style="width:13%"><col style="width:10%"><col style="width:8%"><col style="width:11%"></colgroup>`;
+  const thead = (tip, title, add, sub = "") => `<thead><tr><th class="sh">${title}${sub ? `<span>${sub}</span>` : ""}</th><th>Who</th><th class="n gT">Today</th>${byAmy ? "" : `<th class="n gA">With AI${tip ? info("withai") : ""}</th>`}<th class="n gF">Agency fee</th><th class="n">Cost</th><th class="n"><button class="add-btn" ${add}>${ic("plus", 11)} Add</button></th></tr></thead>`;
 
   return intro + `<div class="grid${RAIL_HIDE ? " slimg" : ""}">${rail}
     <div class="answers">
@@ -596,14 +629,14 @@ function asIsHTML(m){
           <div class="blk">
             <div class="eyb">Cost</div>
             <div class="fig"><span data-count="c${a.id}" data-to="${money(c0)}">${eur(money(c0))}</span><span class="to">→</span><span class="ai">${eur(money(c1))}</span></div>
-            ${twoBars("Today", c0, "With AI", c1, cs, (c, sc) => bar(payParts(c), sc), "", "", Math.max(0, money(c0) - money(c1)))}
-            ${legend([...PAY.filter(([k]) => (c0[k] || 0) + (c1[k] || 0) > 0.01).map(([, l, c]) => [c, l]), ["c-saved", "Saved"]])}
+            ${twoBars("Today", c0, byAmy ? "With Amy" : "With AI", c1, cs, (c, sc) => bar(payParts(c), sc), "", "")}
+            ${legend(PAY.filter(([k]) => (c0[k] || 0) + (c1[k] || 0) > 0.01).map(([, l, c]) => [c, l]))}
           </div>
           <div class="blk">
             <div class="eyb">Cycle time</div>
-            <div class="fig">${dd(O.elapsed)}<small class="u">days</small><span class="to">→</span><span class="ai">${dd(A.elapsed)}</span><small class="u ai">days</small></div>
-            ${twoBars("Today", O, "With AI", A, tSc, (s, sc) => timeBar({...s, dep: s.held}, sc), "", "", Math.max(0, O.elapsed - A.elapsed))}
-            ${legend([...TIME, ["c-ai-key", "With AI"], ["c-saved", "Saved"]])}
+            <div class="fig">${dd(O.elapsed)}<small class="u">${dayw(O.elapsed)}</small><span class="to">→</span><span class="ai">${dd(A.elapsed)}</span><small class="u ai">${dayw(A.elapsed)}</small></div>
+            ${twoBars("Today", O, byAmy ? "With Amy" : "With AI", A, tSc, (s, sc) => timeBar({...s, dep: s.held}, sc), "", "")}
+            ${legend(TIME)}
           </div>
         </div>
       </section>
@@ -612,7 +645,7 @@ function asIsHTML(m){
           <thead><tr><th class="sh">Outputs</th><th>Format and length</th><th class="n">Tag</th><th class="n"><button class="add-btn" data-add-out>${ic("plus", 11)} Add</button></th></tr></thead><tbody>${outsOf(a).map(o => `<tr class="row">
             <td><input class="cell" data-outf="label" data-outid="${o.id}" data-k="ol${o.id}" value="${esc(o.label)}" placeholder="Output" aria-label="Output"></td>
             <td><input class="cell" data-outf="format" data-outid="${o.id}" data-k="of${o.id}" value="${esc(o.format)}" placeholder="Format, pages, variants" aria-label="Format and length"></td>
-            <td class="n"><button class="newtag" data-out-new="${o.id}" title="Click to change: Existing, Enhance, New"><i class="sdot s-${outTag(o)}"></i>${OUTLAB[outTag(o)]}</button></td>
+            <td class="n">${outDD(o)}</td>
             ${acts(o.id, o.files, o.example || (o.files && o.files.length), "data-del-out", "", "Attach a template")}</tr>` +
             noteRow(o.id, 4, `data-outf="example" data-outid="${o.id}"`, o.example, "A template or notes: what good looks like", o.files)).join("")}</tbody></table></div>
         <div class="tscroll"><table class="tin"><colgroup><col style="width:48%"><col style="width:28%"><col style="width:12%"><col style="width:12%"></colgroup>
@@ -621,8 +654,9 @@ function asIsHTML(m){
           ${tot(make, money(c0))}
 
         </tbody></table></div>
-        <div class="tscroll"><table class="adapt">${cols}${thead(false, "Adaptations", mkt.length ? `data-none hidden` : `data-add-step="market"`)}<tbody>${mkt.slice(0, 1).map((s, i) => stepRow(s, 0, true)).join("")}
-        </tbody></table></div>
+        ${byAmy ? amyCard(a) : ""}
+        ${mkt.length ? `<div class="tscroll"><table class="adapt">${cols}${thead(false, "Adaptations", `data-none hidden`)}<tbody>${mkt.slice(0, 1).map((s, i) => stepRow(s, 0, true)).join("")}
+        </tbody></table></div>` : `<div class="tscroll"><div class="adempty"><span>Adaptations</span><button class="add-btn" data-add-step="market">${ic("plus", 11)} Add</button></div></div>`}
         ${stakeHTML(a, noteRow)}
         <div class="nuance"><textarea data-f="nuances" data-k="nu" placeholder="Cover anything important for this asset: what changes how it is made, approved or adapted">${esc(a.nuances)}</textarea></div>
       </section>
@@ -724,7 +758,7 @@ function toBeHTML(m){
   const cell = key => { const l = levLine(key); return l ? `<input class="num" data-tl="value" data-line="${l.id}" data-k="tv${l.id}" inputmode="decimal" value="${val(l.value)}" aria-label="${esc(key)}">` : ""; };
   const runCard = `<div class="tcard"><h4>Amy price per asset${info("price")}</h4><table class="rc"><thead><tr><th></th><th class="n">Small</th><th class="n">Medium</th><th class="n">Large</th></tr></thead><tbody>
       <tr><td>Self-service</td><td class="n">${cell("selfSmall")}</td><td class="n">${cell("selfMedium")}</td><td class="n">${cell("selfLarge")}</td></tr>
-      <tr><td>Managed</td><td class="n">${cell("dfySmall")}</td><td class="n">${cell("dfyMedium")}</td><td class="n">${cell("dfyLarge")}</td></tr></tbody></table></div>`;
+      <tr><td>Done-for-you</td><td class="n">${cell("dfySmall")}</td><td class="n">${cell("dfyMedium")}</td><td class="n">${cell("dfyLarge")}</td></tr></tbody></table></div>`;
   const groups = S.tobe.groups.filter(g => !g.hidden && !isRate(g));
   const setup = groups.find(g => g.lines.some(l => l.key === "setup"));
   const cards = groups.filter(g => g !== setup).map(card).join("") + runCard + (setup ? card(setup) : "");
@@ -789,7 +823,7 @@ function bcFigures(m){
     {key: "agency", label: "Agency and outside spend", cls: "k-agency", old: sum(outKeys, "old") * Y, ai: sum(outKeys, "ai") * Y,
       hover: "Agency fees, stock and other outside costs"},
     {key: "amy", label: "Amy and platform", cls: "k-dfy", old: 0, ai: sum(amyKeys, "ai") * Y,
-      hover: `Amy self-service ${big(L("self").ai * Y)}, Amy managed ${big(L("dfy").ai * Y)}, platform ${big(L("platform").ai * Y)}`},
+      hover: `Amy self-service ${big(L("self").ai * Y)}, Amy done-for-you ${big(L("dfy").ai * Y)}, platform ${big(L("platform").ai * Y)}`},
     {key: "setup", label: "Setup, one-off", cls: "k-oneoff", old: 0, ai: m.oneOff, hover: m.oneOffLines.map(l => `${l.label} ${big(l.ai)}`).join(", ")}
   ];
   if (all) rows.push(
@@ -1034,6 +1068,7 @@ document.addEventListener("input", e => {
     const a = S.assets[t.dataset.route]; if (!a) return;
     a.route = t.value; a.runPrice = null; render(); save(); return;
   }
+  if (t.dataset.amy){ const a = S.assets[S.current]; if (!a) return; a.amy = a.amy || {}; a.amy[t.dataset.amy] = t.value === "" ? "" : parseFloat(String(t.value).replace(",", ".")); save(); return; }
   if (t.dataset.stk){ const a = S.assets[S.current], r = a && stakesOf(a).find(x => x.id === t.dataset.stkid); if (!r) return; r[t.dataset.stk] = t.dataset.stk === "step" ? (parseInt(t.value) || "") : t.value; save(); return; }
   if (t.dataset.role != null){ if (!Array.isArray(S.roles) || !S.roles.length) S.roles = DEFAULT_ROLES.slice(); S.roles[+t.dataset.role] = t.value; save(); return; }
   if (t.dataset.in){
@@ -1073,10 +1108,12 @@ document.addEventListener("click", e => { const cb = e.target.closest && e.targe
     return; }
   const tg = e.target.closest && e.target.closest("[data-sdd-toggle]");
   document.querySelectorAll(".sdd.open").forEach(x => { if (!tg || x !== tg.parentElement){ x.classList.remove("open"); x.firstElementChild.setAttribute("aria-expanded", "false"); } });
-  if (tg){ const open = tg.parentElement.classList.toggle("open"); tg.setAttribute("aria-expanded", String(open)); return; }
+  if (tg){ const open = tg.parentElement.classList.toggle("open"); tg.setAttribute("aria-expanded", String(open));
+    const m = tg.nextElementSibling; if (open && m && tg.closest(".tscroll")){ const r = tg.getBoundingClientRect(); m.style.position = "fixed"; m.style.right = "auto"; m.style.left = Math.max(8, r.right - 150) + "px"; m.style.top = (r.bottom + 6) + "px"; }
+    return; }
   const sb = e.target.closest && e.target.closest("[data-sumst]"); if (sb){ const a = S.assets[sb.dataset.sumst]; if (a){ setStatus(a, STNEXT[statusOf(a)]); render(); save(); } return; }
   const b = e.target.closest && e.target.closest("[data-set-status]"); if (!b) return; const a = S.assets[S.current]; if (a){ setStatus(a, b.dataset.setStatus); render(); save(); } });
-document.addEventListener("change", e => { if (e.target.dataset && e.target.dataset.stk){ const y = scrollY; render(); scrollTo(0, y); return; } const d = e.target.dataset, num0 = () => parseFloat(String(e.target.value).replace(/[€,\s]/g, "")); 
+document.addEventListener("change", e => { if (e.target.dataset && (e.target.dataset.stk || e.target.dataset.amy)){ const y = scrollY; render(); scrollTo(0, y); return; } const d = e.target.dataset, num0 = () => parseFloat(String(e.target.value).replace(/[€,\s]/g, "")); 
   if (d.sumv || d.suma){ const id = d.sumv || d.suma, a = S.assets[id], x = compute(S).assets.find(y => y.id === id), v = num0(); if (a && x && v >= 0){ snap(`${d.sumv ? "Volume" : "Agency cost"} for ${a.name}`);
       if (d.sumv){ a.tiers = null; a.want = {n: v, u: 0, m: 0}; }
       else { const cur = x.year.old.agency + x.year.old.other, outs = a.steps.filter(q => +q.fee > 0);
@@ -1101,6 +1138,8 @@ document.addEventListener("click", e => {
   if ((b = q("[data-out-new]"))){ const a = S.assets[S.current], o = a && outsOf(a).find(x => x.id === b.dataset.outNew); if (o){ o.tag = OUTNEXT[outTag(o)]; o.isNew = o.tag === "new"; render(); save(); } return; }
   if ((b = q("[data-add-out]"))){ const a = S.assets[S.current], o = {id: uid("o"), label: "", format: "", example: "", files: []}; outsOf(a).push(o); syncOut(a); render(); save(); document.querySelector(`[data-k="ol${o.id}"]`)?.focus(); return; }
   if ((b = q("[data-del-out]"))){ snap("Removed an output"); const a = S.assets[S.current]; a.outputs = outsOf(a).filter(x => x.id !== b.dataset.delOut); if (!a.outputs.length) a.outputs = [{id: uid("o"), label: "", format: "", example: "", files: []}]; syncOut(a); render(); save(); return; }
+  if ((b = q("[data-amy-route]"))){ const a = S.assets[S.current]; if (a){ a.route = b.dataset.amyRoute; render(); save(); } return; }
+  if ((b = q("[data-out-set]"))){ const a = S.assets[S.current], o = a && outsOf(a).find(x => x.id === b.dataset.outSet); if (o){ o.tag = b.dataset.v; o.isNew = o.tag === "new"; render(); save(); } return; }
   if ((b = q("[data-cbx-set]"))){ const a = S.assets[S.current], r = a && stakesOf(a).find(x => x.id === b.dataset.cbxSet); if (r){ r.who = b.dataset.v; render(); save(); } return; }
   if ((b = q("[data-stk-inv]"))){ const a = S.assets[S.current], r = a && stakesOf(a).find(x => x.id === b.dataset.stkInv); if (r){ r.inv = r.inv === "align" ? "approve" : "align"; render(); save(); } return; }
   if ((b = q("[data-add-stk]"))){ const a = S.assets[S.current], rows = stakesOf(a), nx = rows.reduce((t, r) => Math.max(t, parseInt(r.step) || 0), 0) + 1; const r = {id: uid("k"), who: "", inv: "approve", step: nx, comment: ""}; rows.push(r); render(); save(); document.querySelector(`[data-k="sw${r.id}"]`)?.focus(); return; }
@@ -1347,4 +1386,4 @@ window.__bc = {S: () => S, compute, render};
 
 if (SHARED){ pullState(); setInterval(pullState, 15000); }
 
-if (cleanState(S) | applyBatch1(S) | applyBatch2(S) | applyBatch3(S) | applyBatch4(S) | applyBatch5(S) | applyBatch6(S) | applyBatch7(S) | applyBatch8(S) | applyBatch9(S) | applyBatch10(S) | applyBatch11(S) | applyBatch12(S)){ save(); render(); }
+if (cleanState(S) | applyBatch1(S) | applyBatch2(S) | applyBatch3(S) | applyBatch4(S) | applyBatch5(S) | applyBatch6(S) | applyBatch7(S) | applyBatch8(S) | applyBatch9(S) | applyBatch10(S) | applyBatch11(S) | applyBatch12(S) | applyBatch13(S)){ save(); render(); }

@@ -31,6 +31,10 @@ function routeOf(state, a){
   return (state.routes || []).find(r => r.key === a.route) || (state.routes || [])[0] || {key: "self", label: "Amy self-service", kind: "self"};
 }
 const SIZES = {small: "Small", medium: "Medium", large: "Large"};
+/* With Amy an asset is one step: Vodafone's review hours and the days it takes, typed on the asset (1 and 1 by default) */
+const amyBlock = (state, a) => { const k = routeOf(state, a).kind; return k === "self" || k === "dfy"; };
+const amyHours = a => a.amy && a.amy.hours != null && a.amy.hours !== "" ? num(+a.amy.hours) : 1;
+const amyDays  = a => a.amy && a.amy.days  != null && a.amy.days  !== "" ? num(+a.amy.days)  : 1;
 function runsOf(state, a){ return a.runs != null ? num(a.runs) : lever(state, "runs"); }
 function runPriceOf(state, a){
   const r = routeOf(state, a);
@@ -59,7 +63,13 @@ function schedule(state, a, ai, from = 0){
   const go = from;   /* the process starts once its inputs are in, so waiting for them is not part of the cycle */
   let end = go, prevBegin = go;
   const work = {create: 0, approve: 0, market: 0};
+  const blockAmy = ai && amyBlock(state, a); let amyDone = false;
   const rows = a.steps.map((s, i) => {
+    if (blockAmy && phaseOf(s) !== "market"){
+      const first = !amyDone; amyDone = true; const begin = end, stop = begin + (first ? amyDays(a) : 0);
+      end = stop; prevBegin = begin; if (first) work.create += amyDays(a);
+      return {id: s.id, phase: phaseOf(s), hours: first ? amyHours(a) : 0, begin, workStart: begin, stop};
+    }
     const w0 = num(s.hours) / hpd, idle0 = Math.max(0, num(s.days) - w0);
     const amy = amyMakes(state, a, s, ai);
     const h = amy ? AMY_H : num(s.hours) * (ai ? 1 - pct(s.ai) : 1), idle = amy ? 0 : idle0 * (ai ? 1 - pct(s.aiWait) : 1);
@@ -86,6 +96,10 @@ function unitCost(state, a, steps, ai, mode){
   const r = routeOf(state, a), priced = ai && (r.kind === "self" || r.kind === "dfy");
   const upd = pct(a.updatePct ?? 50), appr = pct(lever(state, "approvalShare") || 50);
   const c = zero();
+  if (priced && mode !== "m"){
+    const sh = mode === "n" ? 1 : appr, h = amyHours(a) * sh;
+    c.central += h * lever(state, "rate"); c.hCentral += h; c[r.kind] += runsOf(state, a) * runPriceOf(state, a); return c;
+  }
   for (const s of steps){
     const review = phaseOf(s) === "approve" || mode === "m";
     const share = mode === "n" ? 1 : !ai ? (mode === "u" ? upd : 1) : review ? appr : upd;
@@ -145,7 +159,7 @@ function compute(state){
   const lines = [
     row("agency", "Agency fees", true),
     row("other", "Other outside costs", true),
-    row("dfy", "Amy managed", true),
+    row("dfy", "Amy done-for-you", true),
     row("self", "Amy self-service", true),
     {key: "platform", label: "Amy platform", cash: true, today: 0, old: 0, ai: platform},
     ...state.bc.lines.map(l => ({key: "c:" + l.id, label: l.label, cash: true, today: num(l.today), old: num(l.old), ai: num(l.ai), custom: true})),
@@ -161,12 +175,16 @@ function compute(state){
   /* The one-off: the toolkit setup (solutioning, shadowing, process
      mapping, the business case, AEO research) and one template for each
      asset Amy makes in the plan, unless a number of templates is typed. */
-  const autoTemplates = assets.filter(x => (x.route.kind === "self" || x.route.kind === "dfy") && x.pieces.plan > 0).length;
+  const amyAssets = assets.filter(x => (x.route.kind === "self" || x.route.kind === "dfy") && x.pieces.plan > 0);
+  const autoTemplates = amyAssets.length;
   const tplTyped = state.tobe.groups.flatMap(g => g.lines).find(l => l.key === "templates");
-  const templates = tplTyped && tplTyped.value != null && tplTyped.value !== "" ? num(tplTyped.value) : autoTemplates;
+  const typed = tplTyped && tplTyped.value != null && tplTyped.value !== "";
+  const tplOf = x => lever(state, "template" + (SIZES[(state.assets[x.id] || {}).size] || "Medium")) || lever(state, "templatePrice");
+  const templates = typed ? num(tplTyped.value) : autoTemplates;
+  const templatesCost = typed ? templates * (lever(state, "templateMedium") || lever(state, "templatePrice")) : amyAssets.reduce((t, x) => t + tplOf(x), 0);
   const oneOffLines = [
     {key: "setup",     label: "Digital toolkit setup", ai: lever(state, "setup")},
-    {key: "templates", label: "Templates",             ai: templates * lever(state, "templatePrice"), count: templates},
+    {key: "templates", label: "Templates",             ai: templatesCost, count: templates},
     ...state.bc.oneOff.map(l => ({key: "o:" + l.id, label: l.label, ai: num(l.ai), custom: true}))
   ];
   const oneOff = oneOffLines.reduce((t, l) => t + l.ai, 0);
