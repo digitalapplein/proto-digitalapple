@@ -553,7 +553,9 @@ table.sm .aname{white-space:nowrap}
 table.sm td.st{color:var(--second);font-size:13px}
 table.sm td small{display:block;color:var(--tert);font-size:11px;line-height:14px}
 table.sm .pair{justify-content:flex-end}
-table.sm input.num{width:52px}
+table.sm input.num{width:56px}
+table.sm input.num.wide{width:84px}
+table.sm td.st .newtag{white-space:nowrap}
 table.sm tr.on td{background:#EAF6E1}
 .newtag.sm{padding:0 7px;font-size:10px;cursor:default}
 table.sm .sectbtn{font:inherit;font-weight:600;color:var(--ink);background:none;border:0;padding:0;cursor:pointer;text-align:left}
@@ -563,6 +565,21 @@ table.sm .sectbtn:hover{text-decoration:underline}
 .newtag.on{background:var(--ink);border-color:var(--ink);color:#fff}
 table.adapt tbody tr.row td .grip{display:none}
 .ahead2{display:flex;align-items:center;gap:12px}.ahead2 .title{flex:1;min-width:0}.stsel{position:static!important;flex:none;display:inline-flex;align-items:center;gap:6px;flex-wrap:nowrap}.stsel .pillrow{display:inline-flex;gap:3px}.stsel .pill{padding:2px 9px;font-size:11px}.tocf{margin-right:4px}
+.sdot{width:9px;height:9px;border-radius:50%;flex:none;margin-left:6px;background:#B8B8B8}.sdot.s-required{background:#2F8A1F}.sdot.s-enhance{background:#F6D77A}.sdot.s-new{background:#FF965F}.sdot.s-optional{background:#B8B8B8}
+#clientName{display:none}
+.rte{border:1px solid var(--card);border-radius:12px;background:#fff;overflow:hidden}
+.rtb{display:flex;align-items:center;gap:4px;padding:6px 8px;border-bottom:1px solid var(--line);background:var(--surface)}
+.rtsp{flex:1}
+.rtbtn{display:inline-flex;align-items:center;gap:6px;border:1px solid transparent;background:none;border-radius:999px;padding:4px 9px;color:var(--second);font:700 12px/16px var(--display);cursor:pointer}
+.rtbtn:hover{background:#fff;border-color:var(--card)}
+.rtbtn i{font-style:normal}
+.rtbtn.go{background:var(--ink);color:#fff}.rtbtn.go:hover{background:#000;border-color:transparent}
+.rtbtn.rec{background:#FFE6DA;color:#B4491A;border-color:#FF965F}
+.rtx{min-height:max(520px,calc(100vh - 280px));padding:12px 16px;font-size:14px;line-height:21px;outline:none;color:var(--ink)}
+.rtx:empty::before{content:attr(data-ph);color:var(--t3)}
+.rtx ul{margin:4px 0;padding-left:22px}.rtx h3{font:700 16px/22px var(--display);margin:10px 0 4px}
+.dci2{display:flex;gap:10px;font-size:13px;line-height:19px}.dci2 .dcl{color:var(--tert);min-width:130px}.dci2 .dct{color:var(--ink);font-weight:600}
+.dopen{margin:2px 0 4px;padding-left:20px;font-size:13px;line-height:19px;color:var(--second)}
 </style>
 </head>
 <body>
@@ -572,10 +589,10 @@ table.adapt tbody tr.row td .grip{display:none}
   <span class="ctx" id="client"></span><span class="stamp" id="clientName"></span></div>
   <nav class="tabs" role="tablist">
     <button role="tab" data-tab="discuss" aria-selected="true">Brief</button>
-    <button role="tab" data-tab="asis" aria-selected="false">As-is</button>
+    <button role="tab" data-tab="asis" aria-selected="false">As-is Process</button>
     <button role="tab" data-tab="summary" aria-selected="false">Summary</button>
-    <button role="tab" data-tab="tobe" aria-selected="false">Assumptions</button>
     <button role="tab" data-tab="bc" aria-selected="false">Business case</button>
+    <button role="tab" data-tab="tobe" aria-selected="false">Assumptions</button>
   </nav>
   <div class="hr"><span class="saved" id="saved"></span>
   <div class="exp" id="exportWrap">

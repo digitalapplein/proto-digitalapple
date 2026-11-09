@@ -127,6 +127,26 @@ const CALL4 = {
   "Product name": "Rules to come: at most 5 words, starts with Vodafone Business, descriptive. 3 to 5 names go to legal. A naming brief template exists. Kept off any shared platform for now.",
   "SEO keywords": "No keyword tools today (Brand Path exists, no access). We add an AEO audit and search volumes by market, on consumption. The cost model still to agree."
 };
+/* what to cover on every asset, in the order the call runs */
+const COVER = ["Asset overview", "Inputs", "Process", "Cycle time", "Your effort", "External cost", "Asset: retain, enhance or new", "Outputs and formats", "Adaptations (market, industry)", "Approvers and stakeholders"];
+/* notes are saved as simple HTML (bold, bullets, a heading); older notes are plain text */
+const hesc = t => String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+function toHtml(t){
+  t = String(t || ""); if (/<(p|div|br|ul|li|b|strong|h3)\b/i.test(t)) return t;
+  const out = []; let list = false;
+  for (const ln of t.split(/\n/)){
+    const m = /^\s*[-•]\s+(.*)$/.exec(ln);
+    if (m){ if (!list){ out.push("<ul>"); list = true; } out.push(`<li>${hesc(m[1])}</li>`); continue; }
+    if (list){ out.push("</ul>"); list = false; }
+    out.push(ln.trim() ? `<div>${hesc(ln)}</div>` : "<div><br></div>");
+  }
+  if (list) out.push("</ul>"); return out.join("");
+}
+function toPlain(t){
+  const el = document.createElement("div"); el.innerHTML = toHtml(t);
+  el.querySelectorAll("li").forEach(li => li.prepend("- ")); el.querySelectorAll("li,div,p,h3,br").forEach(n => n.after("\n"));
+  return el.textContent.replace(/\n{3,}/g, "\n\n").trim();
+}
 const dkey = name => name.toLowerCase().replace(/[^a-z0-9]+/g, "-");
 function dAll(){
   const out = [];
@@ -159,13 +179,21 @@ function discussHTML(){
       <div class="dhead">${a.parent || phase !== name ? `<div class="dcrumb">${esc(a.parent || phase)}</div>` : ""}
         <div class="dtitle"><h2>${esc(name)}</h2>
         <div class="tools">
-          <button class="cvbtn${asset.covered ? " y" : ""}" data-cover>${asset.covered ? ic("check", 12) + " Covered" : "Mark covered"}</button>
-          <button class="cvbtn cvt2" data-convert>Convert to structured data</button></div></div></div>
+          <span class="pillrow" role="group" aria-label="Status of this asset">${Object.entries(STLAB).map(([k, l]) => `<button class="pill" data-set-status="${k}" aria-pressed="${statusOf(asset) === k}">${l}</button>`).join("")}</span></div></div></div>
       ${conv}
       <div class="dsplit">
-        <aside class="dcover"><div class="dl">To cover on this one</div>
-          <ul>${coverList(asset, name).map(c => `<li>${esc(c)}</li>`).join("")}</ul></aside>
-        <div class="dnotes"><textarea data-dfield="free" placeholder="Notes from the call, in your own words">${esc(dfree(name))}</textarea></div>
+        <aside class="dcover"><div class="dl">Cover</div>
+          <ul>${COVER.map(c => `<li>${esc(c)}</li>`).join("")}</ul></aside>
+        <div class="dnotes"><div class="rte">
+          <div class="rtb">
+            <button class="rtbtn" data-rt="bold" data-hover="Bold" aria-label="Bold">${ic("bold", 14)}</button>
+            <button class="rtbtn" data-rt="insertUnorderedList" data-hover="Bullets" aria-label="Bullets">${ic("list", 14)}</button>
+            <button class="rtbtn" data-rt="h3" data-hover="Heading" aria-label="Heading">${ic("head", 14)}</button>
+            <span class="rtsp"></span>
+            <button class="rtbtn${REC ? " rec" : ""}" data-voice data-hover="${REC ? "Stop recording" : "Record your voice"}" aria-label="Record your voice">${ic("mic", 15)}${REC ? "<i>Recording</i>" : ""}</button>
+            <button class="rtbtn go" data-convert data-hover="Turn the notes into the detailed page" aria-label="Analyze">${ic("spark", 14)}<i>Analyze</i></button>
+          </div>
+          <div class="rtx" contenteditable="true" data-dfield="free" data-ph="Notes from the call, in your own words" role="textbox" aria-multiline="true">${toHtml(dfree(name))}</div></div></div>
       </div>
       <span class="dsync" id="dsync"></span>
     </section></div></div>`;
@@ -192,7 +220,7 @@ const dfree = name => { const r = D[name] || {}; if (!("free" in r) && ALIAS[nam
    A first version without AI: it reads hours, days, fees, who approves and
    who makes it from the text and shows what it would change; nothing is
    applied until you tick and apply. An AI step can replace parse() later. */
-let CONV = null;
+let CONV = null, REC = null;
 const PARTIES = ["Product (group)", "Product (local)", "Product", "Local GTM", "Propositions team", "Cluster lead", "Brand", "Legal", "Compliance", "Sustainability", "Markets", "VPC"];
 function parseNotes(text, a){
   const items = [], used = new Set(), steps = a.steps || [];
@@ -247,10 +275,33 @@ function parseNotes(text, a){
   return items.filter(it => String(it.from) !== String(it.to));
 }
 function convHTML(){
-  if (!CONV.items.length) return `<div class="dconv"><b>Nothing to convert yet.</b> Type notes on the right, then press Convert again. <button class="cvbtn" data-conv-x>Close</button></div>`;
-  return `<div class="dconv"><div class="dch"><b>Proposed changes to the detailed page</b><span>Untick anything you do not want. Nothing changes until you apply.</span></div>
-    ${CONV.items.map((it, i) => `<label class="dci"><input type="checkbox" data-conv-i="${i}" ${it.on ? "checked" : ""}><span class="dcl">${esc(it.label)}</span><span class="dcf">${esc(String(it.from ?? "") || "empty")}</span><span class="dca">→</span><span class="dct">${esc(String(it.to))}</span></label>`).join("")}
-    <div class="dcb"><button class="btn lime" data-conv-go>Apply ${CONV.items.filter(x => x.on).length}</button><button class="cvbtn" data-conv-x>Cancel</button></div></div>`;
+  const done = CONV.done || [], open = CONV.open || [];
+  return `<div class="dconv"><div class="dch"><b>${done.length ? `Added ${done.length} to the detailed page` : "Nothing new found in the notes"}</b></div>
+    ${done.map(it => `<div class="dci2"><span class="dcl">${esc(it.label)}</span><span class="dct">${esc(String(it.to))}</span></div>`).join("")}
+    <div class="dch"><b>${open.length ? "Still open" : "Nothing open"}</b></div>
+    ${open.length ? `<ul class="dopen">${open.map(o => `<li>${esc(o)}</li>`).join("")}</ul>` : ""}
+    <div class="dcb"><button class="btn lime" data-dnext>Next asset</button><button class="cvbtn" data-conv-x>Close</button></div></div>`;
+}
+/* Analyze: read the notes, apply what they say to the detailed page, then list what is still open */
+function analyze(){
+  const as = S.assets[S.current], name = DCUR, ed = document.querySelector(".rtx");
+  if (ed){ clearTimeout(dSaveT); dPut(name, "free", ed.innerHTML); }
+  const items = parseNotes(toPlain(dfree(name)), as);
+  snap("Analyzed " + name);
+  items.forEach(x => { if (x.on) x.apply(); });
+  CONV = {name, done: items.filter(x => x.on), open: coverList(as, name)}; save(); render();
+}
+function placeCaretEnd(el){ const r = document.createRange(); r.selectNodeContents(el); r.collapse(false); const s = getSelection(); s.removeAllRanges(); s.addRange(r); }
+function toggleVoice(){
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR){ toast("Voice needs Chrome"); return; }
+  if (REC){ REC.stop(); return; }
+  const r = new SR(); r.lang = "en-GB"; r.continuous = true; r.interimResults = false;
+  r.onresult = ev => { let t = ""; for (let i = ev.resultIndex; i < ev.results.length; i++) if (ev.results[i].isFinal) t += ev.results[i][0].transcript + " ";
+    const ed = document.querySelector(".rtx"); if (t && ed){ ed.focus(); placeCaretEnd(ed); document.execCommand("insertText", false, t); } };
+  r.onerror = ev => { if (ev.error !== "no-speech") toast("Voice: " + ev.error); };
+  r.onend = () => { REC = null; render(); };
+  REC = r; r.start(); render();
 }
 
 /* six free-text boxes in the order the call runs; each opens with what is
@@ -306,7 +357,12 @@ if (ONLINE){ dPull(); setInterval(dPull, 8000); }
 document.addEventListener("click", e => {
   const q = s => e.target.closest(s); let b;
   if ((b = q("[data-dset]"))){ const k = b.dataset.dset, v = b.dataset.dv; dPut(DCUR, k, dval(DCUR, k) === v && !disEst(DCUR, k) ? "" : v); render(); return; }
-  if ((b = q("[data-convert]"))){ const as = S.assets[S.current]; CONV = {name: DCUR, items: parseNotes(dfree(DCUR), as)}; render(); return; }
+  if ((b = q("[data-convert]"))){ analyze(); return; }
+  if ((b = q("[data-voice]"))){ toggleVoice(); return; }
+  if ((b = q("[data-rt]"))){ const ed = document.querySelector(".rtx"); if (!ed) return; ed.focus();
+    if (b.dataset.rt === "h3"){ const blk = getSelection().anchorNode; const inH = blk && (blk.nodeType === 1 ? blk : blk.parentElement).closest("h3"); document.execCommand("formatBlock", false, inH ? "div" : "h3"); }
+    else document.execCommand(b.dataset.rt);
+    ed.dispatchEvent(new Event("input", {bubbles: true})); return; }
   if ((b = q("[data-conv-x]"))){ CONV = null; render(); return; }
   if ((b = q("[data-conv-go]"))){ const n = CONV.items.filter(x => x.on); n.forEach(x => x.apply()); CONV = null; save(); render(); const t = $("#saved"); if (t){ t.textContent = `Applied ${n.length} change${n.length === 1 ? "" : "s"}`; setTimeout(() => { t.textContent = ""; }, 3500); } return; }
   if ((b = q("[data-dknown]"))){ const k = BOX.map(x => { const v = dboxSeed(DCUR)[x.k]; return v ? `${x.l}\n${v}` : ""; }).filter(Boolean).join("\n\n"); const cur = dfree(DCUR); dPut(DCUR, "free", (cur ? cur + "\n\n" : "") + "Already known\n" + k); render(); return; }
@@ -317,10 +373,20 @@ document.addEventListener("change", e => { const t = e.target; if (t.dataset && 
 document.addEventListener("input", e => {
   const t = e.target;
   if (!t.dataset.dfield) return;
-  const k = t.dataset.dfield, v = t.value, name = DCUR;
+  const k = t.dataset.dfield, v = t.isContentEditable ? t.innerHTML : t.value, name = DCUR;
   const box = t.closest(".df"); if (box){ box.classList.toggle("gap", v.trim() === ""); box.classList.remove("est"); }
+  (D[name] = D[name] || {})[k] = v; dLocal();
   clearTimeout(dSaveT); dSaveT = setTimeout(() => dPut(name, k, v), 400);
 });
+
+document.addEventListener("mousedown", e => { if (e.target.closest && e.target.closest(".rtbtn[data-rt]")) e.preventDefault(); });
+document.addEventListener("keydown", e => {
+  const t = e.target; if (!t.isContentEditable || !t.dataset || !t.dataset.dfield || e.key !== " ") return;
+  const sel = getSelection(), n = sel.anchorNode;
+  if (n && n.nodeType === 3 && /^[-•*]$/.test(n.textContent.slice(0, sel.anchorOffset)) && sel.anchorOffset === n.textContent.length && !n.previousSibling){
+    e.preventDefault(); n.textContent = ""; document.execCommand("insertUnorderedList"); }
+});
+document.addEventListener("paste", e => { const t = e.target; if (t.isContentEditable && t.dataset && t.dataset.dfield){ e.preventDefault(); document.execCommand("insertText", false, (e.clipboardData || window.clipboardData).getData("text/plain")); } });
 
 /* the tool opens on this page, so draw it once this file has loaded */
 if (TAB === "discuss") render();

@@ -227,6 +227,23 @@ function applyBatch8(st){
   if (!st.assets[st.current]) st.current = st.sections.flatMap(x => x.assets)[0];
   (st.applied = st.applied || []).push("batch8"); return true;
 }
+/* Batch 9 (9 Nov): assets from the first call that had hours but no volume: made for every launch, like the others. */
+function applyBatch9(st){
+  if (!st || !st.assets || (st.applied || []).includes("batch9")) return false;
+  for (const a of Object.values(st.assets)){
+    if (!["One Brief", "Market Opportunity", "Meet the customer", "Messaging House", "Marketing Hub page", "Comms"].includes((a.name || "").trim())) continue;
+    const t = a.today || {}, w = a.want || {};
+    if (a.optional || (+t.n || 0) + (+t.u || 0) + (+t.m || 0) > 0 || (+w.n || 0) + (+w.u || 0) + (+w.m || 0) > 0) continue;
+    a.today = {n: 22, u: 0, m: 0}; a.want = {n: 22, u: 0, m: 0}; a.tiers = ["L1", "L2", "L3"]; a.rows = "n"; delete a.status;
+  }
+  (st.applied = st.applied || []).push("batch9"); return true;
+}
+/* Batch 10 (9 Nov): page feedback: the project title. */
+function applyBatch10(st){
+  if (!st || !st.assets || (st.applied || []).includes("batch10")) return false;
+  st.client = st.client || {}; st.client.project = "AI Content Business Case for Vodafone";
+  (st.applied = st.applied || []).push("batch10"); return true;
+}
 /* hosted: one shared copy of the whole tool; the newest save wins */
 const SHARED = location.protocol.startsWith("http");
 function pullState(){
@@ -235,7 +252,7 @@ function pullState(){
   fetch("api/state").then(r => r.json()).then(R => {
     if (!R || !R.assets || (R.version || 0) < 16) return;
     if ((R.savedAt || 0) > (S.savedAt || 0)){
-      S = R; cleanState(S); applyBatch1(S); applyBatch2(S); applyBatch3(S); applyBatch4(S); applyBatch5(S); applyBatch6(S); applyBatch7(S); applyBatch8(S); try { localStorage.setItem(STORE + S.client.id, JSON.stringify(S)); } catch(_){}
+      S = R; cleanState(S); applyBatch1(S); applyBatch2(S); applyBatch3(S); applyBatch4(S); applyBatch5(S); applyBatch6(S); applyBatch7(S); applyBatch8(S); applyBatch9(S); applyBatch10(S); try { localStorage.setItem(STORE + S.client.id, JSON.stringify(S)); } catch(_){}
       const y = scrollY; render(); scrollTo(0, y);
     }
   }).catch(() => {});
@@ -246,6 +263,8 @@ const levLine = key => { for (const g of S.tobe.groups) for (const l of g.lines)
    Paint
    =================================================================== */
 const ICON = {
+  mic:'<rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v4"/>', spark:'<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8zM19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/>',
+  bold:'<path d="M7 5h6a3.5 3.5 0 0 1 0 7H7zM7 12h7a3.5 3.5 0 0 1 0 7H7z"/>', list:'<path d="M9 6h12M9 12h12M9 18h12M4 6h.01M4 12h.01M4 18h.01"/>', head:'<path d="M6 4v16M18 4v16M6 12h12"/>',
   x:'<path d="M18 6 6 18M6 6l12 12"/>', check:'<path d="M20 6 9 17l-5-5"/>', plus:'<path d="M12 5v14M5 12h14"/>', chev:'<path d="m6 9 6 6 6-6"/>',
   clip:'<path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/>',
   note:'<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',
@@ -336,14 +355,16 @@ function countTo(node){
 
 const n0 = v => Math.round(v).toLocaleString("en-GB");
 /* Required: made today and kept; New: not made today, added with AI; Optional: Sally picks per tier */
+const STLAB = {required: "Existing", enhance: "Enhance", new: "New", optional: "Optional"};
+const STNEXT = {required: "enhance", enhance: "new", new: "optional", optional: "required"};
 const statusOf = a => a.status || (a.optional ? "optional" : madeToday(a) ? "required" : "new");
 function setStatus(a, v){
   a.status = v; a.optional = v === "optional";
-  if (v === "required"){
+  if (v === "required" || v === "enhance"){
     if (a._todayWas){ a.today = a._todayWas; delete a._todayWas; }
     else if (!madeToday(a)){ a.today = {n: 22, u: 0, m: 0}; a.tiers = ["L1", "L2", "L3"]; a.rows = a.rows || "n"; }
   }
-  if (v !== "required" && madeToday(a)){ a._todayWas = a.today; a.today = {n: 0, u: 0, m: 0}; }
+  if (v !== "required" && v !== "enhance" && madeToday(a)){ a._todayWas = a.today; a.today = {n: 0, u: 0, m: 0}; }
 }
 /* an asset can have several outputs, each with a format and templates attached;
    a.output keeps them joined as text for the exports. Older copies hold plain text and are converted. */
@@ -393,9 +414,7 @@ function planHTML(){
 }
 /* top of the list: hide it, and how many assets and markets there are */
 function railTop(){
-  const n = S.sections.filter(s => s.toolkit !== false).reduce((t, s) => t + s.assets.filter(id => !S.assets[id].optional && !S.assets[id].parent).length, 0);
-  return `<div class="rtop"><button class="railbtn in" data-rail data-hover="Hide the list" aria-label="Hide the asset list">${ic("side", 15)}</button>
-    <span><b>${n}</b> assets</span><span data-hover="DE, UK and VBI; cluster markets are in L3"><b>${val(S.plan ? S.plan.markets : "")}</b> lead markets</span></div>`;
+  return `<div class="rtop"><button class="railbtn in" data-rail data-hover="Hide the list" aria-label="Hide the asset list">${ic("side", 15)}</button></div>`;
 }
 function railHTML(){
   return railTop() + `<div class="it kit ${S.current === "toolkit" ? "on" : ""}" data-kit><span class="nm">Digital toolkit</span></div>` +
@@ -408,7 +427,7 @@ function railHTML(){
       const a = S.assets[id];
       return `<div class="it ${id === S.current ? "on" : ""} ${isMapped(a) ? "" : "blank"} ${a.optional ? "opt" : ""} ${a.parent ? "kid" : ""}" data-asset="${id}" draggable="true"${a.optional ? ` title="Optional"` : a.parent ? ` title="Part of ${esc((S.assets[a.parent] || {}).name || "")}: counted there"` : ""}>
         <span class="grip hov">${ic("grip", 12)}</span>
-        <span class="nm" data-ren-asset="${id}">${esc(a.name)}</span>${TAB === "discuss" ? `<span class="cvt${a.covered ? " y" : ""}" title="${a.covered ? "Covered" : "Not covered yet"}">${a.covered ? ic("check", 9) : ""}</span>` : ""}
+        <span class="nm" data-ren-asset="${id}">${esc(a.name)}</span><span class="sdot s-${statusOf(a)}" data-hover="${STLAB[statusOf(a)]}"></span>
         
         <button class="mini hov" data-del-asset="${id}" aria-label="Remove ${esc(a.name)}" title="Remove asset">${ic("x", 12)}</button>
       </div>`;
@@ -507,7 +526,7 @@ function asIsHTML(m){
       <section class="hero">
         <div class="ahead2">
         <input class="title" data-f="name" data-k="title" value="${esc(a.name)}" aria-label="Asset name">
-        <span class="stsel"><span class="tocf" id="tocf"></span><span class="pillrow" role="group" aria-label="Status of this asset">${[["required", "Required"], ["new", "New"], ["optional", "Optional"]].map(([k, l]) =>
+        <span class="stsel"><span class="tocf" id="tocf"></span><span class="pillrow" role="group" aria-label="Status of this asset">${Object.entries(STLAB).map(([k, l]) =>
           `<button class="pill" data-set-status="${k}" aria-pressed="${statusOf(a) === k}">${l}</button>`).join("")}</span></span>
         </div>
         <input class="hdesc top" data-f="desc" data-k="desc" value="${esc(a.desc || "")}" placeholder="What this asset is for, in one line" aria-label="What this asset is for">
@@ -563,20 +582,21 @@ function summaryHTML(m){
   const fig = x => ({vol: x.pieces.plan, agency: x.year.old.agency + x.year.old.other, vf: x.year.old.central + x.year.old.market, hrs: x.year.old.hCentral + x.year.old.hMarket});
   const zero0 = () => ({vol: 0, agency: 0, vf: 0, hrs: 0});
   const add = (t, f) => { for (const k in t) t[k] += f[k]; return t; };
-  const cell = f => `<td class="n">${f.vol ? n0(f.vol) : "–"}</td>`;
-  const money3 = f => `<td class="n">${f.hrs || f.vf ? `${eur(f.vf)}<small>${n0(f.hrs)} h a year</small>` : "–"}</td><td class="n">${f.agency ? eur(f.agency) : "–"}</td><td class="n"><b>${f.vf + f.agency ? eur(f.vf + f.agency) : "–"}</b></td>`;
+  const stLabel = a => STLAB[statusOf(a)];
+  const money3 = f => `<td class="n">${f.vf ? eur(f.vf) : "–"}</td><td class="n">${f.agencyCell}</td><td class="n"><b>${f.vf + f.agency ? eur(f.vf + f.agency) : "–"}</b></td>`;
   const cur = S.assets[S.current], scope = cur ? (S.sections.find(sec => sec.assets.includes(S.current)) || {}).id : null;
   const T = zero0();
   const body = S.sections.filter(sec => !scope || sec.id === scope).map(sec => {
-    const xs = m.assets.filter(x => x.sectionId === sec.id && (x.pieces.today > 0 || x.pieces.plan > 0)); if (!xs.length) return "";
+    const xs = m.assets.filter(x => x.sectionId === sec.id && (S.assets[x.id] || {}).steps); if (!xs.length) return "";
     xs.forEach(x => add(T, fig(x)));
-    return `<tr class="grp"><td colspan="8">${esc(sec.name)}</td></tr>` + xs.map(x => { const a = S.assets[x.id] || {}, f = fig(x);
-      return `<tr class="${x.id === S.current ? "on" : ""}"><td><button class="aname" data-goto="${x.id}" title="Open ${esc(x.name)}">${esc(x.name)}</button></td><td class="st">${x.made ? "Existing" : "New"}</td>${cell(f)}<td class="n"><span class="pair"><input class="num sm" data-sumh="${x.id}" inputmode="decimal" value="${val(Math.round(teamHours(a) * 10) / 10)}" aria-label="Team hours for one ${esc(x.name)}"><i>h</i></span></td>${money3(f)}<td class="n">${x.sched.old.elapsed ? n0(x.sched.old.elapsed) + " d" : "–"}</td></tr>`; }).join("");
+    return `<tr class="grp"><td colspan="8">${esc(sec.name)}</td></tr>` + xs.map(x => { const a = S.assets[x.id], f = fig(x);
+      f.agencyCell = `<span class="pair"><i>€</i><input class="num sm wide" data-suma="${x.id}" inputmode="decimal" value="${f.agency ? Math.round(f.agency) : ""}" placeholder="–" aria-label="Agency cost a year, ${esc(x.name)}"></span>`;
+      return `<tr class="${x.id === S.current ? "on" : ""}"><td><button class="aname" data-goto="${x.id}" title="Open ${esc(x.name)}">${esc(x.name)}</button></td><td class="st"><button class="newtag${statusOf(a) === "new" ? " on" : ""}" data-sumst="${x.id}" title="Click to change: Existing, Enhance, New, Optional">${stLabel(a)}</button></td><td class="n"><input class="num sm" data-sumv="${x.id}" inputmode="decimal" value="${f.vol ? Math.round(f.vol) : ""}" placeholder="–" aria-label="Volume a year, ${esc(x.name)}"></td><td class="n"><input class="num sm" data-sumh="${x.id}" inputmode="decimal" value="${teamHours(a) ? val(Math.round(teamHours(a) * 10) / 10) : ""}" placeholder="–" aria-label="Vodafone effort in hours for one ${esc(x.name)}"></td>${money3(f)}<td class="n">${x.sched.old.elapsed ? n0(x.sched.old.elapsed) + " d" : "–"}</td></tr>`; }).join("");
   }).join("");
   const where = scope ? (S.sections.find(x => x.id === scope) || {}).name : "All sections";
   return `<div class="grid${RAIL_HIDE ? " slimg" : ""}">${rail}<div class="answers"><section class="detail sumtab"><div class="tabbar"><h3>Summary</h3><div class="tools">${esc(where)}</div></div>
-    <div class="tscroll"><table class="sm"><thead><tr><th>Asset</th><th>Status</th><th class="n">Volume</th><th class="n">Hours a piece</th><th class="n">Vodafone cost</th><th class="n">Agency cost</th><th class="n">Total</th><th class="n">Cycle time</th></tr></thead><tbody>${body}
-    <tr class="tot"><td>Total</td><td></td>${cell(T)}<td></td>${money3(T)}<td></td></tr></tbody></table></div></section></div></div>`;
+    <div class="tscroll"><table class="sm"><thead><tr><th>Asset</th><th>Status</th><th class="n">Volume</th><th class="n">Vodafone effort (hours)</th><th class="n">Vodafone cost</th><th class="n">Agency cost</th><th class="n">Total</th><th class="n">Cycle time</th></tr></thead><tbody>${body}
+    <tr class="tot"><td>Total</td><td></td><td class="n">${n0(T.vol)}</td><td></td>${money3({...T, agencyCell: T.agency ? eur(T.agency) : "–"})}<td></td></tr></tbody></table></div></section></div></div>`;
 }
 function toolkitHTML(m){
   const k0 = toolkit(S, m, false), k1 = toolkit(S, m, true);
@@ -979,8 +999,16 @@ document.addEventListener("input", e => {
   }
 });
 /* labels and notes only redraw the sums once the field is left */
-document.addEventListener("click", e => { const b = e.target.closest && e.target.closest("[data-set-status]"); if (!b) return; const a = S.assets[S.current]; if (a){ setStatus(a, b.dataset.setStatus); render(); save(); } });
-document.addEventListener("change", e => { if (e.target.dataset.sumh){ const a = S.assets[e.target.dataset.sumh], v = parseFloat(String(e.target.value).replace(",", ".")); if (a && v >= 0){ snap(`Hours for ${a.name}`); setTeamHours(a, v); render(); save(); } return; } if (e.target.dataset.status){ const a = S.assets[e.target.dataset.status]; if (a){ setStatus(a, e.target.value); render(); save(); } return; } });
+document.addEventListener("click", e => { const sb = e.target.closest && e.target.closest("[data-sumst]"); if (sb){ const a = S.assets[sb.dataset.sumst]; if (a){ setStatus(a, STNEXT[statusOf(a)]); render(); save(); } return; }
+  const b = e.target.closest && e.target.closest("[data-set-status]"); if (!b) return; const a = S.assets[S.current]; if (a){ setStatus(a, b.dataset.setStatus); render(); save(); } });
+document.addEventListener("change", e => { const d = e.target.dataset, num0 = () => parseFloat(String(e.target.value).replace(/[€,\s]/g, "")); 
+  if (d.sumv || d.suma){ const id = d.sumv || d.suma, a = S.assets[id], x = compute(S).assets.find(y => y.id === id), v = num0(); if (a && x && v >= 0){ snap(`${d.sumv ? "Volume" : "Agency cost"} for ${a.name}`);
+      if (d.sumv){ a.tiers = null; a.want = {n: v, u: 0, m: 0}; }
+      else { const cur = x.year.old.agency + x.year.old.other, outs = a.steps.filter(q => +q.fee > 0);
+        if (outs.length && cur > 0) outs.forEach(q => { q.fee = Math.round(q.fee * v / cur); });
+        else { const q = a.steps.find(z => /draft|design|copy/i.test(z.label)) || a.steps[0]; if (q){ q.fee = Math.round(v / Math.max(1, x.pieces.plan)); if (!q.who) q.who = "Agency"; } } }
+      render(); save(); } return; }
+  if (e.target.dataset.sumh){ const a = S.assets[e.target.dataset.sumh], v = parseFloat(String(e.target.value).replace(",", ".")); if (a && v >= 0){ snap(`Hours for ${a.name}`); setTeamHours(a, v); render(); save(); } return; } if (e.target.dataset.status){ const a = S.assets[e.target.dataset.status]; if (a){ setStatus(a, e.target.value); render(); save(); } return; } });
 document.addEventListener("change", e => { if (e.target.dataset.s || e.target.dataset.sai || e.target.dataset.tl || e.target.dataset.f === "name") { const y = scrollY; render(); scrollTo(0, y); } });
 
 document.addEventListener("click", e => {
@@ -1231,4 +1259,4 @@ window.__bc = {S: () => S, compute, render};
 
 if (SHARED){ pullState(); setInterval(pullState, 15000); }
 
-if (cleanState(S) | applyBatch1(S) | applyBatch2(S) | applyBatch3(S) | applyBatch4(S) | applyBatch5(S) | applyBatch6(S) | applyBatch7(S) | applyBatch8(S)){ save(); render(); }
+if (cleanState(S) | applyBatch1(S) | applyBatch2(S) | applyBatch3(S) | applyBatch4(S) | applyBatch5(S) | applyBatch6(S) | applyBatch7(S) | applyBatch8(S) | applyBatch9(S) | applyBatch10(S)){ save(); render(); }
