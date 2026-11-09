@@ -137,6 +137,15 @@ function applyBatch3(st){
   if (!st.assets[st.current]) st.current = st.sections.flatMap(x => x.assets)[0];
   (st.applied = st.applied || []).push("batch3"); return true;
 }
+/* Batch 4 (9 Nov): defaults agreed with Mohit where Sally gave no number. Everything else is left as it was. */
+function applyBatch4(st){
+  if (!st || !st.assets || (st.applied || []).includes("batch4")) return false;
+  const by = n => Object.values(st.assets).find(x => (x.name || "").trim() === n);
+  let a;
+  if ((a = by("Sales to customer email")) && a.want && a.want.n === a.today.n){ a.want = {...a.want, n: a.today.n * 3}; a.nuances = (a.nuances || "") + " Volume planned at 3 a launch, one per ICP cohort (default, to confirm)."; }
+  if ((a = by("Video cutdowns")) && a.want && !a.want.n){ a.tiers = null; a.want = {n: 51, u: 0, m: 0}; a.nuances = (a.nuances || "") + " Volume: 3 cutdowns for each of the 17 explainer videos (default, to confirm)."; }
+  (st.applied = st.applied || []).push("batch4"); return true;
+}
 /* hosted: one shared copy of the whole tool; the newest save wins */
 const SHARED = location.protocol.startsWith("http");
 function pullState(){
@@ -145,7 +154,7 @@ function pullState(){
   fetch("api/state").then(r => r.json()).then(R => {
     if (!R || !R.assets || (R.version || 0) < 16) return;
     if ((R.savedAt || 0) > (S.savedAt || 0)){
-      S = R; cleanState(S); applyBatch1(S); applyBatch2(S); applyBatch3(S); try { localStorage.setItem(STORE + S.client.id, JSON.stringify(S)); } catch(_){}
+      S = R; cleanState(S); applyBatch1(S); applyBatch2(S); applyBatch3(S); applyBatch4(S); try { localStorage.setItem(STORE + S.client.id, JSON.stringify(S)); } catch(_){}
       const y = scrollY; render(); scrollTo(0, y);
     }
   }).catch(() => {});
@@ -1106,4 +1115,4 @@ window.__bc = {S: () => S, compute, render};
 
 if (SHARED){ pullState(); setInterval(pullState, 15000); }
 
-if (cleanState(S) | applyBatch1(S) | applyBatch2(S) | applyBatch3(S)){ save(); render(); }
+if (cleanState(S) | applyBatch1(S) | applyBatch2(S) | applyBatch3(S) | applyBatch4(S)){ save(); render(); }
