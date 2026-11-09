@@ -244,6 +244,13 @@ function applyBatch10(st){
   st.client = st.client || {}; st.client.project = "AI Content Business Case for Vodafone";
   (st.applied = st.applied || []).push("batch10"); return true;
 }
+/* Batch 11 (9 Nov): page feedback: the exec summary's output has its full name. */
+function applyBatch11(st){
+  if (!st || !st.assets || (st.applied || []).includes("batch11")) return false;
+  const a = Object.values(st.assets).find(x => (x.name || "").trim() === "Product exec summary");
+  if (a){ const o = outsOf(a); if (o[0] && /^one[- ]page/i.test((o[0].label || "").trim())){ o[0].label = "Product executive summary"; syncOut(a); } }
+  (st.applied = st.applied || []).push("batch11"); return true;
+}
 /* hosted: one shared copy of the whole tool; the newest save wins */
 const SHARED = location.protocol.startsWith("http");
 function pullState(){
@@ -252,7 +259,7 @@ function pullState(){
   fetch("api/state").then(r => r.json()).then(R => {
     if (!R || !R.assets || (R.version || 0) < 16) return;
     if ((R.savedAt || 0) > (S.savedAt || 0)){
-      S = R; cleanState(S); applyBatch1(S); applyBatch2(S); applyBatch3(S); applyBatch4(S); applyBatch5(S); applyBatch6(S); applyBatch7(S); applyBatch8(S); applyBatch9(S); applyBatch10(S); try { localStorage.setItem(STORE + S.client.id, JSON.stringify(S)); } catch(_){}
+      S = R; cleanState(S); applyBatch1(S); applyBatch2(S); applyBatch3(S); applyBatch4(S); applyBatch5(S); applyBatch6(S); applyBatch7(S); applyBatch8(S); applyBatch9(S); applyBatch10(S); applyBatch11(S); try { localStorage.setItem(STORE + S.client.id, JSON.stringify(S)); } catch(_){}
       const y = scrollY; render(); scrollTo(0, y);
     }
   }).catch(() => {});
@@ -381,6 +388,8 @@ function outsOf(a){
   }
   return a.outputs;
 }
+const outTag = o => o.tag || (o.isNew ? "new" : "required");
+const OUTLAB = {required: "Existing", enhance: "Enhance", new: "New"}, OUTNEXT = {required: "enhance", enhance: "new", new: "required"};
 const syncOut = a => { a.output = outsOf(a).map(o => [o.label, o.format].map(x => (x || "").trim()).filter(Boolean).join(", ")).filter(Boolean).join("; "); };
 const madeToday = a => { const t = a.today || {}; return (+t.n || 0) + (+t.u || 0) + (+t.m || 0) > 0; };
 const SIZE_OPTS = (cur, attrs) => `<select class="cell sel sz" ${attrs}>${Object.entries(SIZES).map(([k, l]) => `<option value="${k}" ${k === cur ? "selected" : ""}>${l}</option>`).join("")}</select>`;
@@ -458,7 +467,7 @@ function stepBars(st, w, label, grab){
 const thinBar = (from, to, w, label) => `<b class="tb" style="left:${w(from)}%;width:${Math.max(.5, w(to - from))}%" data-hover="With AI: ${label}, ${d1(to - from)} days"></b>`;
 
 /* time as a stacked bar: inputs, making, approving, idle */
-const TIME = [["c-dep", "Inputs", "dep"], ["c-make", "Creation", "making"], ["c-appr", "Approvals", "approving"], ["c-wait", "Wait", "idle"]];
+const TIME = [["c-make", "Creation", "making"], ["c-appr", "Approvals", "approving"], ["c-wait", "Wait", "idle"]];
 /* a legend under a bar, for the parts it shows */
 const legend = parts => `<div class="legend">${parts.map(([c, l]) => `<span><i class="${c}"></i>${l}</span>`).join("")}</div>`;
 const timeBar = (s, scale) => bar(TIME.map(([c, l, k]) => [c, l, s[k]]), scale, v => d1(v) + " days");
@@ -485,8 +494,8 @@ function asIsHTML(m){
   const a = S.assets[S.current], x = m.assets.find(r => r.id === a.id), O = x.sched.old, A = x.sched.ai;
   const c0 = x.unit.old.n, c1 = x.unit.ai.n, cs = Math.max(money(c0), money(c1));
   const tSc = Math.max(O.elapsed, A.elapsed);
-  const acts = (id, files, note, del, extra = "", attachTip = "Attach a sample") => `<td class="acts">${extra}
-      <button class="ic ${files && files.length ? "on" : "hov"}" data-attach="${id}" title="${attachTip}" aria-label="${attachTip}">${ic("clip")}</button>
+  const acts = (id, files, note, del, extra = "", attachTip = "Attach a sample", need = false) => `<td class="acts">${extra}
+      <button class="ic ${files && files.length ? "on" : need ? "need" : "hov"}" data-attach="${id}" title="${need && !(files && files.length) ? "An example of this input is needed" : attachTip}" aria-label="${attachTip}">${ic("clip")}</button>
       <button class="ic ${note ? "on" : "hov"}" data-note="${id}" title="Notes" aria-label="Notes">${ic("note")}</button>
       <button class="ic hov" ${del}="${id}" title="Remove" aria-label="Remove">${ic("x")}</button></td>`;
   const noteRow = (id, cols, attr, text, ph, files) => NOTE.has(id) ? `<tr class="note"><td colspan="${cols}"><textarea ${attr} data-k="c${id}" placeholder="${ph}">${esc(text)}</textarea>
@@ -499,7 +508,7 @@ function asIsHTML(m){
       <td><input class="cell" data-in="label" data-inid="${it.id}" data-k="il${it.id}" value="${esc(it.label)}" placeholder="Input" aria-label="Input"></td>
       <td><input class="cell" data-in="from" data-inid="${it.id}" data-k="if${it.id}" value="${esc(it.from)}" placeholder="From" aria-label="From"></td>
       <td class="n"><span class="pair"><input class="num sm" data-in="days" data-inid="${it.id}" data-k="id${it.id}" inputmode="decimal" value="${val(it.days)}" aria-label="Days to get it"><i>d</i></span></td>
-      ${acts(it.id, it.files, it.example || (it.files && it.files.length), "data-del-input")}</tr>` +
+      ${acts(it.id, it.files, it.example || (it.files && it.files.length), "data-del-input", "", "Attach a sample", true)}</tr>` +
       noteRow(it.id, 4, `data-in="example" data-inid="${it.id}"`, it.example, "A sample or notes: what good looks like, where it comes from", it.files)).join("");
 
   const stepRow = (s, i, market) => { const q = aiStep(s, a), ph = s.phase || "create", has = s.comment || (s.files && s.files.length);
@@ -517,8 +526,9 @@ function asIsHTML(m){
       noteRow(s.id, 7, `data-s="comment" data-step-id="${s.id}"`, s.comment, "What happens here, who chases, what goes wrong", s.files); };
 
   const make = a.steps.filter(s => s.phase !== "market"), mkt = a.steps.filter(s => s.phase === "market");
+  const span = (sc, list) => { const rs = sc.steps.filter(r => list.some(x => x.id === r.id)); return rs.length ? Math.max(...rs.map(r => r.stop)) - Math.min(...rs.map(r => r.begin)) : 0; };
   const tot = (list, cost) => { const h = list.reduce((t, s) => t + (+s.hours || 0), 0), ha = list.reduce((t, s) => t + aiStep(s, a).h, 0), f = list.reduce((t, s) => t + (+s.fee || 0), 0);
-    return `<tr class="tot"><td colspan="2">Total</td><td class="n gT">${h1(h)} h</td><td class="n ai gA">${h1(ha)} h</td><td class="n gF">${f ? eur(f) : ""}</td><td class="n">${eur(cost)}</td><td></td></tr>`; };
+    return `<tr class="tot"><td colspan="2">Total</td><td class="n gT">${h1(h)} h · ${dd(span(O, list))} d</td><td class="n ai gA">${h1(ha)} h · ${dd(span(A, list))} d</td><td class="n gF">${f ? eur(f) : ""}</td><td class="n">${eur(cost)}</td><td></td></tr>`; };
   const cols = `<colgroup><col style="width:29%"><col style="width:16%"><col style="width:13%"><col style="width:13%"><col style="width:10%"><col style="width:8%"><col style="width:11%"></colgroup>`;
   const byAmy = ["self", "dfy"].includes(routeOf(S, a).kind);
   const thead = (tip, title, add, sub = "") => `<thead><tr><th class="sh">${title}${sub ? `<span>${sub}</span>` : ""}</th><th>Who</th><th class="n gT">Today</th><th class="n gA">${byAmy ? "With Amy" : "With AI"}${tip ? info(byAmy ? "withamy" : "withai") : ""}</th><th class="n gF">Agency fee</th><th class="n">Cost</th><th class="n"><button class="add-btn" ${add}>${ic("plus", 11)} Add</button></th></tr></thead>`;
@@ -547,18 +557,18 @@ function asIsHTML(m){
       <section class="detail">
         <div class="tabbar"><h3>How it's made</h3></div>
         <div class="tscroll"><table class="tin"><colgroup><col style="width:48%"><col style="width:28%"><col style="width:12%"><col style="width:12%"></colgroup>
+          <thead><tr><th class="sh">Outputs</th><th>Format and length</th><th class="n">Tag</th><th class="n"><button class="add-btn" data-add-out>${ic("plus", 11)} Add</button></th></tr></thead><tbody>${outsOf(a).map(o => `<tr class="row">
+            <td><input class="cell" data-outf="label" data-outid="${o.id}" data-k="ol${o.id}" value="${esc(o.label)}" placeholder="Output" aria-label="Output"></td>
+            <td><input class="cell" data-outf="format" data-outid="${o.id}" data-k="of${o.id}" value="${esc(o.format)}" placeholder="Format, pages, variants" aria-label="Format and length"></td>
+            <td class="n"><button class="newtag" data-out-new="${o.id}" title="Click to change: Existing, Enhance, New"><i class="sdot s-${outTag(o)}"></i>${OUTLAB[outTag(o)]}</button></td>
+            ${acts(o.id, o.files, o.example || (o.files && o.files.length), "data-del-out", "", "Attach a template")}</tr>` +
+            noteRow(o.id, 4, `data-outf="example" data-outid="${o.id}"`, o.example, "A template or notes: what good looks like", o.files)).join("")}</tbody></table></div>
+        <div class="tscroll"><table class="tin"><colgroup><col style="width:48%"><col style="width:28%"><col style="width:12%"><col style="width:12%"></colgroup>
           <thead><tr><th class="sh">Inputs</th><th>From</th><th class="n">Takes</th><th class="n"><button class="add-btn" data-add-input>${ic("plus", 11)} Add</button></th></tr></thead><tbody>${ins}</tbody></table></div>
         <div class="tscroll"><table>${cols}${thead(true, "Steps", "data-add-step")}<tbody>${make.map((s, i) => stepRow(s, i, false)).join("")}
           ${tot(make, money(c0))}
 
         </tbody></table></div>
-        <div class="tscroll"><table class="tin"><colgroup><col style="width:48%"><col style="width:28%"><col style="width:12%"><col style="width:12%"></colgroup>
-          <thead><tr><th class="sh">Outputs</th><th>Format and length</th><th class="n">Tag</th><th class="n"><button class="add-btn" data-add-out>${ic("plus", 11)} Add</button></th></tr></thead><tbody>${outsOf(a).map(o => `<tr class="row">
-            <td><input class="cell" data-outf="label" data-outid="${o.id}" data-k="ol${o.id}" value="${esc(o.label)}" placeholder="Output" aria-label="Output"></td>
-            <td><input class="cell" data-outf="format" data-outid="${o.id}" data-k="of${o.id}" value="${esc(o.format)}" placeholder="Format, pages, variants" aria-label="Format and length"></td>
-            <td class="n"><button class="newtag${o.isNew ? " on" : ""}" data-out-new="${o.id}" aria-pressed="${!!o.isNew}" title="Not made today">New</button></td>
-            ${acts(o.id, o.files, o.example || (o.files && o.files.length), "data-del-out", "", "Attach a template")}</tr>` +
-            noteRow(o.id, 4, `data-outf="example" data-outid="${o.id}"`, o.example, "A template or notes: what good looks like", o.files)).join("")}</tbody></table></div>
         <div class="tscroll"><table class="adapt">${cols}${thead(false, "Adaptations", mkt.length ? `data-none hidden` : `data-add-step="market"`)}<tbody>${mkt.slice(0, 1).map((s, i) => stepRow(s, 0, true)).join("")}
         </tbody></table></div>
         <div class="nuance"><textarea data-f="nuances" data-k="nu" placeholder="Nuances: anything that changes how this asset is made, approved or adapted">${esc(a.nuances)}</textarea></div>
@@ -1027,7 +1037,7 @@ document.addEventListener("click", e => {
     if (railOpen(sec)){ RAIL_SHUT.add(id); RAIL_OPEN.delete(id); } else { RAIL_OPEN.add(id); RAIL_SHUT.delete(id); } render(); return; }
   if ((b = q("[data-ksec]"))){ const id = b.dataset.ksec; KIT_OPEN.has(id) ? KIT_OPEN.delete(id) : KIT_OPEN.add(id); const y = scrollY; render(); scrollTo(0, y); return; }
   if ((b = q("[data-cover]"))){ const a = S.assets[S.current]; if (a){ a.covered = !a.covered; render(); save(); } return; }
-  if ((b = q("[data-out-new]"))){ const a = S.assets[S.current], o = a && outsOf(a).find(x => x.id === b.dataset.outNew); if (o){ o.isNew = !o.isNew; render(); save(); } return; }
+  if ((b = q("[data-out-new]"))){ const a = S.assets[S.current], o = a && outsOf(a).find(x => x.id === b.dataset.outNew); if (o){ o.tag = OUTNEXT[outTag(o)]; o.isNew = o.tag === "new"; render(); save(); } return; }
   if ((b = q("[data-add-out]"))){ const a = S.assets[S.current], o = {id: uid("o"), label: "", format: "", example: "", files: []}; outsOf(a).push(o); syncOut(a); render(); save(); document.querySelector(`[data-k="ol${o.id}"]`)?.focus(); return; }
   if ((b = q("[data-del-out]"))){ snap("Removed an output"); const a = S.assets[S.current]; a.outputs = outsOf(a).filter(x => x.id !== b.dataset.delOut); if (!a.outputs.length) a.outputs = [{id: uid("o"), label: "", format: "", example: "", files: []}]; syncOut(a); render(); save(); return; }
   if ((b = q("[data-add-input]"))){ const a = S.assets[S.current], it = input("", "", 0); (a.inputs = a.inputs || []).push(it); render(); save(); document.querySelector(`[data-k="il${it.id}"]`)?.focus(); return; }
@@ -1270,4 +1280,4 @@ window.__bc = {S: () => S, compute, render};
 
 if (SHARED){ pullState(); setInterval(pullState, 15000); }
 
-if (cleanState(S) | applyBatch1(S) | applyBatch2(S) | applyBatch3(S) | applyBatch4(S) | applyBatch5(S) | applyBatch6(S) | applyBatch7(S) | applyBatch8(S) | applyBatch9(S) | applyBatch10(S)){ save(); render(); }
+if (cleanState(S) | applyBatch1(S) | applyBatch2(S) | applyBatch3(S) | applyBatch4(S) | applyBatch5(S) | applyBatch6(S) | applyBatch7(S) | applyBatch8(S) | applyBatch9(S) | applyBatch10(S) | applyBatch11(S)){ save(); render(); }

@@ -56,7 +56,7 @@ const amyMakes = (state, a, s, ai) => { if (!ai || isReview(s)) return false; co
 function schedule(state, a, ai, from = 0){
   const hpd = lever(state, "hoursPerDay") || 7;
   const dep = (a.inputs || []).reduce((t, i) => Math.max(t, num(i.days)), 0);
-  const go = Math.max(from, dep);
+  const go = from;   /* the process starts once its inputs are in, so waiting for them is not part of the cycle */
   let end = go, prevBegin = go;
   const work = {create: 0, approve: 0, market: 0};
   const rows = a.steps.map((s, i) => {
