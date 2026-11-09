@@ -3,3 +3,4 @@ Disallow: /packages/nebius-tco-calculator/
 Disallow: /packages/nebius-pricing-calculator/
 Disallow: /packages/rca-assessment-analytics/
 Disallow: /apps/
+Disallow: /web-presentations/vodafone-networks-interactive-deck/
