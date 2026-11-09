@@ -251,6 +251,21 @@ function applyBatch11(st){
   if (a){ const o = outsOf(a); if (o[0] && /^one[- ]page/i.test((o[0].label || "").trim())){ o[0].label = "Product executive summary"; syncOut(a); } }
   (st.applied = st.applied || []).push("batch11"); return true;
 }
+/* Batch 12 (9 Nov): stakeholders start from who is already on each review step (same step = together), and reviews take
+   half the time with AI. Only steps still at the starting 30% are changed. */
+function applyBatch12(st){
+  if (!st || !st.assets || (st.applied || []).includes("batch12")) return false;
+  for (const a of Object.values(st.assets)){
+    const rv = (a.steps || []).filter(x => /review|approv/i.test(x.label || ""));
+    rv.forEach(x => { if (+x.ai === 30) x.ai = 50; });
+    if (Array.isArray(a.stake) && a.stake.length) continue;
+    const rows = []; let n = 0;
+    rv.forEach(x => { const names = String(x.who || "").split(/,|\band\b/i).map(t => t.trim()).filter(Boolean); if (!names.length) return; n++;
+      names.forEach(w => rows.push({id: uid("k"), who: /^market$/i.test(w) ? "Markets" : w, inv: "approve", step: n, comment: ""})); });
+    a.stake = rows;
+  }
+  (st.applied = st.applied || []).push("batch12"); return true;
+}
 /* hosted: one shared copy of the whole tool; the newest save wins */
 const SHARED = location.protocol.startsWith("http");
 function pullState(){
@@ -259,7 +274,7 @@ function pullState(){
   fetch("api/state").then(r => r.json()).then(R => {
     if (!R || !R.assets || (R.version || 0) < 16) return;
     if ((R.savedAt || 0) > (S.savedAt || 0)){
-      S = R; cleanState(S); applyBatch1(S); applyBatch2(S); applyBatch3(S); applyBatch4(S); applyBatch5(S); applyBatch6(S); applyBatch7(S); applyBatch8(S); applyBatch9(S); applyBatch10(S); applyBatch11(S); try { localStorage.setItem(STORE + S.client.id, JSON.stringify(S)); } catch(_){}
+      S = R; cleanState(S); applyBatch1(S); applyBatch2(S); applyBatch3(S); applyBatch4(S); applyBatch5(S); applyBatch6(S); applyBatch7(S); applyBatch8(S); applyBatch9(S); applyBatch10(S); applyBatch11(S); applyBatch12(S); try { localStorage.setItem(STORE + S.client.id, JSON.stringify(S)); } catch(_){}
       const y = scrollY; render(); scrollTo(0, y);
     }
   }).catch(() => {});
@@ -270,6 +285,7 @@ const levLine = key => { for (const g of S.tobe.groups) for (const l of g.lines)
    Paint
    =================================================================== */
 const ICON = {
+  arrow:'<path d="M5 12h14M13 6l6 6-6 6"/>',
   mic:'<rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v4"/>', spark:'<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8zM19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/>',
   bold:'<path d="M7 5h6a3.5 3.5 0 0 1 0 7H7zM7 12h7a3.5 3.5 0 0 1 0 7H7z"/>', list:'<path d="M9 6h12M9 12h12M9 18h12M4 6h.01M4 12h.01M4 18h.01"/>', head:'<path d="M6 4v16M18 4v16M6 12h12"/>',
   x:'<path d="M18 6 6 18M6 6l12 12"/>', check:'<path d="M20 6 9 17l-5-5"/>', plus:'<path d="M12 5v14M5 12h14"/>', chev:'<path d="m6 9 6 6 6-6"/>',
@@ -308,7 +324,7 @@ function render(){
   $("#client").textContent = S.client.project; $("#clientName").textContent = S.client.name;
   document.querySelectorAll("[data-tab]").forEach(b => b.setAttribute("aria-selected", b.dataset.tab === TAB));
   const m = compute(S);
-  $("#main").innerHTML = TAB === "discuss" ? (typeof discussHTML === "function" ? discussHTML() : "") : TAB === "asis" ? asIsHTML(m) : TAB === "summary" ? summaryHTML(m) : TAB === "tobe" ? toBeHTML(m) : bcHTML(m);
+  $("#main").innerHTML = TAB === "discuss" ? (typeof discussHTML === "function" ? discussHTML() : "") : TAB === "asis" ? asIsHTML(m) : TAB === "summary" ? summaryHTML(m) : TAB === "tobe" ? toBeHTML(m) + rolesHTML() : bcHTML(m);
   document.querySelectorAll("[data-count]").forEach(countTo);
   if (TAB === "asis") markUnconfirmed();
 }
@@ -424,11 +440,8 @@ function planHTML(){
       `<input class="num sm" data-plan="${r}.${k}" data-k="p${r}${k}" inputmode="decimal" value="${val(P[r][k])}" aria-label="${l}, ${TIER[k]}">`).join("")}</div>`).join("") + `</div>`;
 }
 /* top of the list: hide it, and how many assets and markets there are */
-function railTop(){
-  return `<div class="rtop"><button class="railbtn in" data-rail data-hover="Hide the list" aria-label="Hide the asset list">${ic("side", 15)}</button></div>`;
-}
 function railHTML(){
-  return railTop() + `<div class="it kit ${S.current === "toolkit" ? "on" : ""}" data-kit><span class="nm">Digital toolkit</span></div>` +
+  return `<div class="kitrow"><button class="railbtn in" data-rail data-hover="Hide the list" aria-label="Hide the asset list">${ic("side", 15)}</button><div class="it kit ${S.current === "toolkit" ? "on" : ""}" data-kit><span class="nm">Digital toolkit</span></div></div>` +
     S.sections.map(sec => { const open = railOpen(sec);
       return `<div class="sec" data-sec="${sec.id}">
       <button class="secbtn" data-rsec="${sec.id}" aria-expanded="${open}"><span class="chev">${ic("chev", 11)}</span><span class="nm" data-ren-sec="${sec.id}">${esc(sec.name)}</span></button>
@@ -484,6 +497,38 @@ function aiStep(s, a){
 }
 const dd = n => n >= 3 ? n0(n) : d1(n);
 
+/* Stakeholders: who approves or aligns on an asset, in what order. Same step number = at the same time. */
+const DEFAULT_ROLES = ["Portfolio marketing", "Product (group)", "Product (local)", "Local GTM", "Propositions team", "Cluster lead", "Brand", "Legal", "Compliance", "Sustainability", "Markets", "Pre-sales", "VPC"];
+const rolesOf = () => Array.isArray(S.roles) && S.roles.length ? S.roles : DEFAULT_ROLES;
+const stakesOf = a => Array.isArray(a.stake) ? a.stake : (a.stake = []);
+function chainHTML(rows){
+  const by = {};
+  rows.filter(r => (r.who || "").trim()).forEach(r => { const k = parseInt(r.step) || 99; (by[k] = by[k] || []).push(r); });
+  const keys = Object.keys(by).map(Number).sort((x, y) => x - y);
+  const names = l => l.map(r => esc(r.who.trim())).join(" + ");
+  const group = k => { const g = by[k], ap = g.filter(r => r.inv !== "align"), al = g.filter(r => r.inv === "align");
+    return `<span class="chg">${al.length ? `<span class="ch al">Align: ${names(al)}</span>` : ""}${ap.length ? `<span class="ch ap">${ap.length > 1 ? "Approve together" : "Approve"}: ${names(ap)}</span>` : ""}</span>`; };
+  const arrow = `<span class="cha">${ic("arrow", 14)}</span>`;
+  return `<div class="chain"><span class="ch end">Draft</span>${keys.map(k => arrow + group(k)).join("")}${keys.length ? arrow : ""}<span class="ch end">Final</span></div>`;
+}
+function stakeHTML(a){
+  const rows = stakesOf(a);
+  const tr = rows.map(r => `<tr class="row">
+      <td><input class="cell" list="rolelist" data-stk="who" data-stkid="${r.id}" data-k="sw${r.id}" value="${esc(r.who)}" placeholder="Role or person" aria-label="Role or person"></td>
+      <td class="n"><button class="newtag" data-stk-inv="${r.id}" title="Click to change: Approves, Aligns"><i class="sdot ${r.inv === "align" ? "s-enhance" : "s-required"}"></i>${r.inv === "align" ? "Aligns" : "Approves"}</button></td>
+      <td class="n"><input class="num sm" data-stk="step" data-stkid="${r.id}" data-k="ss${r.id}" inputmode="numeric" value="${val(r.step)}" aria-label="Step in the chain: the same number happens together"></td>
+      <td><input class="cell" data-stk="comment" data-stkid="${r.id}" data-k="sc${r.id}" value="${esc(r.comment || "")}" placeholder="Comment" aria-label="Comment"></td>
+      <td class="acts"><button class="ic hov" data-del-stk="${r.id}" title="Remove" aria-label="Remove">${ic("x")}</button></td></tr>`).join("");
+  return `<div class="tscroll"><table class="tin"><colgroup><col style="width:34%"><col style="width:16%"><col style="width:8%"><col style="width:34%"><col style="width:8%"></colgroup>
+    <thead><tr><th class="sh">Stakeholders</th><th class="n">Involvement</th><th class="n" data-hover="Same number: they review at the same time">Step</th><th>Comment</th><th class="n"><button class="add-btn" data-add-stk>${ic("plus", 11)} Add</button></th></tr></thead><tbody>${tr}</tbody></table>
+    ${rows.some(r => (r.who || "").trim()) ? chainHTML(rows) : ""}</div>
+    <datalist id="rolelist">${rolesOf().map(r => `<option value="${esc(r)}"></option>`).join("")}</datalist>`;
+}
+function rolesHTML(){
+  const roles = rolesOf();
+  return `<section class="detail rolesec"><div class="tabbar"><h3>Stakeholder roles</h3><div class="tools"><button class="add-btn" data-add-role>${ic("plus", 11)} Add</button></div></div>
+    <div class="roles">${roles.map((r, i) => `<span class="role"><input class="cell" data-role="${i}" value="${esc(r)}" aria-label="Role"><button class="ic hov" data-del-role="${i}" title="Remove" aria-label="Remove">${ic("x", 12)}</button></span>`).join("")}</div></section>`;
+}
 function asIsHTML(m){
   const rail = RAIL_HIDE ? `<div class="askcol slim"><button class="railbtn" data-rail data-hover="Show the asset list" aria-label="Show the asset list">${ic("side", 16)}</button></div>`
     : `<div class="askcol"><section class="ask">${railHTML()}</section></div>`;
@@ -571,7 +616,8 @@ function asIsHTML(m){
         </tbody></table></div>
         <div class="tscroll"><table class="adapt">${cols}${thead(false, "Adaptations", mkt.length ? `data-none hidden` : `data-add-step="market"`)}<tbody>${mkt.slice(0, 1).map((s, i) => stepRow(s, 0, true)).join("")}
         </tbody></table></div>
-        <div class="nuance"><textarea data-f="nuances" data-k="nu" placeholder="Nuances: anything that changes how this asset is made, approved or adapted">${esc(a.nuances)}</textarea></div>
+        ${stakeHTML(a)}
+        <div class="nuance"><textarea data-f="nuances" data-k="nu" placeholder="Cover anything important for this asset: what changes how it is made, approved or adapted">${esc(a.nuances)}</textarea></div>
       </section>
     </div></div>`;
 }
@@ -981,6 +1027,8 @@ document.addEventListener("input", e => {
     const a = S.assets[t.dataset.route]; if (!a) return;
     a.route = t.value; a.runPrice = null; render(); save(); return;
   }
+  if (t.dataset.stk){ const a = S.assets[S.current], r = a && stakesOf(a).find(x => x.id === t.dataset.stkid); if (!r) return; r[t.dataset.stk] = t.dataset.stk === "step" ? (parseInt(t.value) || "") : t.value; save(); return; }
+  if (t.dataset.role != null){ if (!Array.isArray(S.roles) || !S.roles.length) S.roles = DEFAULT_ROLES.slice(); S.roles[+t.dataset.role] = t.value; save(); return; }
   if (t.dataset.in){
     const a = S.assets[S.current], it = a && (a.inputs || []).find(x => x.id === t.dataset.inid); if (!it) return;
     if (t.dataset.in !== "days"){ it[t.dataset.in] = t.value; save(); return; }
@@ -1015,7 +1063,7 @@ document.addEventListener("click", e => { const tg = e.target.closest && e.targe
   if (tg){ const open = tg.parentElement.classList.toggle("open"); tg.setAttribute("aria-expanded", String(open)); return; }
   const sb = e.target.closest && e.target.closest("[data-sumst]"); if (sb){ const a = S.assets[sb.dataset.sumst]; if (a){ setStatus(a, STNEXT[statusOf(a)]); render(); save(); } return; }
   const b = e.target.closest && e.target.closest("[data-set-status]"); if (!b) return; const a = S.assets[S.current]; if (a){ setStatus(a, b.dataset.setStatus); render(); save(); } });
-document.addEventListener("change", e => { const d = e.target.dataset, num0 = () => parseFloat(String(e.target.value).replace(/[€,\s]/g, "")); 
+document.addEventListener("change", e => { if (e.target.dataset && e.target.dataset.stk){ const y = scrollY; render(); scrollTo(0, y); return; } const d = e.target.dataset, num0 = () => parseFloat(String(e.target.value).replace(/[€,\s]/g, "")); 
   if (d.sumv || d.suma){ const id = d.sumv || d.suma, a = S.assets[id], x = compute(S).assets.find(y => y.id === id), v = num0(); if (a && x && v >= 0){ snap(`${d.sumv ? "Volume" : "Agency cost"} for ${a.name}`);
       if (d.sumv){ a.tiers = null; a.want = {n: v, u: 0, m: 0}; }
       else { const cur = x.year.old.agency + x.year.old.other, outs = a.steps.filter(q => +q.fee > 0);
@@ -1040,6 +1088,11 @@ document.addEventListener("click", e => {
   if ((b = q("[data-out-new]"))){ const a = S.assets[S.current], o = a && outsOf(a).find(x => x.id === b.dataset.outNew); if (o){ o.tag = OUTNEXT[outTag(o)]; o.isNew = o.tag === "new"; render(); save(); } return; }
   if ((b = q("[data-add-out]"))){ const a = S.assets[S.current], o = {id: uid("o"), label: "", format: "", example: "", files: []}; outsOf(a).push(o); syncOut(a); render(); save(); document.querySelector(`[data-k="ol${o.id}"]`)?.focus(); return; }
   if ((b = q("[data-del-out]"))){ snap("Removed an output"); const a = S.assets[S.current]; a.outputs = outsOf(a).filter(x => x.id !== b.dataset.delOut); if (!a.outputs.length) a.outputs = [{id: uid("o"), label: "", format: "", example: "", files: []}]; syncOut(a); render(); save(); return; }
+  if ((b = q("[data-stk-inv]"))){ const a = S.assets[S.current], r = a && stakesOf(a).find(x => x.id === b.dataset.stkInv); if (r){ r.inv = r.inv === "align" ? "approve" : "align"; render(); save(); } return; }
+  if ((b = q("[data-add-stk]"))){ const a = S.assets[S.current], rows = stakesOf(a), nx = rows.reduce((t, r) => Math.max(t, parseInt(r.step) || 0), 0) + 1; const r = {id: uid("k"), who: "", inv: "approve", step: nx, comment: ""}; rows.push(r); render(); save(); document.querySelector(`[data-k="sw${r.id}"]`)?.focus(); return; }
+  if ((b = q("[data-del-stk]"))){ snap("Removed a stakeholder"); const a = S.assets[S.current]; a.stake = stakesOf(a).filter(x => x.id !== b.dataset.delStk); render(); save(); return; }
+  if ((b = q("[data-add-role]"))){ if (!Array.isArray(S.roles) || !S.roles.length) S.roles = DEFAULT_ROLES.slice(); S.roles.push(""); render(); save(); const i = document.querySelectorAll("[data-role]"); i[i.length - 1]?.focus(); return; }
+  if ((b = q("[data-del-role]"))){ if (!Array.isArray(S.roles) || !S.roles.length) S.roles = DEFAULT_ROLES.slice(); S.roles.splice(+b.dataset.delRole, 1); render(); save(); return; }
   if ((b = q("[data-add-input]"))){ const a = S.assets[S.current], it = input("", "", 0); (a.inputs = a.inputs || []).push(it); render(); save(); document.querySelector(`[data-k="il${it.id}"]`)?.focus(); return; }
   if ((b = q("[data-del-input]"))){ snap("Removed an input"); const a = S.assets[S.current]; a.inputs = a.inputs.filter(x => x.id !== b.dataset.delInput); render(); save(); return; }
   if ((b = q("[data-view]"))){ VIEW = b.dataset.view; const y = scrollY; render(); scrollTo(0, y); return; }
@@ -1280,4 +1333,4 @@ window.__bc = {S: () => S, compute, render};
 
 if (SHARED){ pullState(); setInterval(pullState, 15000); }
 
-if (cleanState(S) | applyBatch1(S) | applyBatch2(S) | applyBatch3(S) | applyBatch4(S) | applyBatch5(S) | applyBatch6(S) | applyBatch7(S) | applyBatch8(S) | applyBatch9(S) | applyBatch10(S) | applyBatch11(S)){ save(); render(); }
+if (cleanState(S) | applyBatch1(S) | applyBatch2(S) | applyBatch3(S) | applyBatch4(S) | applyBatch5(S) | applyBatch6(S) | applyBatch7(S) | applyBatch8(S) | applyBatch9(S) | applyBatch10(S) | applyBatch11(S) | applyBatch12(S)){ save(); render(); }
