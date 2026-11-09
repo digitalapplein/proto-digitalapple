@@ -471,7 +471,7 @@ function asIsHTML(m){
             <td class="n"><button class="newtag${o.isNew ? " on" : ""}" data-out-new="${o.id}" aria-pressed="${!!o.isNew}" title="Not made today">New</button></td>
             ${acts(o.id, o.files, o.example || (o.files && o.files.length), "data-del-out", "", "Attach a template")}</tr>` +
             noteRow(o.id, 4, `data-outf="example" data-outid="${o.id}"`, o.example, "A template or notes: what good looks like", o.files)).join("")}</tbody></table></div>
-        <div class="tscroll"><table class="adapt">${cols}${thead(false, "Adaptations", mkt.length ? `data-none hidden` : `data-add-step="market"`, "hours or agency spend to adapt it")}<tbody>${mkt.slice(0, 1).map((s, i) => stepRow(s, 0, true)).join("")}
+        <div class="tscroll"><table class="adapt">${cols}${thead(false, "Adaptations", mkt.length ? `data-none hidden` : `data-add-step="market"`)}<tbody>${mkt.slice(0, 1).map((s, i) => stepRow(s, 0, true)).join("")}
         </tbody></table></div>
         <div class="nuance"><textarea data-f="nuances" data-k="nu" placeholder="Nuances: anything that changes how this asset is made, approved or adapted">${esc(a.nuances)}</textarea></div>
       </section>
