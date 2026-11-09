@@ -146,6 +146,21 @@ function applyBatch4(st){
   if ((a = by("Video cutdowns")) && a.want && !a.want.n){ a.tiers = null; a.want = {n: 51, u: 0, m: 0}; a.nuances = (a.nuances || "") + " Volume: 3 cutdowns for each of the 17 explainer videos (default, to confirm)."; }
   (st.applied = st.applied || []).push("batch4"); return true;
 }
+/* Batch 5 (9 Nov): an asset has one adaptation row. Market steps are merged: hours, days and agency fees add up. */
+function applyBatch5(st){
+  if (!st || !st.assets || (st.applied || []).includes("batch5")) return false;
+  for (const a of Object.values(st.assets)){
+    const mk = (a.steps || []).filter(x => x.phase === "market"); if (mk.length < 2) continue;
+    const [f, ...rest] = mk, conf = a.conf = a.conf || {};
+    const sum = k => mk.reduce((t, x) => t + (+x[k] || 0), 0);
+    const whos = [...new Set(mk.map(x => (x.who || "").trim()).filter(Boolean))];
+    f.hours = sum("hours"); f.days = sum("days"); f.fee = sum("fee"); f.parallel = false; f.who = whos.length === 1 ? whos[0] : whos.join(", ");
+    f.comment = [f.comment, ...rest.map(x => x.comment)].filter(Boolean).join(" ") || "";
+    if (mk.some(x => conf["h" + x.id])) conf["h" + f.id] = 1; if (mk.some(x => conf["d" + x.id])) conf["d" + f.id] = 1;
+    a.steps = a.steps.filter(x => !rest.includes(x));
+  }
+  (st.applied = st.applied || []).push("batch5"); return true;
+}
 /* hosted: one shared copy of the whole tool; the newest save wins */
 const SHARED = location.protocol.startsWith("http");
 function pullState(){
@@ -154,7 +169,7 @@ function pullState(){
   fetch("api/state").then(r => r.json()).then(R => {
     if (!R || !R.assets || (R.version || 0) < 16) return;
     if ((R.savedAt || 0) > (S.savedAt || 0)){
-      S = R; cleanState(S); applyBatch1(S); applyBatch2(S); applyBatch3(S); applyBatch4(S); try { localStorage.setItem(STORE + S.client.id, JSON.stringify(S)); } catch(_){}
+      S = R; cleanState(S); applyBatch1(S); applyBatch2(S); applyBatch3(S); applyBatch4(S); applyBatch5(S); try { localStorage.setItem(STORE + S.client.id, JSON.stringify(S)); } catch(_){}
       const y = scrollY; render(); scrollTo(0, y);
     }
   }).catch(() => {});
@@ -450,13 +465,13 @@ function asIsHTML(m){
 
         </tbody></table></div>
         <div class="tscroll"><table class="tin"><colgroup><col style="width:48%"><col style="width:28%"><col style="width:12%"><col style="width:12%"></colgroup>
-          <thead><tr><th class="sh">Outputs</th><th colspan="2">Format and length</th><th class="n"><button class="add-btn" data-add-out>${ic("plus", 11)} Add</button></th></tr></thead><tbody>${outsOf(a).map(o => `<tr class="row">
+          <thead><tr><th class="sh">Outputs</th><th>Format and length</th><th class="n">Tag</th><th class="n"><button class="add-btn" data-add-out>${ic("plus", 11)} Add</button></th></tr></thead><tbody>${outsOf(a).map(o => `<tr class="row">
             <td><input class="cell" data-outf="label" data-outid="${o.id}" data-k="ol${o.id}" value="${esc(o.label)}" placeholder="Output" aria-label="Output"></td>
-            <td colspan="2"><input class="cell" data-outf="format" data-outid="${o.id}" data-k="of${o.id}" value="${esc(o.format)}" placeholder="Format, pages, variants" aria-label="Format and length"></td>
+            <td><input class="cell" data-outf="format" data-outid="${o.id}" data-k="of${o.id}" value="${esc(o.format)}" placeholder="Format, pages, variants" aria-label="Format and length"></td>
+            <td class="n"><button class="newtag${o.isNew ? " on" : ""}" data-out-new="${o.id}" aria-pressed="${!!o.isNew}" title="Not made today">New</button></td>
             ${acts(o.id, o.files, o.example || (o.files && o.files.length), "data-del-out", "", "Attach a template")}</tr>` +
             noteRow(o.id, 4, `data-outf="example" data-outid="${o.id}"`, o.example, "A template or notes: what good looks like", o.files)).join("")}</tbody></table></div>
-        <div class="tscroll"><table>${cols}${thead(false, "Adaptations", `data-add-step="market"`, "market versions, updates and variants, by the market team")}<tbody>${mkt.map((s, i) => stepRow(s, i, true)).join("")}
-          ${mkt.length ? tot(mkt, money(x.unit.old.m)) : ""}
+        <div class="tscroll"><table class="adapt">${cols}${thead(false, "Adaptations", mkt.length ? `data-none hidden` : `data-add-step="market"`, "hours or agency spend to adapt it")}<tbody>${mkt.slice(0, 1).map((s, i) => stepRow(s, 0, true)).join("")}
         </tbody></table></div>
         <div class="nuance"><textarea data-f="nuances" data-k="nu" placeholder="Nuances: anything that changes how this asset is made, approved or adapted">${esc(a.nuances)}</textarea></div>
       </section>
@@ -898,6 +913,7 @@ document.addEventListener("click", e => {
     if (railOpen(sec)){ RAIL_SHUT.add(id); RAIL_OPEN.delete(id); } else { RAIL_OPEN.add(id); RAIL_SHUT.delete(id); } render(); return; }
   if ((b = q("[data-ksec]"))){ const id = b.dataset.ksec; KIT_OPEN.has(id) ? KIT_OPEN.delete(id) : KIT_OPEN.add(id); const y = scrollY; render(); scrollTo(0, y); return; }
   if ((b = q("[data-cover]"))){ const a = S.assets[S.current]; if (a){ a.covered = !a.covered; render(); save(); } return; }
+  if ((b = q("[data-out-new]"))){ const a = S.assets[S.current], o = a && outsOf(a).find(x => x.id === b.dataset.outNew); if (o){ o.isNew = !o.isNew; render(); save(); } return; }
   if ((b = q("[data-add-out]"))){ const a = S.assets[S.current], o = {id: uid("o"), label: "", format: "", example: "", files: []}; outsOf(a).push(o); syncOut(a); render(); save(); document.querySelector(`[data-k="ol${o.id}"]`)?.focus(); return; }
   if ((b = q("[data-del-out]"))){ snap("Removed an output"); const a = S.assets[S.current]; a.outputs = outsOf(a).filter(x => x.id !== b.dataset.delOut); if (!a.outputs.length) a.outputs = [{id: uid("o"), label: "", format: "", example: "", files: []}]; syncOut(a); render(); save(); return; }
   if ((b = q("[data-add-input]"))){ const a = S.assets[S.current], it = input("", "", 0); (a.inputs = a.inputs || []).push(it); render(); save(); document.querySelector(`[data-k="il${it.id}"]`)?.focus(); return; }
@@ -1133,4 +1149,4 @@ window.__bc = {S: () => S, compute, render};
 
 if (SHARED){ pullState(); setInterval(pullState, 15000); }
 
-if (cleanState(S) | applyBatch1(S) | applyBatch2(S) | applyBatch3(S) | applyBatch4(S)){ save(); render(); }
+if (cleanState(S) | applyBatch1(S) | applyBatch2(S) | applyBatch3(S) | applyBatch4(S) | applyBatch5(S)){ save(); render(); }
