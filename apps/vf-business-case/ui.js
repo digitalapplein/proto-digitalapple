@@ -484,8 +484,12 @@ const TIME = [["c-make", "Creation", "making"], ["c-appr", "Approvals", "approvi
 /* a legend under a bar, for the parts it shows */
 const legend = parts => `<div class="legend">${parts.map(([c, l]) => `<span><i class="${c}"></i>${l}</span>`).join("")}</div>`;
 const timeBar = (s, scale) => bar(TIME.map(([c, l, k]) => [c, l, s[k]]), scale, v => d1(v) + " days");
-const twoBars = (lblA, a, lblB, b, scale, fn, totA, totB) =>
-  `<div class="trow"><span>${lblA}</span>${fn(a, scale)}<b>${totA}</b></div><div class="trow ai"><span>${lblB}</span>${fn(b, scale)}<b>${totB}</b></div>`;
+/* sv: how much the With AI bar saves, drawn after it in pale green up to the length of Today's bar */
+const twoBars = (lblA, a, lblB, b, scale, fn, totA, totB, sv = 0) => {
+  let bb = fn(b, scale);
+  if (sv > 0.01) bb = bb.replace(/<\/div>$/, `<i class="c-saved" style="width:${(sv / (scale || 1) * 100).toFixed(2)}%" data-hover="Saved"></i></div>`);
+  return `<div class="trow"><span>${lblA}</span>${fn(a, scale)}<b>${totA}</b></div><div class="trow ai"><span>${lblB}</span>${bb}<b>${totB}</b></div>`;
+};
 
 /* a step with AI, as plain numbers: hours of work and days start to finish */
 const HPD = () => lever(S, "hoursPerDay") || 7;
@@ -591,15 +595,15 @@ function asIsHTML(m){
         <div class="twin">
           <div class="blk">
             <div class="eyb">Cost</div>
-            <div class="fig"><span data-count="c${a.id}" data-to="${money(c0)}">${eur(money(c0))}</span><span class="to">→</span><span class="ai">${eur(money(c1))}</span>${reduPill(money(c0), money(c1))}</div>
-            ${twoBars("Today", c0, "With AI", c1, cs, (c, sc) => bar(payParts(c), sc), "", "")}
-            ${legend(PAY.filter(([k]) => (c0[k] || 0) + (c1[k] || 0) > 0.01).map(([, l, c]) => [c, l]))}
+            <div class="fig"><span data-count="c${a.id}" data-to="${money(c0)}">${eur(money(c0))}</span><span class="to">→</span><span class="ai">${eur(money(c1))}</span></div>
+            ${twoBars("Today", c0, "With AI", c1, cs, (c, sc) => bar(payParts(c), sc), "", "", Math.max(0, money(c0) - money(c1)))}
+            ${legend([...PAY.filter(([k]) => (c0[k] || 0) + (c1[k] || 0) > 0.01).map(([, l, c]) => [c, l]), ["c-saved", "Saved"]])}
           </div>
           <div class="blk">
             <div class="eyb">Cycle time</div>
-            <div class="fig">${dd(O.elapsed)}<small class="u">d</small><span class="to">→</span><span class="ai">${dd(A.elapsed)}</span><small class="u ai">d</small>${reduPill(O.elapsed, A.elapsed)}</div>
-            ${twoBars("Today", O, "With AI", A, tSc, (s, sc) => timeBar({...s, dep: s.held}, sc), "", "")}
-            ${legend([...TIME, ["c-ai-key", "With AI"]])}
+            <div class="fig">${dd(O.elapsed)}<small class="u">days</small><span class="to">→</span><span class="ai">${dd(A.elapsed)}</span><small class="u ai">days</small></div>
+            ${twoBars("Today", O, "With AI", A, tSc, (s, sc) => timeBar({...s, dep: s.held}, sc), "", "", Math.max(0, O.elapsed - A.elapsed))}
+            ${legend([...TIME, ["c-ai-key", "With AI"], ["c-saved", "Saved"]])}
           </div>
         </div>
       </section>
