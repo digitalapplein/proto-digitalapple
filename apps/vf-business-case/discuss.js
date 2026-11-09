@@ -127,6 +127,13 @@ const CALL4 = {
   "Product name": "Rules to come: at most 5 words, starts with Vodafone Business, descriptive. 3 to 5 names go to legal. A naming brief template exists. Kept off any shared platform for now.",
   "SEO keywords": "No keyword tools today (Brand Path exists, no access). We add an AEO audit and search volumes by market, on consumption. The cost model still to agree."
 };
+/* an asset renamed in the list keeps its notes: they move to the new name */
+function dRename(from, to){
+  if (!from || !to || from === to) return;
+  const keys = DF.map(f => f.k).concat("free"), cur = D[to] = D[to] || {};
+  for (const k of keys){ if (k in cur) continue; const own = D[from] && k in D[from] ? D[from][k] : k === "free" ? dfree(from) : (disEst(from, k) ? "" : dval(from, k)); if (own !== "" && own != null) cur[k] = own; }
+  delete D[from]; dLocal(); if (ONLINE) for (const [k, v] of Object.entries(cur)) dPut(to, k, v);
+}
 /* what to cover on every asset, in the order the call runs */
 const COVER = ["Asset overview", "Inputs", "Process", "Cycle time", "Your effort", "External cost", "Asset: retain, enhance or new", "Outputs and formats", "Adaptations (market, industry)", "Approvers and stakeholders"];
 /* notes are saved as simple HTML (bold, bullets, a heading); older notes are plain text */
@@ -179,7 +186,7 @@ function discussHTML(){
       <div class="dhead">${a.parent || phase !== name ? `<div class="dcrumb">${esc(a.parent || phase)}</div>` : ""}
         <div class="dtitle"><h2>${esc(name)}</h2>
         <div class="tools">
-          <span class="pillrow" role="group" aria-label="Status of this asset">${Object.entries(STLAB).map(([k, l]) => `<button class="pill" data-set-status="${k}" aria-pressed="${statusOf(asset) === k}">${l}</button>`).join("")}</span></div></div></div>
+          ${statusDD(asset)}</div></div></div>
       ${conv}
       <div class="dsplit">
         <aside class="dcover"><div class="dl">Cover</div>

@@ -357,6 +357,8 @@ const n0 = v => Math.round(v).toLocaleString("en-GB");
 /* Required: made today and kept; New: not made today, added with AI; Optional: Sally picks per tier */
 const STLAB = {required: "Existing", enhance: "Enhance", new: "New", optional: "Optional"};
 const STNEXT = {required: "enhance", enhance: "new", new: "optional", optional: "required"};
+const statusDD = a => `<span class="sdd"><button class="sddb" data-sdd-toggle aria-haspopup="listbox" aria-expanded="false"><i class="sdot s-${statusOf(a)}"></i>${STLAB[statusOf(a)]}${ic("chev", 11)}</button>
+  <span class="sddm" role="listbox">${Object.entries(STLAB).map(([k, l]) => `<button class="sddo${statusOf(a) === k ? " on" : ""}" role="option" data-set-status="${k}"><i class="sdot s-${k}"></i>${l}</button>`).join("")}</span></span>`;
 const statusOf = a => a.status || (a.optional ? "optional" : madeToday(a) ? "required" : "new");
 function setStatus(a, v){
   a.status = v; a.optional = v === "optional";
@@ -525,9 +527,8 @@ function asIsHTML(m){
     <div class="answers">
       <section class="hero">
         <div class="ahead2">
-        <input class="title" data-f="name" data-k="title" value="${esc(a.name)}" aria-label="Asset name">
-        <span class="stsel"><span class="tocf" id="tocf"></span><span class="pillrow" role="group" aria-label="Status of this asset">${Object.entries(STLAB).map(([k, l]) =>
-          `<button class="pill" data-set-status="${k}" aria-pressed="${statusOf(a) === k}">${l}</button>`).join("")}</span></span>
+        <input class="title" data-k="title" value="${esc(a.name)}" readonly title="Rename in the left list: double-click the name" aria-label="Asset name">
+        <span class="stsel"><span class="tocf" id="tocf"></span>${statusDD(a)}</span>
         </div>
         <input class="hdesc top" data-f="desc" data-k="desc" value="${esc(a.desc || "")}" placeholder="What this asset is for, in one line" aria-label="What this asset is for">
         <div class="twin">
@@ -999,7 +1000,10 @@ document.addEventListener("input", e => {
   }
 });
 /* labels and notes only redraw the sums once the field is left */
-document.addEventListener("click", e => { const sb = e.target.closest && e.target.closest("[data-sumst]"); if (sb){ const a = S.assets[sb.dataset.sumst]; if (a){ setStatus(a, STNEXT[statusOf(a)]); render(); save(); } return; }
+document.addEventListener("click", e => { const tg = e.target.closest && e.target.closest("[data-sdd-toggle]");
+  document.querySelectorAll(".sdd.open").forEach(x => { if (!tg || x !== tg.parentElement){ x.classList.remove("open"); x.firstElementChild.setAttribute("aria-expanded", "false"); } });
+  if (tg){ const open = tg.parentElement.classList.toggle("open"); tg.setAttribute("aria-expanded", String(open)); return; }
+  const sb = e.target.closest && e.target.closest("[data-sumst]"); if (sb){ const a = S.assets[sb.dataset.sumst]; if (a){ setStatus(a, STNEXT[statusOf(a)]); render(); save(); } return; }
   const b = e.target.closest && e.target.closest("[data-set-status]"); if (!b) return; const a = S.assets[S.current]; if (a){ setStatus(a, b.dataset.setStatus); render(); save(); } });
 document.addEventListener("change", e => { const d = e.target.dataset, num0 = () => parseFloat(String(e.target.value).replace(/[€,\s]/g, "")); 
   if (d.sumv || d.suma){ const id = d.sumv || d.suma, a = S.assets[id], x = compute(S).assets.find(y => y.id === id), v = num0(); if (a && x && v >= 0){ snap(`${d.sumv ? "Volume" : "Agency cost"} for ${a.name}`);
@@ -1125,8 +1129,8 @@ addEventListener("scroll", hideTip, {passive: true});
 function addAsset(secId){
   let sec = S.sections.find(s => s.id === secId);
   if (!sec){ sec = {id: uid("g"), name: "New section", assets: []}; S.sections.push(sec); }
-  const a = asset("New asset", {today: 0, want: 0}); S.assets[a.id] = a; sec.assets.push(a.id); S.current = a.id; render(); save();
-  const t = document.querySelector('[data-k="title"]'); if (t){ t.focus(); t.select(); }
+  const a = asset("New asset", {today: 0, want: 0}); S.assets[a.id] = a; sec.assets.push(a.id); S.current = a.id; setStatus(a, "required"); render(); save();
+  renameEl(document.querySelector(`[data-ren-asset="${a.id}"]`));
 }
 
 /* ---------- rename in the list: double-click ---------- */
@@ -1136,11 +1140,18 @@ function renameEl(nm){
   const obj = isSec ? S.sections.find(s => s.id === id) : S.assets[id];
   const inp = document.createElement("input"); inp.className = "edit"; inp.value = obj.name;
   nm.replaceWith(inp); inp.focus(); inp.select();
-  const done = keep => { if (keep && inp.value.trim()) obj.name = inp.value.trim(); render(); save(); };
+  const done = keep => { const old = obj.name; if (keep && inp.value.trim()) obj.name = inp.value.trim(); if (!isSec && obj.name !== old && typeof dRename === "function") dRename(old, obj.name); render(); save(); };
   inp.addEventListener("keydown", e => { if (e.key === "Enter") done(true); if (e.key === "Escape") done(false); });
   inp.addEventListener("blur", () => done(true), {once: true});
 }
-document.addEventListener("dblclick", e => { const nm = e.target.closest("[data-ren-sec],[data-ren-asset]"); if (nm) renameEl(nm); });
+/* two quick clicks on a name in the list rename it; the list is the one place names are edited, everywhere else shows them */
+let lastNm = {k: "", t: 0};
+document.addEventListener("click", e => {
+  const nm = e.target.closest && e.target.closest("[data-ren-sec],[data-ren-asset]"); if (!nm || e.target.closest("input.edit")) return;
+  const k = nm.dataset.renSec || nm.dataset.renAsset, now = Date.now();
+  if (lastNm.k === k && now - lastNm.t < 450){ e.stopPropagation(); e.preventDefault(); lastNm = {k: "", t: 0}; renameEl(document.querySelector(`[data-ren-sec="${k}"],[data-ren-asset="${k}"]`)); return; }
+  lastNm = {k, t: now};
+}, true);
 
 /* ---------- drag assets between sections, and steps within an asset ---------- */
 let DRAG = null;
