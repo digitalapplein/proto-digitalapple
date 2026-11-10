@@ -1,0 +1,92 @@
+[
+ {
+  "file": "r01.jpg",
+  "title": "Executive guide: Securing the global workforce",
+  "type": "White paper",
+  "date": "2026-02-22",
+  "gated": null,
+  "tags": "{'Product': ['Cybersecurity (0.9)', 'Cybersecurity > Mobile security apps (0.85)', 'Cybersecurity > Endpoint Security (0.8)'], 'Solution or need': ['Secure Connected Enterprise (0.95)', 'Boundless Working (0.85)'], 'Theme': ['Trust, security and privacy (0.95)', 'Connecting businesses (0.7)'], 'Business size': ['Large & multinational (0.85)']}",
+  "ok": 27068
+ },
+ {
+  "file": "r02.jpg",
+  "title": "Digital thinking to modernise global manufacturing",
+  "type": "Case study",
+  "date": "2025-01-15",
+  "gated": null,
+  "tags": "{'Product': ['Mobile Connectivity & Devices > 5G for business (1)', 'Mobile Connectivity & Devices > Mobile Private Networks (1)'], 'Solution or need': ['Smart Operations (1)', 'Secure Connected Enterprise (0.7)'], 'Theme': ['Connecting businesses (1)', 'Planet (energy, climate, circular economy) (0.9)', 'Connecting futures (0.8)'], 'Industry': ['Manufacturing (1)', 'Energy & utilities (0.8)'], 'B",
+  "ok": 20700
+ },
+ {
+  "file": "r03.jpg",
+  "title": "Network foundations build operational efficiency: A case study with CIMPOR",
+  "type": "Case study",
+  "date": "2025-05-26",
+  "gated": null,
+  "tags": "{'Product': ['Mobile Connectivity & Devices > Mobile Private Networks (1)', 'Mobile Connectivity & Devices > 5G for business (1)', 'IoT Connectivity (0.8)'], 'Solution or need': ['Smart Operations (1)', 'Secure Connected Enterprise (0.8)', 'Boundless Working (0.7)'], 'Theme': ['Connecting businesses (1)', 'Planet (energy, climate, circular economy) (0.9)', 'Connecting futures (0.8)'], 'Industry': ",
+  "ok": 27171
+ },
+ {
+  "file": "r04.jpg",
+  "title": "Why Network-as-a-Service?",
+  "type": "YouTube video",
+  "date": "2026-09-16",
+  "gated": null,
+  "tags": "{'Product': ['Fixed Connectivity > SD-WAN (0.7)', 'Mobile Connectivity & Devices > 5G for business (0.69)', 'Cloud & Edge > Multi-access Edge Computing (MEC) (0.69)'], 'Solution or need': ['Secure Connected Enterprise (0.67)', 'Smart Operations (0.64)', 'Boundless Working (0.64)'], 'Theme': ['Trust, security and privacy (0.64)', 'Connecting businesses (0.62)', 'Connecting futures (0.6)'], 'Busines",
+  "ok": 12817
+ },
+ {
+  "file": "r05.jpg",
+  "title": "Chain reactions: de-risking supply chains with digital ESG transparency",
+  "type": "Blog",
+  "date": "2026-05-12",
+  "gated": null,
+  "tags": "{'Product': ['IoT Connectivity > IoT Analytics (0.8)', 'IoT Connectivity (0.7)'], 'Solution or need': ['Smart Operations (0.9)', 'Secure Connected Enterprise (0.7)'], 'Theme': ['Planet (energy, climate, circular economy) (0.95)', 'Connecting businesses (0.85)', 'Trust, security and privacy (0.8)'], 'Industry': ['Transport & logistics (0.8)', 'Manufacturing (0.7)'], 'Business size': ['Large & multi",
+  "ok": 40367
+ },
+ {
+  "file": "r06.jpg",
+  "title": "Proactive approach to fighting evolving fraud threat",
+  "type": "Case study",
+  "date": "2025-04-02",
+  "gated": null,
+  "tags": "{'Product': ['Messaging & Identity > Identity Hub (fraud prevention) (1)'], 'Solution or need': ['Secure Connected Enterprise (1)'], 'Theme': ['Trust, security and privacy (1)', 'Connecting businesses (0.8)'], 'Industry': ['Banking & finance (1)'], 'Business size': ['Large & multinational (0.9)'], 'Market': ['Europe > United Kingdom (0.7)']}",
+  "ok": 27460
+ },
+ {
+  "file": "r07.jpg",
+  "title": "Staying ahead of wildfires with smart technology",
+  "type": "Company news",
+  "date": "2026-06-23",
+  "gated": null,
+  "tags": "{'Product': ['IoT Connectivity (0.9)', 'IoT Connectivity > Satellite IoT (0.85)', 'Fixed Connectivity > Satellite Services (0.75)'], 'Solution or need': ['Smart Operations (0.9)'], 'Theme': ['Planet (energy, climate, circular economy) (0.95)', 'Connecting businesses (0.8)', 'Communities (0.75)'], 'Industry': ['Public sector (0.8)', 'Public sector > Local government (0.7)'], 'Business size': ['Publ",
+  "ok": 45902
+ },
+ {
+  "file": "r08.jpg",
+  "title": "We're a Leader in the 2024 IDC MarketScape for UCaaS",
+  "type": "Analyst view",
+  "date": "2025-03-24",
+  "gated": null,
+  "tags": "{'Product': ['Unified Communications > UC as a Service (1)', 'Unified Communications (0.9)', 'Unified Communications > Voice Services (0.8)'], 'Solution or need': ['Boundless Working (0.9)'], 'Theme': ['Connecting businesses (0.9)', 'Connecting people (0.8)'], 'Business size': ['Large & multinational (0.8)']}",
+  "ok": 30570
+ },
+ {
+  "file": "r09.jpg",
+  "title": "Boundless Working: unlocking seamless collaboration everywhere, part 1",
+  "type": "Event or webinar",
+  "date": "2024-10-29",
+  "gated": null,
+  "tags": "{'Product': ['E2E Solutions > Collaborative Worker (0.9)', 'Unified Communications > UC as a Service (0.7)'], 'Solution or need': ['Boundless Working (1)', 'Secure Connected Enterprise (0.8)'], 'Theme': ['Connecting businesses (0.9)', 'Our people and workplace equality (0.8)', 'Trust, security and privacy (0.7)'], 'Industry': ['Professional services (0.7)'], 'Business size': ['Large & multinationa",
+  "ok": 34442
+ },
+ {
+  "file": "r10.jpg",
+  "title": "Is your business \u2018Fit for the Future\u2019?",
+  "type": "Thought leadership",
+  "date": "2026-10-27 (no date on the page; evergreen hub)",
+  "gated": null,
+  "tags": "{'Solution or need': ['Secure Connected Enterprise (0.72)', 'Smart Operations (0.7)', 'Boundless Working (0.7)'], 'Theme': ['Trust, security and privacy (0.9)', 'Connecting businesses (0.85)', 'Connecting futures (0.8)'], 'Industry': ['Professional services (0.75)', 'Banking & finance (0.74)', 'Retail (0.73)'], 'Business size': ['Large & multinational (0.7)']}",
+  "ok": 37345
+ }
+]

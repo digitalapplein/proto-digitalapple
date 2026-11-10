@@ -1,0 +1,1117 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta name="robots" content="noindex, nofollow">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>The Marketing Hub, rebuilt</title>
+<style>
+@font-face{font-family:VF;src:url(assets/Vodafone_Rg.ttf);font-weight:400;font-display:swap}
+@font-face{font-family:VF;src:url(assets/Vodafone_Bd.ttf);font-weight:700;font-display:swap}
+:root{--red:#E60000;--ink:#1D1D1F;--grey:#6E6E73;--muted:#86868B;--line:#D2D2D7;--soft:#F5F5F7;--dk2:#161617;--dk3:#232325;--dline:#2E2E30;--dgrey:#A1A1A6;--ease:cubic-bezier(.2,.8,.2,1)}
+*{box-sizing:border-box}
+body{margin:0;background:#fff;color:var(--ink);font-family:VF,-apple-system,"Helvetica Neue",Arial,sans-serif;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+img{display:block;max-width:100%}
+button{font:inherit;color:inherit;cursor:pointer}
+.sec{position:relative;padding:130px 0 140px;overflow:hidden}
+.light{background:#fff;color:var(--ink)}
+.soft{background:var(--soft);color:var(--ink)}
+.dark{background:#000;color:#F5F5F7}
+.wrap{width:min(1240px,calc(100% - 64px));margin:0 auto;position:relative}
+.label{font-size:19px;font-weight:700;color:var(--red);margin:0 0 14px}
+.h2{font-size:clamp(40px,4.4vw,64px);line-height:1.05;letter-spacing:-.022em;font-weight:700;margin:0 0 20px;max-width:18ch;text-wrap:balance}
+.lead{font-size:21px;line-height:1.45;color:var(--grey);max-width:46ch;margin:0;text-wrap:pretty}
+.dark .lead{color:var(--dgrey)}
+.center{text-align:center}.center .h2,.center .lead{margin-left:auto;margin-right:auto}
+.vh{min-height:100vh;display:flex;flex-direction:column;justify-content:center}
+.agree{color:var(--muted)}
+.vm{display:inline-block;width:1em;height:1em;background:url(assets/vb-logo-red.png) no-repeat;background-size:3.046em auto;background-position:-.0355em -.0355em;flex:none}
+
+/* footer chapter line */
+#foot.hide{opacity:0;pointer-events:none}
+#foot{position:fixed;left:0;right:0;bottom:0;height:46px;z-index:60;display:flex;align-items:center;gap:22px;padding:0 28px;font-size:13px;color:var(--grey);background:rgba(255,255,255,.8);-webkit-backdrop-filter:saturate(180%) blur(18px);backdrop-filter:saturate(180%) blur(18px);border-top:1px solid rgba(0,0,0,.06);transition:background .4s,color .4s}
+#foot b{color:var(--ink);transition:color .4s}
+#foot .ch{min-width:250px;white-space:nowrap}
+#foot .bar{flex:1;height:2px;background:rgba(0,0,0,.1);border-radius:2px;position:relative;overflow:hidden}
+#foot .bar i{position:absolute;left:0;top:0;bottom:0;width:0;background:var(--red)}
+#foot .num{font-variant-numeric:tabular-nums;min-width:52px;text-align:right}
+#foot .nb{width:28px;height:28px;border-radius:50%;border:1px solid rgba(0,0,0,.15);background:transparent;display:grid;place-items:center;padding:0}
+#foot .nb svg{width:12px;height:12px}
+#foot[data-theme=dark]{background:rgba(0,0,0,.72);color:var(--dgrey)}
+#foot[data-theme=dark] b{color:#fff}
+#foot[data-theme=dark] .bar{background:rgba(255,255,255,.16)}
+#foot[data-theme=dark] .nb{border-color:rgba(255,255,255,.25)}
+
+/* stages */
+.fit{position:relative;width:100%;aspect-ratio:16/10}
+.fit.w16{aspect-ratio:16/9}
+.stage{position:absolute;left:0;top:0;width:1280px;height:800px;transform:scale(var(--s,.5));transform-origin:0 0}
+.w16>.stage{width:1600px;height:900px}
+/* laptop */
+.laptop{position:relative;perspective:2200px}
+.lid{position:relative;background:#0b0b0c;border-radius:20px 20px 6px 6px;padding:1.9% 1.9% 2.6%;box-shadow:0 0 0 1px #2a2a2c inset,0 40px 90px rgba(0,0,0,.35);transform-origin:50% 100%}
+.lid::before{content:"";position:absolute;top:.7%;left:50%;width:6px;height:6px;margin-left:-3px;border-radius:50%;background:#1e1e20}
+.scr{position:relative;border-radius:5px;background:#fff;overflow:hidden}
+.base{height:16px;margin:0 -6.5%;background:linear-gradient(#e2e2e6,#b4b4b9 70%,#8d8d92);border-radius:2px 2px 16px 16px;position:relative}
+.base::before{content:"";position:absolute;left:50%;top:0;width:16%;height:6px;margin-left:-8%;background:#a4a4a9;border-radius:0 0 8px 8px}
+
+/* mock UI, stage px */
+.ui{position:absolute;inset:0;background:#fff;color:#1d1d1f;font-size:15px;line-height:1.35;display:grid;grid-template-columns:200px 1fr;grid-template-rows:60px 1fr;text-align:left}
+.ui-top{grid-column:1/-1;display:flex;align-items:center;gap:16px;padding:0 22px;border-bottom:1px solid #ececef}
+.ui-brand{display:flex;align-items:center;gap:10px;width:166px;font-weight:700;font-size:16px;color:#e60000;white-space:nowrap}
+.ui-brand .vm{font-size:26px}
+.ui-search{width:540px;height:38px;border-radius:19px;background:#f2f2f4;display:flex;align-items:center;gap:10px;padding:0 16px;color:#86868b;font-size:14px}
+.ui-search svg{width:15px;height:15px;flex:none}
+.ui-sp{flex:1}
+.ui-av{width:34px;height:34px;border-radius:50%;background:url(assets/sp-par.jpg) center/cover}
+.ui-side{border-right:1px solid #ececef;padding:16px 12px;display:flex;flex-direction:column;gap:4px}
+.ui-side a{display:flex;align-items:center;gap:10px;height:38px;padding:0 12px;border-radius:10px;font-size:14.5px;color:#1d1d1f;transition:background .3s,color .3s}
+.ui-side a svg{width:16px;height:16px;flex:none}
+.ui-side a.on{background:#fdeaea;color:#e60000;font-weight:700}
+.ui-side .cap{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#a1a1a6;margin:14px 12px 4px}
+.ui-side .chp{height:30px;font-size:13.5px;color:#55555a}
+.ui-main{position:relative;overflow:hidden}
+.pane{position:absolute;inset:0;padding:22px 26px;opacity:0;visibility:hidden;transform:scale(.985);transition:opacity .45s ease,transform .6s var(--ease),visibility 0s .45s}
+.pane.on{opacity:1;visibility:visible;transform:none;transition:opacity .45s ease,transform .6s var(--ease)}
+.ph{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.ph h4{font-size:22px;margin:0;font-weight:700;letter-spacing:-.01em}
+.chip{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 11px;border-radius:14px;background:#f2f2f4;font-size:12.5px;white-space:nowrap;color:#1d1d1f}
+.chip b{font-weight:400;color:#86868b}
+.chip.red{background:#fdeaea;color:#c00000;font-weight:700}
+.chip.dd::after{content:"";width:6px;height:6px;border-right:1.5px solid #86868b;border-bottom:1.5px solid #86868b;transform:rotate(45deg) translateY(-2px);margin-left:4px}
+.btn{height:36px;border-radius:18px;padding:0 16px;background:#e60000;color:#fff;font-weight:700;display:inline-flex;align-items:center;gap:6px;font-size:13.5px;white-space:nowrap;border:0}
+.btn.ghost{background:#fff;color:#1d1d1f;box-shadow:inset 0 0 0 1.5px #1d1d1f}
+.btn.dk{background:#1d1d1f}
+.tog{display:inline-flex;align-items:center;gap:8px;font-size:13px}
+.tog i{width:36px;height:21px;border-radius:11px;background:#d2d2d7;position:relative;transition:background .3s}
+.tog i::after{content:"";position:absolute;left:2px;top:2px;width:17px;height:17px;border-radius:50%;background:#fff;transition:transform .3s var(--ease)}
+.tog.on i{background:#e60000}.tog.on i::after{transform:translateX(15px)}
+.spark{color:#e60000;display:inline-flex}
+.spark svg{width:14px;height:14px}
+/* asset cards */
+.ac{position:relative;margin:0;border-radius:12px;overflow:hidden;background:#eee}
+.ac img{width:100%;height:100%;object-fit:cover}
+.ac .tgs{position:absolute;left:8px;bottom:8px;right:8px;display:flex;flex-wrap:wrap;gap:4px;transition:opacity .35s,transform .35s}
+.ac .tgs i{font-style:normal;font-size:11px;background:rgba(255,255,255,.95);color:#1d1d1f;border-radius:9px;padding:3px 8px;white-space:nowrap}
+.ac .tgs i:first-child{background:#e60000;color:#fff}
+.notags .ac .tgs{opacity:0;transform:translateY(6px)}
+.wall{display:flex;gap:12px;align-items:flex-start}
+.wall .col{flex:1;display:flex;flex-direction:column;gap:12px;min-width:0}
+
+/* ===== 1 COVER ===== */
+#s-cover{height:100vh;min-height:720px;padding:0;display:flex;align-items:center;justify-content:center}
+#s-cover .ly{position:absolute;inset:0;pointer-events:none}
+#s-cover .fc{position:absolute;width:var(--w,220px)}
+#s-cover .in{border-radius:16px;overflow:hidden;background:#fff;box-shadow:0 30px 70px rgba(0,0,0,.14),0 0 0 1px rgba(0,0,0,.04);animation:bob 9s ease-in-out infinite alternate;animation-delay:var(--a,0s)}
+#s-cover .in img{width:100%;aspect-ratio:16/10;object-fit:cover}
+#s-cover .in .m{padding:9px 12px 11px}
+#s-cover .in .m span{display:block;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:3px}
+#s-cover .in .m b{display:block;font-size:12.5px;line-height:1.3}
+#s-cover .ly1 .fc{filter:blur(1.5px);opacity:.75}
+@keyframes bob{from{transform:translateY(0)}to{transform:translateY(-14px)}}
+#s-cover .veil{position:absolute;inset:0;background:radial-gradient(ellipse 44% 34% at 50% 50%,#fff 45%,rgba(255,255,255,.8) 66%,rgba(255,255,255,0) 100%);pointer-events:none}
+#s-cover .ct{position:relative;text-align:center;z-index:5;padding:0 24px}
+#s-cover h1{font-size:clamp(52px,7vw,104px);line-height:.98;letter-spacing:-.035em;font-weight:700;margin:0}
+#s-cover h1 span{display:block}
+#s-cover h1 em{font-style:normal;color:var(--red)}
+#s-cover .cue{position:absolute;left:28px;bottom:22px;transform:none;flex-direction:row !important;font-size:13px;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:8px;z-index:200;background:rgba(255,255,255,.85);padding:8px 16px;border-radius:20px}
+#s-cover .cue i{width:1px;height:34px;background:linear-gradient(var(--muted),transparent)}
+
+/* ===== 2 WHAT IT IS FOR ===== */
+#s-what .h2{max-width:24ch;font-size:clamp(36px,3.6vw,52px);margin:0}
+.what-hd{display:grid;grid-template-columns:minmax(0,1fr) 290px;gap:64px;align-items:end}
+.count-side{border-left:1px solid var(--dline);padding-left:32px}
+.count-side .big{font-size:clamp(64px,6.4vw,96px);font-weight:700;letter-spacing:-.04em;line-height:.9;color:#fff}
+.count-side .big small{font-size:.55em;color:var(--red)}
+.count-side p{margin:12px 0 0;font-size:17px;line-height:1.42;color:var(--dgrey)}
+.count-side p b{color:#fff;font-weight:400}
+.areas{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin-top:56px;align-items:start}
+.areas figure{margin:0;background:var(--dk2);border-radius:20px;overflow:hidden}
+.areas img{width:100%;aspect-ratio:16/9;object-fit:cover;object-position:top left}
+.areas figcaption{padding:18px 20px 22px}
+.areas b{display:block;font-size:21px;margin-bottom:6px}
+.areas span{display:block;font-size:15.5px;line-height:1.42;color:var(--dgrey)}
+.count-side p.all{color:#fff;margin-top:10px}
+#s-what{padding-bottom:110px}
+
+/* ===== 3 USERS ===== */
+.ptable{margin-top:52px;border-top:1px solid var(--line)}
+.prow{display:grid;grid-template-columns:1.25fr 1.3fr 1.3fr;gap:28px;align-items:center;padding:18px 0;border-bottom:1px solid var(--line);font-size:18px;line-height:1.38}
+.prow.hd{font-size:17px;font-weight:700;color:var(--red);padding:14px 0}
+.prow .tm{display:flex;align-items:center;gap:16px;font-weight:700}
+.prow .tm img{width:52px;height:52px;border-radius:50%;object-fit:cover;flex:none}
+#s-users .h2{max-width:none}
+
+/* ===== 4 TODAY ===== */
+#s-today{height:100vh;min-height:700px;padding:0;display:flex;align-items:center}
+#s-today .wrap{width:min(1360px,calc(100% - 64px));display:grid;grid-template-columns:420px 1fr;gap:56px;align-items:center;padding-bottom:30px}
+#s-today .h2{font-size:clamp(34px,3.2vw,48px);margin-bottom:12px}
+#s-today .lead{font-size:18px;margin-bottom:26px}
+.ci{border-top:1px solid var(--dline);padding:14px 0 14px 20px;position:relative;cursor:pointer}
+.ci:last-child{border-bottom:1px solid var(--dline)}
+.ci::before{content:"";position:absolute;left:0;top:15px;bottom:15px;width:3px;border-radius:2px;background:var(--red);transform:scaleY(0);transition:transform .4s var(--ease)}
+.ci h3{margin:0;font-size:20px;color:#6e6e73;transition:color .4s;display:flex;gap:12px}
+.ci h3 small{font-size:13px;color:var(--red);padding-top:4px}
+.ci p{margin:0;font-size:16px;line-height:1.45;color:var(--dgrey);max-height:0;overflow:hidden;opacity:0;transition:max-height .55s var(--ease),opacity .4s,margin .4s}
+.ci.on::before{transform:scaleY(1)}
+.ci.on h3{color:#fff}
+.ci.on p{max-height:200px;opacity:1;margin-top:8px}
+.frame{border-radius:14px;overflow:hidden;background:#1c1c1e;box-shadow:0 0 0 1px #2c2c2e,0 40px 100px rgba(0,0,0,.6)}
+.frame .bar{height:30px;display:flex;align-items:center;gap:7px;padding:0 12px;background:#2a2a2c}
+.frame .bar i{width:10px;height:10px;border-radius:50%;background:#48484a}
+.frame .bar span{margin-left:12px;font-size:12px;color:#8e8e93}
+.ts{position:absolute;inset:0;opacity:0;transition:opacity .55s ease;color:#1d1d1f}
+.ts.on{opacity:1}
+.ts>img{position:absolute;inset:0;width:100%;height:100%;transition:transform 6s ease-out}
+.ts.on>img{transform:scale(1.03)}
+.cap2{margin-top:14px;font-size:13px;color:#8e8e93}
+.ov{position:absolute}
+.ov-search{left:576px;top:21px;width:514px;height:46px;border-radius:23px;background:#f2f2f2;display:flex;align-items:center;padding-left:24px;gap:16px;font-size:19px}
+.ov-search svg{width:22px;height:22px;color:#555}
+.ov-drop{left:576px;top:80px;width:514px;background:#fff;border-radius:18px;box-shadow:0 20px 60px rgba(0,0,0,.25);padding:20px 24px;font-size:19px;display:flex;align-items:center;gap:12px}
+.ov-drop::before{content:"";width:12px;height:12px;border-radius:50%;background:#e60000}
+.dim{position:absolute;inset:0;background:rgba(0,0,0,.45)}
+.mf{position:relative}
+.flagcard{left:338px;top:271px;width:296px;height:160px;border-radius:22px 22px 0 0;overflow:visible}
+.flagcard svg{width:100%;height:100%;border-radius:22px 22px 0 0;display:block}
+.modal{left:720px;top:60px;width:800px;height:790px;background:#fff;border-radius:26px;padding:34px 40px;font-size:18px;box-shadow:0 30px 80px rgba(0,0,0,.35)}
+.modal h5{font-size:30px;margin:0 0 20px}
+.modal label{display:block;font-size:15px;color:#6e6e73;margin:14px 0 6px}
+.modal .in{min-height:46px;border-radius:12px;background:#f2f2f2;padding:11px 16px;font-size:17px}
+.modal .in.ta{min-height:84px}
+.modal .tl{display:flex;flex-wrap:wrap;gap:8px}
+.modal .tl i{font-style:normal;font-size:15px;padding:6px 12px;border-radius:16px;background:#f2f2f2}
+.modal .sq{width:150px;height:150px;border-radius:12px;overflow:hidden;position:relative}
+.modal .sq svg,.flagcard svg{display:block}
+.modal .up{position:absolute;right:40px;bottom:34px;height:48px;padding:0 28px;border-radius:24px;background:#e60000;color:#fff;font-weight:700;display:flex;align-items:center}
+.mk{position:absolute;border:4px solid #e60000;border-radius:16px;pointer-events:none}
+.mk b{position:absolute;left:-22px;top:-22px;width:40px;height:40px;border-radius:50%;background:#e60000;color:#fff;font-size:21px;display:grid;place-items:center;box-shadow:0 6px 18px rgba(230,0,0,.45)}
+.box{position:absolute;border:3px dashed #e60000;border-radius:22px}
+.tag-m{position:absolute;display:inline-flex;align-items:center;gap:10px;height:44px;padding:0 20px 0 16px;border-radius:22px;background:#e60000;color:#fff;font-size:19px;font-weight:700;white-space:nowrap;box-shadow:0 10px 30px rgba(230,0,0,.35);z-index:3}
+.tag-m::before{content:"";width:10px;height:10px;border-radius:50%;background:#fff}
+.modal .sq.empty{background:#f2f2f2;border:2px dashed #c7c7cc;display:grid;place-items:center;color:#86868b;font-size:14px}
+
+/* ===== 5 INTRODUCING ===== */
+#s-new{height:100vh;min-height:720px;padding:0;background:#fff}
+.nw-zoom{position:absolute;inset:0;transform-origin:50% 50%;--B:60px}
+.nw-lid{position:absolute;left:calc(var(--B)*-1);right:calc(var(--B)*-1);top:calc(var(--B)*-1);bottom:calc(var(--B)*-1.35);background:#0b0b0c;border-radius:calc(var(--B)*.9) calc(var(--B)*.9) calc(var(--B)*.3) calc(var(--B)*.3);box-shadow:0 0 0 calc(var(--B)*.06) #2a2a2c inset}
+.nw-base{position:absolute;left:calc(var(--B)*-3);right:calc(var(--B)*-3);top:calc(100% + var(--B)*1.35);height:calc(var(--B)*.75);background:linear-gradient(#e2e2e6,#b4b4b9 70%,#8d8d92);border-radius:0 0 calc(var(--B)*.8) calc(var(--B)*.8)}
+.nw-screen{position:absolute;inset:0;overflow:hidden;background:#fff}
+.nw-wall{position:absolute;inset:-10vh 0;display:flex;gap:16px;padding:0 16px}
+.nw-col{flex:1;display:flex;flex-direction:column;gap:16px;animation:colup var(--t,60s) linear infinite}
+.nw-col.dn{animation-name:coldn}
+@keyframes colup{from{transform:translateY(0)}to{transform:translateY(-50%)}}
+@keyframes coldn{from{transform:translateY(-50%)}to{transform:translateY(0)}}
+.nw-col .c{border-radius:16px;overflow:hidden;background:#eee;flex:none;box-shadow:0 10px 30px rgba(0,0,0,.08)}
+.nw-col .c img{width:100%;height:100%;object-fit:cover}
+.nw-boxes{position:absolute;left:50%;top:54%;width:min(980px,80vw);transform:translate(-50%,-50%);display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.nw-boxes i{aspect-ratio:16/10;border-radius:18px;background:#c7c7cc}
+.nw-veil{position:absolute;inset:0;background:radial-gradient(ellipse 50% 24% at 50% 50%,#fff 48%,rgba(255,255,255,.9) 68%,rgba(255,255,255,0) 100%);pointer-events:none;z-index:3}
+.nw-hd{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;z-index:4;padding:34px 56px;border-radius:28px;background:rgba(255,255,255,.88);-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);white-space:nowrap}
+.nw-hd .h2{font-size:clamp(48px,6vw,92px);max-width:none;margin:0;letter-spacing:-.035em}
+
+/* ===== 6 FEATURES ===== */
+.nw-app{position:absolute;inset:0;background:#fff;opacity:0;display:grid;place-items:center}
+#featFit{width:min(100%,160vh)}
+.nw-pills{position:absolute;z-index:6;visibility:hidden;opacity:0}
+.nw-text{position:absolute;z-index:6;visibility:hidden;opacity:0;align-content:center;color:#fff}
+#featList{display:flex;flex-wrap:wrap;gap:8px}
+#featList button{height:36px;padding:0 15px;border-radius:18px;border:1px solid #3a3a3c;background:transparent;color:#d1d1d6;font-size:15px;transition:background .3s,color .3s,border-color .3s}
+#featList button:hover{border-color:#8e8e93}
+#featList button.on{background:#fff;color:#1d1d1f;border-color:#fff}
+.ftext{display:grid}
+.ft{grid-area:1/1;opacity:0;visibility:hidden;transform:translateY(12px);transition:opacity .45s,transform .45s var(--ease),visibility 0s .45s}
+.ft.on{opacity:1;visibility:visible;transform:none;transition:opacity .45s,transform .45s var(--ease)}
+.ft h3{font-size:34px;margin:0 0 10px;letter-spacing:-.015em}
+.ft p{font-size:21px;line-height:1.35;color:#fff;margin:0 0 18px}
+.ft ul{margin:0;padding:0;list-style:none}
+.ft li{font-size:16px;line-height:1.4;color:var(--dgrey);padding:11px 0 11px 22px;border-top:1px solid var(--dline);position:relative}
+.ft li::before{content:"";position:absolute;left:2px;top:18px;width:8px;height:8px;border-radius:50%;background:var(--red)}
+/* panes */
+.fby{display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
+.fby small{font-size:12px;color:#6e6e73;margin-right:2px}
+.fby .clr{font-size:12.5px;color:#e60000;margin-left:4px}
+.recs{display:flex;gap:10px;align-items:center;margin-bottom:12px;padding:10px 12px;background:#f7f7f8;border-radius:12px}
+.recs small{font-size:12px;color:#6e6e73;margin-right:4px;white-space:nowrap}
+.recs i{width:64px;height:40px;border-radius:7px;background:#ddd center/cover;flex:none}
+.res{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.rc{border-radius:14px;overflow:hidden;background:#fff;border:1px solid #ececef}
+.rc .im{height:190px;background:#eee center/cover;position:relative}
+.rc .im em{position:absolute;left:12px;top:12px;font-style:normal;font-size:11.5px;font-weight:700;background:#e60000;color:#fff;border-radius:9px;padding:4px 10px}
+.rc .tx{padding:12px 14px 14px}
+.rc .tx b{display:block;font-size:15px;line-height:1.3}
+.rc .tx small{display:block;color:#86868b;font-size:12px;margin:4px 0 8px}
+.rc .tg{display:flex;flex-wrap:wrap;gap:5px}
+.rc .tg i{font-style:normal;font-size:11px;background:#f2f2f4;border-radius:8px;padding:3px 8px}
+.qbox{height:50px;border-radius:25px;box-shadow:0 0 0 2px #e60000;display:flex;align-items:center;gap:12px;padding:0 20px;font-size:17px;margin-bottom:10px}
+.qbox svg{width:18px;height:18px;color:#86868b;flex:none}
+.qbox .caret{width:2px;height:22px;background:#1d1d1f;animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.up-grid{display:grid;grid-template-columns:330px 1fr;gap:22px;height:100%}
+.drop{border:2px dashed #d2d2d7;border-radius:18px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:#fafafa;text-align:center;padding:22px}
+.doc{width:250px;border-radius:8px;overflow:hidden;box-shadow:0 16px 40px rgba(0,0,0,.2);position:relative}
+.doc img{width:100%;aspect-ratio:16/9;object-fit:cover}
+.doc::after{content:"PDF";position:absolute;right:8px;top:8px;font-size:11px;font-weight:700;color:#e60000;background:#fff;border-radius:5px;padding:2px 6px}
+.drop b{font-size:13.5px;line-height:1.3;max-width:250px}
+.drop small{font-size:12px;color:#86868b}
+.prog{width:220px;height:5px;border-radius:3px;background:#e5e5ea;overflow:hidden}
+.prog i{display:block;height:100%;background:#e60000;transform-origin:left}
+.fld{margin-bottom:11px}
+.fld small{display:flex;align-items:center;gap:6px;font-size:12px;color:#86868b;margin-bottom:5px}
+.fld .v{font-size:13.5px;line-height:1.42;background:#f7f7f8;border-radius:10px;padding:9px 12px;min-height:36px}
+.fld .tg{display:flex;flex-wrap:wrap;gap:6px}
+.th-grid{display:grid;grid-template-columns:400px 1fr;gap:28px;height:100%}
+.asset{border-radius:16px;border:1px solid #ececef;overflow:hidden;align-self:start}
+.asset .cov{height:225px;background:#c7c7cc;position:relative;overflow:hidden}
+.asset .cov .ph0{position:absolute;inset:0;display:grid;place-items:center;color:#fff;font-size:13px}
+.asset .cov .img{position:absolute;inset:0;background:center/cover;opacity:0}
+.asset .tx{padding:14px 16px}
+.asset .tx b{display:block;font-size:16px}
+.asset .tx small{color:#86868b;font-size:12.5px}
+.lib h5{font-size:15px;margin:0 0 4px}
+.lib>small{font-size:12px;color:#86868b}
+.lib .g{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}
+.lib .g i{aspect-ratio:4/3;border-radius:10px;background:#ddd center/cover;position:relative;transition:box-shadow .3s}
+.lib .g i.pick{box-shadow:0 0 0 3px #e60000}
+.lib .g i.pick::after{content:"Best match";position:absolute;left:8px;top:8px;font-size:11px;font-weight:700;background:#e60000;color:#fff;border-radius:8px;padding:3px 8px;font-style:normal;opacity:var(--bm,0);transition:opacity .3s}
+.crops{display:flex;gap:14px;align-items:flex-end;margin-top:18px}
+.crops div{background:#ddd center/cover;border-radius:8px;position:relative}
+.crops span{position:absolute;left:0;bottom:-20px;font-size:11.5px;color:#86868b;white-space:nowrap}
+.fly{position:absolute;border-radius:10px;background:center/cover;z-index:9;box-shadow:0 20px 40px rgba(0,0,0,.3)}
+.hub{border-radius:16px;overflow:hidden;border:1px solid #ececef}
+.hub .hh{height:190px;position:relative;background:#e60000 url(assets/ms-cover.jpg) right center/cover;color:#fff;padding:20px 24px;display:flex;flex-direction:column;justify-content:flex-end}
+.hub .hh::before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(150,0,0,.92) 0,rgba(200,0,0,.7) 50%,rgba(230,0,0,0) 100%)}
+.hub .hh>*{position:relative}
+.hub .hh small{font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;opacity:.85}
+.hub .hh b{font-size:28px;letter-spacing:-.01em;line-height:1.1;margin:4px 0 6px}
+.hub .hh p{margin:0;font-size:12.5px;line-height:1.45;max-width:620px;opacity:.95}
+.hub .rows{padding:12px 16px 14px;display:grid;grid-template-columns:1.2fr 1.8fr 1.2fr;gap:16px}
+.hub h6{font-size:12.5px;margin:0 0 7px}
+.hub .t{display:flex;gap:8px}
+.hub .t i{flex:1;height:72px;border-radius:8px;background:#eee center/cover}
+.share{position:absolute;top:16px;right:16px;bottom:16px;width:400px;background:#fff;border-radius:18px;box-shadow:0 24px 70px rgba(0,0,0,.25);padding:22px 24px;font-size:14px}
+.share h5{font-size:18px;margin:0 0 16px;line-height:1.25}
+.share .lbl{font-size:12px;color:#86868b;margin:14px 0 8px}
+.opt{display:flex;flex-direction:column;gap:8px}
+.opt span{display:flex;align-items:center;gap:10px}
+.opt span::before{content:"";width:16px;height:16px;border-radius:50%;border:2px solid #c7c7cc;flex:none}
+.opt span.on::before{border:5px solid #e60000}
+.share .row{display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-top:1px solid #ececef}
+.share .sel{height:30px;border-radius:8px;background:#f2f2f4;padding:0 12px;display:flex;align-items:center;font-size:13px}
+.share .lnk{display:flex;gap:8px;margin-top:14px}
+.share .lnk div{flex:1;height:36px;border-radius:10px;background:#f2f2f4;display:flex;align-items:center;padding:0 12px;color:#55555a;font-size:12.5px}
+.share .opened{display:flex;align-items:center;gap:10px;margin-top:14px;font-size:13px;color:#55555a}
+.share .opened i{width:26px;height:26px;border-radius:50%;background:center/cover;margin-right:-16px;border:2px solid #fff}
+.share .opened i:last-of-type{margin-right:4px}
+.share .nolic{margin-top:12px;font-size:13px;font-weight:700}
+.sso{display:flex;align-items:center;gap:14px;padding:13px 16px;border:1px solid #ececef;border-radius:14px;margin-bottom:16px;font-size:14px}
+.sso .vm{font-size:28px}
+.sso .chip{margin-left:auto;background:#1d1d1f;color:#fff;font-weight:700}
+.rt{width:100%;border-collapse:collapse;font-size:14px}
+.rt th{text-align:left;font-weight:400;color:#86868b;font-size:12px;padding:0 10px 9px}
+.rt td{border-top:1px solid #ececef;padding:11px 10px}
+.rt td:first-child{font-weight:700}
+.rt .y{color:#e60000;font-weight:700}
+.rt .n{color:#c7c7cc}
+.log{margin-top:16px;border-radius:14px;background:#f7f7f8;padding:12px 16px;font-size:13px}
+.log h6{font-size:12px;color:#86868b;font-weight:400;margin:0 0 6px}
+.log div{display:flex;gap:10px;padding:5px 0;border-top:1px solid #ececef}
+.log div span{color:#86868b;min-width:44px}
+.chat{max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:14px;height:100%}
+.msg{font-size:15px;line-height:1.45}
+.msg.u{align-self:flex-end;background:#1d1d1f;color:#fff;border-radius:18px 18px 4px 18px;padding:11px 16px;max-width:75%}
+.msg.a{align-self:flex-start;background:#f5f5f7;border-radius:18px 18px 18px 4px;padding:13px 16px;max-width:92%}
+.msg.a .spark{margin-right:6px;vertical-align:-2px}
+.minis{display:flex;gap:10px;margin-top:10px}
+.mini{width:190px;background:#fff;border-radius:10px;overflow:hidden}
+.mini i{display:block;height:92px;background:#ddd center/cover}
+.mini b{display:block;font-size:12px;line-height:1.3;padding:7px 9px 0;height:38px;overflow:hidden}
+.mini small{display:block;font-size:11px;color:#86868b;padding:0 9px 8px}
+.coll{display:flex;align-items:center;gap:14px;background:#fff;border-radius:12px;padding:10px;margin-top:10px}
+.coll .st{position:relative;width:86px;height:58px;flex:none}
+.coll .st i{position:absolute;width:70px;height:46px;border-radius:7px;background:#ddd center/cover;box-shadow:0 4px 10px rgba(0,0,0,.15)}
+.coll b{display:block;font-size:14px}
+.coll small{font-size:12px;color:#86868b}
+.typing{align-self:flex-start;background:#f5f5f7;border-radius:18px;padding:12px 16px;display:flex;gap:5px}
+.typing i{width:7px;height:7px;border-radius:50%;background:#86868b;animation:blink 1s infinite}
+.typing i:nth-child(2){animation-delay:.2s}.typing i:nth-child(3){animation-delay:.4s}
+.cin{margin-top:auto;height:46px;border-radius:23px;background:#f2f2f4;display:flex;align-items:center;padding:0 18px;color:#86868b;font-size:14px}
+.ext{position:absolute;inset:0;background:#fff;color:#1d1d1f;display:flex;flex-direction:column;opacity:0;visibility:hidden;transition:opacity .5s,visibility 0s .5s;z-index:5;text-align:left}
+.ext.on{opacity:1;visibility:visible;transition:opacity .5s}
+.px-top{height:64px;background:#1d1d1f;color:#fff;display:flex;align-items:center;gap:28px;padding:0 34px;font-size:14px}
+.px-top b{font-size:17px}
+.px-top span{color:#a1a1a6}
+.px-top span.on{color:#fff}
+.px-body{padding:28px 34px}
+.px-body h4{font-size:28px;margin:0 0 4px;letter-spacing:-.01em}
+.px-body>p{margin:0 0 20px;color:#6e6e73;font-size:15px}
+.px-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.pxc{border-radius:12px;overflow:hidden;border:1px solid #ececef}
+.pxc i{display:block;height:120px;background:#ddd center/cover}
+.pxc div{padding:10px 12px 12px}
+.pxc small{display:block;font-size:11.5px;color:#86868b}
+.pxc b{display:block;font-size:13.5px;line-height:1.3;margin:4px 0 8px;height:36px;overflow:hidden}
+.from{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;color:#c00000;background:#fdeaea;border-radius:10px;padding:3px 9px 3px 5px}
+.from .vm{font-size:14px}
+.px-api{margin-top:22px;display:flex;align-items:center;gap:10px;font-size:13px;color:#6e6e73}
+.px-api i{width:8px;height:8px;border-radius:50%;background:#e60000;animation:blink 1.4s infinite}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+.kpis div{background:#f7f7f8;border-radius:14px;padding:12px 16px}
+.kpis small{display:block;font-size:12px;color:#86868b}
+.kpis b{font-size:26px;letter-spacing:-.01em}
+.dash2{display:grid;grid-template-columns:1.25fr 1fr;gap:16px}
+.cardx{border:1px solid #ececef;border-radius:14px;padding:14px 16px}
+.cardx h6{font-size:12.5px;color:#6e6e73;font-weight:400;margin:0 0 10px}
+.mbars{display:flex;align-items:flex-end;gap:12px;height:150px;border-bottom:1px solid #ececef}
+.mbars div{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:5px;font-size:10.5px;color:#6e6e73}
+.mbars i{width:100%;border-radius:5px 5px 0 0;background:#1d1d1f;transform-origin:bottom}
+.mbars div.hi i{background:#e60000}
+.mlab{display:flex;gap:12px;padding-top:5px}
+.mlab span{flex:1;text-align:center;font-size:10.5px;color:#6e6e73}
+.nf .r{display:flex;justify-content:space-between;font-size:13px;padding:6px 0;border-top:1px solid #f0f0f2}
+.nf .r span{color:#e60000;font-weight:700}
+.aich{position:absolute;right:26px;bottom:20px;width:420px;background:#fff;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.22);padding:14px 16px;font-size:13.5px}
+.aich .msg{font-size:13.5px}
+.aich .msg.u{margin-left:auto;display:table}
+.aich .msg.a{margin-top:8px}
+
+/* ===== 7 CONTENT HUBS (Netflix) ===== */
+#s-hubs{padding:120px 0 120px}
+.nfx{margin-top:44px;background:#141414;border-radius:28px;color:#fff;padding:0 0 28px;box-shadow:0 40px 100px rgba(0,0,0,.25);transform-origin:50% 0}
+.nfx-top{display:flex;align-items:center;gap:10px;padding:18px 28px}
+.nfx-top .brand{display:flex;align-items:center;gap:10px;font-weight:700;color:#fff;margin-right:22px}
+.nfx-top .brand .vm{font-size:26px}
+.nfx-top button{height:36px;padding:0 16px;border-radius:18px;border:0;background:transparent;color:#a1a1a6;font-size:15px;transition:background .3s,color .3s}
+.nfx-top button.on{background:#2a2a2c;color:#fff}
+.nfx-top button.more{border:1px dashed #48484a;margin-left:6px}
+.hero{margin:0 28px;height:330px;border-radius:20px;position:relative;overflow:hidden;background:#e60000}
+.hero .hi{position:absolute;right:0;top:0;bottom:0;width:62%;background:center 30%/cover;transition:opacity .6s}
+.hero::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,#e60000 0,#e60000 36%,rgba(230,0,0,.8) 48%,rgba(230,0,0,0) 72%)}
+.hero .hc{position:absolute;left:44px;top:50%;transform:translateY(-50%);z-index:2;max-width:520px}
+.hero small{font-size:13px;letter-spacing:.12em;text-transform:uppercase;opacity:.9}
+.hero h3{font-size:54px;line-height:1;letter-spacing:-.03em;margin:8px 0 14px}
+.hero p{font-size:17px;line-height:1.45;margin:0 0 22px;opacity:.95}
+.hero .open{display:inline-flex;align-items:center;gap:10px;height:44px;padding:0 22px;border-radius:22px;background:#fff;color:#1d1d1f;font-weight:700;font-size:16px;border:0}
+.hero .open::before{content:"";border-left:11px solid #1d1d1f;border-top:7px solid transparent;border-bottom:7px solid transparent}
+.nrow{margin:26px 28px 0}
+.nrow h4{font-size:19px;margin:0 0 12px;letter-spacing:-.01em}
+.ntiles{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
+.nt{position:relative;border-radius:10px;background:#222;aspect-ratio:16/9;transition:transform .35s var(--ease),box-shadow .35s;transform-origin:50% 30%}
+.nt:first-child{transform-origin:0 30%}.nt:last-child{transform-origin:100% 30%}
+.nt .im{position:absolute;inset:0;border-radius:10px;background:center/cover}
+.nt em{position:absolute;left:8px;top:8px;font-style:normal;font-size:10.5px;font-weight:700;background:#e60000;color:#fff;border-radius:7px;padding:2px 7px;z-index:2}
+.nt .more{position:absolute;left:0;right:0;top:100%;background:#1f1f1f;border-radius:0 0 10px 10px;padding:10px 12px 12px;opacity:0;pointer-events:none;transition:opacity .3s}
+.nt .more b{display:block;font-size:13px;line-height:1.3}
+.nt .more span{display:block;font-size:11.5px;color:#a1a1a6;margin-top:4px;line-height:1.35}
+.nt:hover{transform:scale(1.3);z-index:10;box-shadow:0 20px 50px rgba(0,0,0,.6)}
+.nt:hover .im{border-radius:10px 10px 0 0}
+.nt:hover .more{opacity:1}
+.nt.ph{background:transparent;border:1.5px dashed #48484a;display:grid;place-items:center;color:#6e6e73;font-size:28px}
+.nt.ph:hover{transform:none;box-shadow:none}
+.nfx-body{transition:opacity .35s}
+/* product hub: light product page */
+.phb{margin:0 28px;background:#fff;color:#1d1d1f;border-radius:20px;overflow:hidden}
+.phb-hero{display:grid;grid-template-columns:1fr 1fr;height:300px}
+.phb-tx{padding:40px 44px;display:flex;flex-direction:column;justify-content:center}
+.phb-tx small{font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:#e60000;font-weight:700}
+.phb-tx h3{font-size:50px;line-height:1;letter-spacing:-.03em;margin:10px 0 14px}
+.phb-tx p{font-size:16.5px;line-height:1.45;color:#55555a;margin:0 0 22px;max-width:44ch}
+.phb-act{display:flex;align-items:center;gap:16px;font-size:13px;color:#86868b}
+.hero .open.dk,.phb .open.dk{display:inline-flex;align-items:center;height:44px;padding:0 22px;border-radius:22px;background:#e60000;color:#fff;font-weight:700;font-size:15px;border:0}
+.phb-im{background:url(assets/ms-brand-a.jpg) center 22%/cover}
+.phb-grid{display:grid;grid-template-columns:1.15fr 1fr 1fr;gap:28px;padding:26px 30px 30px;border-top:1px solid #ececef}
+.phb h4{font-size:15px;margin:0 0 12px}
+.phb-card i{display:block;aspect-ratio:16/9;border-radius:12px;background:center/cover;margin-bottom:10px}
+.phb-card b{display:block;font-size:14.5px;line-height:1.3}
+.phb-card small{font-size:12px;color:#86868b}
+.pli{display:flex;gap:12px;align-items:center;padding:8px 0;border-top:1px solid #f0f0f2}
+.pli:first-of-type{border-top:0;padding-top:0}
+.pli i{width:96px;height:54px;border-radius:8px;background:center/cover;flex:none}
+.pli small{display:block;font-size:11px;color:#e60000;font-weight:700}
+.pli b{display:block;font-size:13px;line-height:1.3;font-weight:400}
+/* campaign hub: editorial, by stage */
+.cph{margin:0 28px}
+.cph-hero{height:280px;border-radius:20px;position:relative;overflow:hidden;background:url(assets/r10.jpg) center 35%/cover}
+.cph-hero::after{content:"";position:absolute;inset:0;background:linear-gradient(0deg,rgba(0,0,0,.85) 0,rgba(0,0,0,.35) 55%,rgba(0,0,0,0) 100%)}
+.cph-tx{position:absolute;left:40px;bottom:32px;z-index:2;max-width:640px}
+.cph-tx small{font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:#ff6b6b;font-weight:700}
+.cph-tx h3{font-size:64px;line-height:1;letter-spacing:-.035em;margin:8px 0 10px}
+.cph-tx p{font-size:17px;margin:0;opacity:.9}
+.cph-st{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:20px}
+.cph-col{background:#1f1f1f;border-radius:16px;padding:16px}
+.cph-col h4{display:flex;align-items:center;gap:10px;font-size:17px;margin:0 0 12px}
+.cph-col h4 span{width:26px;height:26px;border-radius:50%;background:#e60000;display:grid;place-items:center;font-size:13px}
+.ctile{display:grid;grid-template-columns:110px 1fr;grid-template-rows:auto 1fr;column-gap:12px;padding:8px 0;border-top:1px solid #2c2c2e}
+.ctile:first-of-type{border-top:0}
+.ctile i{grid-row:1/3;height:62px;border-radius:8px;background:center/cover}
+.ctile small{font-size:11px;color:#a1a1a6}
+.ctile b{font-size:13px;line-height:1.3;font-weight:400}
+
+/* ===== 8 BENTO ===== */
+#s-summary{padding:56px 0 80px}
+#s-summary .h2{max-width:none;font-size:clamp(36px,3.8vw,56px)}
+.bento{display:grid;grid-template-columns:repeat(6,1fr);grid-auto-rows:140px;gap:12px;margin-top:26px}
+.bt{background:#2a2a2c;border-radius:20px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:12px;text-align:center;position:relative;overflow:hidden}
+.bt b{font-size:16.5px;letter-spacing:-.005em;color:#fff}
+.bt small{font-size:13px;line-height:1.3;color:#a1a1a6;margin-top:-6px;max-width:24ch}
+.bt svg{width:100px;height:48px;overflow:visible}
+.bt.w2{grid-column:span 2}
+.bt.core{grid-column:3/5;grid-row:2/4;background:#000;box-shadow:inset 0 0 0 1px #3a3a3c}
+.bt.core::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 50% 45%,rgba(230,0,0,.5),rgba(230,0,0,0) 60%);animation:glow 4s ease-in-out infinite alternate}
+@keyframes glow{from{opacity:.55}to{opacity:1}}
+.bt.core>*{position:relative}
+.bt.core .vm{font-size:92px}
+.bt.core b{font-size:30px}
+.bt.core span{font-size:16px;color:#d1d1d6}
+.s{fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.sg{fill:none;stroke:#6e6e73;stroke-width:2;stroke-linecap:round}
+.fr{fill:#e60000}.fg{fill:#48484a}.fw{fill:#fff}
+.a-blink{animation:blink2 2.4s ease-in-out infinite}
+@keyframes blink2{0%,100%{opacity:.25}50%{opacity:1}}
+.a-key{animation:keyin 3s var(--ease) infinite}
+@keyframes keyin{0%,15%{transform:translateX(-14px)}45%,85%{transform:translateX(0)}100%{transform:translateX(-14px)}}
+.a-up{animation:up 2.4s ease-in-out infinite}
+@keyframes up{0%{transform:translateY(8px);opacity:0}30%,70%{transform:translateY(0);opacity:1}100%{transform:translateY(-8px);opacity:0}}
+.a-pop{animation:pop 2.4s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
+@keyframes pop{0%,20%{transform:scale(0)}35%,85%{transform:scale(1)}100%{transform:scale(0)}}
+.a-grow{animation:grow 2.6s ease-in-out infinite alternate;transform-box:fill-box;transform-origin:bottom}
+@keyframes grow{from{transform:scaleY(.3)}to{transform:scaleY(1)}}
+.a-slide{animation:slide 4s linear infinite}
+@keyframes slide{from{transform:translateX(0)}to{transform:translateX(-36px)}}
+.a-move{animation:mv 3s ease-in-out infinite;offset-rotate:0deg}
+.a-pulse{animation:pls 2s ease-out infinite;transform-box:fill-box;transform-origin:center}
+@keyframes pls{from{transform:scale(.6);opacity:1}to{transform:scale(1.8);opacity:0}}
+.a-crop{animation:crop 2.6s ease-in-out infinite alternate}
+@keyframes crop{from{transform:translate(0,0)}to{transform:translate(4px,3px)}}
+
+/* ===== 9 INVESTMENT ===== */
+#s-invest{padding-top:84px}
+.price{margin-top:56px;display:grid;grid-template-columns:1.35fr 1fr 1fr;align-items:stretch}
+.pcol{display:flex;flex-direction:column}
+.pcell{height:56px;padding:14px 22px;display:flex;align-items:center;border-top:1px solid var(--line);font-size:16px;line-height:1.38}
+.pcol.lab .pcell{color:var(--grey)}
+.pcol.v .pcell{justify-content:center;text-align:center}
+.pcol .ph{height:150px;border-top:0;flex-direction:column;align-items:center;justify-content:flex-end;padding-bottom:20px}
+#s-invest .h2{max-width:none}
+.pd{font-size:14px;color:var(--grey);margin-top:4px}
+.mig-note{margin:40px 0 0;font-size:17px;color:var(--grey)}
+.pcol.lab .ph{align-items:flex-start}
+.pn{font-size:22px;font-weight:700}
+.pp{font-size:48px;font-weight:700;letter-spacing:-.03em;line-height:1;margin-top:6px}
+.pu{font-size:14px;color:var(--grey);margin-top:6px}
+.pcol.rec{margin:-22px 0 -22px;padding-bottom:22px;background:#fff;border-radius:24px;box-shadow:0 30px 80px rgba(0,0,0,.12),0 0 0 2px #e60000;position:relative;z-index:2}
+.pcol.rec .pcell{border-top-color:#ececef}
+.pcol.rec .pp{color:#e60000}
+.pcol.rec .ph{height:172px}
+.badge{font-size:12px;font-weight:700;color:#fff;background:#e60000;border-radius:10px;padding:3px 10px;margin-bottom:12px}
+.ck{width:24px;height:24px;border-radius:50%;background:#1d1d1f;color:#fff;display:inline-grid;place-items:center;font-size:13px;font-weight:700}
+.pcol.rec .ck{background:#e60000}
+.dash{color:#c7c7cc;font-size:20px}
+
+/* ===== 10 BUSINESS CASE ===== */
+.bcard{margin-top:48px;display:grid;grid-template-columns:1.5fr 1fr;gap:48px;align-items:center;background:#fff;border-radius:28px;padding:36px;box-shadow:0 30px 80px rgba(0,0,0,.08)}
+.bprev{border-radius:16px;overflow:hidden;box-shadow:0 0 0 1px rgba(0,0,0,.08),0 24px 60px rgba(0,0,0,.14);transform:perspective(1600px) rotateY(-6deg) rotateX(3deg);transition:transform .6s var(--ease)}
+.bprev:hover{transform:none}
+.bprev .bar{height:28px;background:#ececef;display:flex;align-items:center;gap:6px;padding:0 12px}
+.bprev .bar i{width:9px;height:9px;border-radius:50%;background:#c7c7cc}
+.bnote{font-size:19px;line-height:1.45;margin:0 0 26px;color:var(--ink)}
+.bopen{display:inline-flex;align-items:center;gap:10px;height:52px;padding:0 28px;border-radius:26px;background:#e60000;color:#fff;font-weight:700;font-size:18px;text-decoration:none;transition:transform .3s var(--ease)}
+.bopen:hover{transform:translateY(-2px)}
+
+/* ===== 11 APPROACH / 12 NEXT ===== */
+.plist{list-style:none;margin:48px 0 0;padding:0;counter-reset:p;max-width:880px}
+.plist li{counter-increment:p;display:grid;grid-template-columns:56px 1fr;align-items:baseline;font-size:22px;line-height:1.4;padding:20px 0;border-top:1px solid var(--dline)}
+.plist li:last-child{border-bottom:1px solid var(--dline)}
+.plist li::before{content:counter(p,decimal-leading-zero);font-size:15px;font-weight:700;color:var(--red)}
+.plist.lt li{border-color:var(--line)}
+/* ===== 12 NEXT ===== */
+#s-next{padding-bottom:160px}
+.contacts{display:flex;gap:48px;margin-top:80px;padding-top:30px;border-top:1px solid var(--line);align-items:center;flex-wrap:wrap;font-size:17px}
+.contacts b{display:block;font-size:19px}
+.contacts a{color:var(--grey);text-decoration:none}
+
+@media (max-width:1100px){
+  #s-today .wrap{grid-template-columns:1fr;gap:24px}
+  .areas{grid-template-columns:1fr 1fr}
+  .bento{grid-template-columns:repeat(3,1fr)}
+  .bt.core{grid-column:1/-1;grid-row:auto}
+  .bcard{grid-template-columns:1fr}
+  .ntiles{grid-template-columns:repeat(3,1fr)}.nt:nth-child(n+4){display:none}
+}
+@media (max-width:760px){
+  .sec{padding:96px 0 110px}
+  .areas,.what-hd{grid-template-columns:1fr}
+  .phb-hero,.phb-grid,.cph-st{grid-template-columns:1fr}.phb-hero{height:auto}.phb-im{height:200px}
+  .prow{grid-template-columns:1fr;gap:6px}.prow.hd{display:none}
+  .price{grid-template-columns:1.2fr 1fr 1fr;font-size:13px}.pcell{padding:10px}
+  .bento{grid-template-columns:1fr 1fr}
+  #foot .ch{min-width:0}#foot .num{display:none}
+}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+<!-- 1 COVER -->
+<section class="sec" id="s-cover" data-ch="Cover" data-theme="light">
+  <div class="ly ly1" id="ly1"></div>
+  <div class="ly ly2" id="ly2"></div>
+  <div class="veil"></div>
+  <div class="ly ly3" id="ly3"></div>
+  <div class="ct"><h1><span>The Marketing Hub,</span><span>rebuilt for <em>Vodafone Business</em></span></h1></div>
+  <div class="cue">Scroll, or use the arrow keys<i></i></div>
+</section>
+
+<!-- 2 WHAT THE HUB IS FOR -->
+<section class="sec dark" id="s-what" data-ch="What the hub is for" data-theme="dark">
+  <div class="wrap">
+    <p class="label rv">The Marketing Hub</p>
+    <div class="what-hd">
+      <h2 class="h2 rv">Home to all Vodafone Business Portfolio Marketing and Strategic Partnerships content.</h2>
+      <div class="count-side rv"><div class="big"><span class="count" data-to="750">750</span><small>+</small></div><p><b>ready-made assets:</b> presentations, videos, product sheets, reports and case studies.</p><p class="all">Open to all Vodafone colleagues.</p></div>
+    </div>
+    <div class="areas px" data-px="50">
+      <figure class="rv"><img src="assets/hub2024/slide2a.jpg" alt="Reading Room, 2024"><figcaption><b>Reading Room</b><span>Buyer profiles, buyer tasks, Fit for the Future reports and market insight.</span></figcaption></figure>
+      <figure class="rv"><img src="assets/hub2024/slide7a.jpg" alt="Portfolio, 2024"><figcaption><b>Portfolio</b><span>Positioning, messaging and customer-facing material for every product.</span></figcaption></figure>
+      <figure class="rv"><img src="assets/hub2024/slide8a.jpg" alt="Partners, 2024"><figcaption><b>Partners</b><span>An overview and playbook for each strategic partner.</span></figcaption></figure>
+      <figure class="rv"><img src="assets/hub2024/slide11b.jpg" alt="Help and Advice, 2024"><figcaption><b>Help and Advice</b><span>How to use the hub, FAQs, and a toolkit to promote it.</span></figcaption></figure>
+    </div>
+  </div>
+</section>
+
+<!-- 3 USERS -->
+<section class="sec light" id="s-users" data-ch="Who uses it" data-theme="light">
+  <div class="wrap">
+    <p class="label rv">Users</p>
+    <h2 class="h2 rv">Who uses the Marketing Hub.</h2>
+    <div class="ptable">
+      <div class="prow hd"><div>Team</div><div>Uses it to</div><div>What success looks like</div></div>
+      <div class="prow pr"><div class="tm"><img src="assets/sp-mkt.jpg" alt="">Portfolio marketing</div><div>Publish and maintain all content and portfolio pages</div><div class="nd">Less manual work. Proof the hub is used. Adoption across every market.</div></div>
+      <div class="prow pr"><div class="tm"><img src="assets/sp-par.jpg" alt="">Operating markets</div><div>Find approved content and adapt it locally</div><div class="nd">Everything for one product in their market, fast</div></div>
+      <div class="prow pr"><div class="tm"><img src="assets/sp-prod.jpg" alt="">Product teams and presales</div><div>Prepare for customer and analyst conversations</div><div class="nd">The latest approved version, in one place</div></div>
+      <div class="prow pr"><div class="tm"><img src="assets/sp-ops.jpg" alt="">Campaign and demand-gen</div><div>Build campaigns from existing assets</div><div class="nd">Reuse what already exists, instead of making it again</div></div>
+      <div class="prow pr"><div class="tm"><img src="assets/sp-cs.jpg" alt="">Sales without a Highspot licence</div><div>Get presentations, product sheets and case studies</div><div class="nd">Access without a separate licence</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- 4 TODAY -->
+<section class="sec dark" id="s-today" data-ch="Today" data-theme="dark">
+  <div class="wrap">
+    <div>
+      <h2 class="h2">How the hub works today.</h2>
+      <p class="lead">Most of the work is manual, and the pages are hard to change.</p>
+      <div id="chal">
+        <div class="ci on" data-i="0"><h3><small>01</small>Finding content</h3><p>Search matches titles, tags and descriptions, so results depend on how well each asset was tagged and described. Some searches find nothing.</p></div>
+        <div class="ci" data-i="1"><h3><small>02</small>Adding assets</h3><p>Every asset needs a description, tags and a thumbnail, all added manually, one asset at a time.</p></div>
+        <div class="ci" data-i="2"><h3><small>03</small>Building pages</h3><p>Every page is a set of boxes in a long scroll, with flags and stock photos as covers. Every portfolio page looks the same, and pages across several portfolios aren't possible.</p></div>
+        <div class="ci" data-i="3"><h3><small>04</small>Updating the site</h3><p>The page builder is fixed, and layout changes need development help. Help and Advice is static pages and PDFs.</p></div>
+      </div>
+    </div>
+    <div>
+      <div class="frame" id="todayFrame"><div class="bar"><i></i><i></i><i></i><span>The Marketing Hub</span></div><div class="fit w16" data-w="1600"><div class="stage" id="todayStage"></div></div></div>
+      <div class="cap2">The current hub, from the 2024 launch</div>
+    </div>
+  </div>
+</section>
+
+<!-- 5 INTRODUCING -->
+<section class="sec" id="s-new" data-ch="Introducing the new hub" data-theme="light">
+  <div class="nw-zoom" id="nwZoom">
+    <div class="nw-lid"></div><div class="nw-base"></div>
+    <div class="nw-screen"><div class="nw-wall" id="nwWall"></div><div class="nw-boxes" id="nwBoxes"></div>
+      <div class="nw-app" id="nwApp"><div class="fit" id="featFit" data-w="1280"><div class="stage" id="featStage"></div></div></div></div>
+  </div>
+  <div class="nw-veil"></div>
+  <div class="nw-hd"><p class="label">Introducing</p><h2 class="h2">The Marketing Hub, AI-powered.</h2></div>
+  <div class="nw-pills" id="featList"></div>
+  <div class="nw-text ftext" id="featText"></div>
+</section>
+
+<!-- 7 CONTENT HUBS -->
+<section class="sec soft" id="s-hubs" data-ch="Content hubs" data-theme="light">
+  <div class="wrap">
+    <p class="label rv">Content hubs</p>
+    <h2 class="h2 rv">Templates for every use case.</h2>
+    <p class="lead rv">Designed once, filled by AI on demand.</p>
+    <div class="nfx" id="nfx">
+      <div class="nfx-top"><span class="brand"><span class="vm"></span>The Marketing Hub</span>
+        <button class="on" data-h="0">Market hub</button><button data-h="1">Product hub</button><button data-h="2">Campaign hub</button><button class="more" data-h="3">More for your use cases</button></div>
+      <div class="nfx-body" id="nfxBody"></div>
+    </div>
+  </div>
+</section>
+
+<!-- 8 SUMMARY -->
+<section class="sec dark" id="s-summary" data-ch="Summary" data-theme="dark">
+  <div class="wrap">
+    <div class="center"><p class="label rv">In summary</p><h2 class="h2 rv">Everything in the new Marketing Hub.</h2></div>
+    <div class="bento" id="bento"></div>
+  </div>
+</section>
+
+
+
+
+
+
+
+<!-- 11 APPROACH -->
+<section class="sec dark vh" id="s-approach" data-ch="How we'll do it" data-theme="dark">
+  <div class="wrap">
+    <p class="label rv">Approach</p>
+    <h2 class="h2 rv">How we'll do it.</h2>
+    <p class="lead rv">8 to 10 weeks from start to switch-over.</p>
+    <ol class="plist" id="steps">
+      <li>Understand today: the process, stakeholders, user journeys and gaps, for the central team and the markets.</li>
+      <li>Interview one person from each team about what they need. The same people test it later.</li>
+      <li>Design the UX, UI, features and content hub templates, and validate them with you.</li>
+      <li>Move all current assets across, tagged in your taxonomy.</li>
+      <li>Test with the central team, then with selected markets, and refine.</li>
+      <li>Run the new hub alongside the current one on a new domain, and switch when everything works.</li>
+    </ol>
+  </div>
+</section>
+
+<!-- 12 NEXT STEPS -->
+<section class="sec light vh" id="s-next" data-ch="Next steps" data-theme="light">
+  <div class="wrap">
+    <h2 class="h2 rv">Next steps.</h2>
+    <ol class="plist lt">
+      <li class="rv">Agree the scope and the content hub templates.</li>
+      <li class="rv">Confirm the support, development and training included.</li>
+      <li class="rv">Confirm the start date.</li>
+      <li class="rv">Book the team and market interviews.</li>
+    </ol>
+    <div class="contacts rv">
+      <div><b>Mohit Thukral</b><a href="mailto:mohit@digitalapple.in">mohit@digitalapple.in</a></div>
+      <div><b>Gitika Thukral</b><a href="mailto:gitika@digitalapple.in">gitika@digitalapple.in</a></div>
+    </div>
+  </div>
+</section>
+
+<footer id="foot" data-theme="light">
+  <span class="ch"><b>The Marketing Hub</b> · <span id="chName">Cover</span></span>
+  <span class="bar"><i id="progBar"></i></span>
+  <span class="num" id="chNum">01 / 12</span>
+  <button class="nb" id="prevBtn" aria-label="Previous"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2 8l4-4 4 4"/></svg></button>
+  <button class="nb" id="nextBtn" aria-label="Next"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2 4l4 4 4-4"/></svg></button>
+</footer>
+
+<script src="assets/vendor/gsap.min.js"></script>
+<script src="assets/vendor/ScrollTrigger.min.js"></script>
+<script>
+(function(){
+'use strict';
+var REDUCE=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+var HAS=!!(window.gsap&&window.ScrollTrigger);
+if(HAS){gsap.registerPlugin(ScrollTrigger);gsap.ticker.lagSmoothing(0);}
+var $=function(s,r){return (r||document).querySelector(s)};
+var $$=function(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))};
+var D=REDUCE?0:1;
+
+/* ---------- real assets ---------- */
+var A={
+ r01:['White paper','Executive guide: Securing the global workforce','Cybersecurity','Secure Connected Enterprise'],
+ r02:['Case study','Digital thinking to modernise global manufacturing','5G for business','Manufacturing'],
+ r03:['Case study','Network foundations build operational efficiency: CIMPOR','Mobile Private Networks','Smart Operations'],
+ r04:['Video','Why Network-as-a-Service?','SD-WAN','Secure Connected Enterprise'],
+ r05:['Blog','Chain reactions: de-risking supply chains with digital ESG transparency','IoT Analytics','Transport & logistics'],
+ r06:['Case study','Proactive approach to fighting evolving fraud threat','Identity Hub (fraud prevention)','Banking & finance'],
+ r07:['Company news','Staying ahead of wildfires with smart technology','Satellite IoT','Public sector'],
+ r08:['Analyst view',"We're a Leader in the 2024 IDC MarketScape for UCaaS",'UC as a Service','Boundless Working'],
+ r09:['Event or webinar','Boundless Working: unlocking seamless collaboration everywhere','Collaborative Worker','Boundless Working'],
+ r10:['Thought leadership','Is your business ‘Fit for the Future’?','Secure Connected Enterprise','Connecting futures'],
+ 'ms-cover':['Toolkit','Vodafone Business Managed Smartphone launch toolkit','Device as a Service','Ireland'],
+ 'ms-brand-a':['Brand image','Managed Smartphone: people at work','Device in use','People at work'],
+ 'ms-brand-b':['Brand image','Managed Smartphone: manufacturing','Device in use','Manufacturing'],
+ 'ms-stat-a':['Insight','SME-led economy: 390K active enterprises in Ireland','Device as a Service','Ireland'],
+ 'ms-stat-b':['Insight','Digital-first market: 73% of Irish enterprises use paid cloud','Device as a Service','Ireland'],
+ 'ms-stat-c':['Insight','AI adoption rising: 20% of Irish enterprises use AI','Device as a Service','Ireland'],
+ 'real/c01':['Case study','Revving up the automotive industry’s connected future','IoT','Automotive'],
+ 'real/c02':['Case study','How top-level communication cuts costs for global operations','Unified Communications','Manufacturing'],
+ 'real/c03':['Case study','Digital certainty strengthens food supply chains','IoT','Food and agriculture'],
+ 'real/c04':['Case study','Powering predictive maintenance with Vodafone IoT','IoT','Smart buildings'],
+ 'real/c05':['Case study','Connecting every link in the logistics chain','Fleet','Transport & logistics'],
+ 'real/c06':['Case study','IoT helps the pharmaceutical supply chain cut waste','IoT','Healthcare'],
+ 'real/w01':['White paper','Secure, Connected Managed Devices','Device as a Service','Report'],
+ 'real/w02':['Threat report','Defending against mobile cybersecurity threats','Cybersecurity','Report'],
+ 'real/w03':['White paper','Smart Operations: IoT in Utilities','IoT','Utilities'],
+ 'real/w04':['Playbook','The Cybersecurity Leader’s Playbook: NIS2','Cybersecurity','Regulation'],
+ 'real/w05':['White paper','Wavelength services: connectivity for the AI era','Fixed Connectivity','Networks'],
+ 'real/w06':['White paper','How to retain talent and succeed in the future of work','Boundless Working','Future of work'],
+ 'real/w07':['White paper','What’s next for financial services?','Cloud & Edge','Banking & finance'],
+ 'real/w08':['White paper','Implementing SASE: secure, agile and resilient','SASE','Cybersecurity']
+};
+function I(k){return 'assets/'+k+'.jpg'}
+var ICON={
+ search:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>',
+ grid:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="9" rx="2"/><rect x="14" y="3" width="7" height="5" rx="2"/><rect x="14" y="12" width="7" height="9" rx="2"/><rect x="3" y="16" width="7" height="5" rx="2"/></svg>',
+ hub:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="6" rx="2"/><rect x="3" y="14" width="5" height="6" rx="1.5"/><rect x="9.5" y="14" width="5" height="6" rx="1.5"/><rect x="16" y="14" width="5" height="6" rx="1.5"/></svg>',
+ chart:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>',
+ chat:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M4 5h16v11H9l-5 4z"/></svg>',
+ cog:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg>',
+ lock:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></svg>',
+ spark:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.2 6.8L21 11l-6.8 2.2L12 20l-2.2-6.8L3 11l6.8-2.2z"/></svg>'
+};
+
+/* ---------- 1 cover ---------- */
+var COV=[ // key, layer, left%, top%, width
+ ['r01',1,4,6,170],['r07',1,72,4,160],['r05',1,88,70,160],['r09',1,14,74,150],
+ ['r02',2,22,3,200],['r10',2,74,9,220],['r06',2,-2,37,150],['r08',2,64,74,210],
+ ['ms-cover',3,5,64,240],['r03',3,90.5,42,150],['r04',3,50,82,200],['ms-brand-a',3,44,1,180]];
+COV.forEach(function(c,i){var a=A[c[0]];var el=document.createElement('div');el.className='fc';el.style.cssText='left:'+c[2]+'%;top:'+c[3]+'%;--w:'+c[4]+'px';el.dataset.d=c[1];
+ el.innerHTML='<div class="en"><div class="in" style="--a:-'+(i*1.1)+'s"><img src="'+I(c[0])+'" alt=""><div class="m"><span>'+a[0]+'</span><b>'+a[1]+'</b></div></div></div>';$('#ly'+c[1]).appendChild(el);});
+
+/* ---------- 4 today stage ---------- */
+var trFlag='<svg viewBox="0 0 150 150" width="150" height="150" preserveAspectRatio="xMidYMid slice"><rect width="150" height="150" fill="#E30A17"/><circle cx="62" cy="75" r="30" fill="#fff"/><circle cx="70" cy="75" r="24" fill="#E30A17"/><polygon fill="#fff" points="98,75 84,80 92,68 92,82 84,70"/></svg>';
+var tagList=['Cloud &amp; Edge','Cybersecurity','Digital Apps','Fixed Connectivity','IoT Connectivity','Messaging &amp; Identity','Mobile Connectivity Services','MPN','Solutions','UC'];
+var boxes=[[339,270,297,170],[651,270,297,170],[964,270,297,170],[1276,270,297,170],[339,459,297,206],[651,459,297,206],[964,459,297,206],[1276,459,297,206],[339,685,297,166],[651,685,297,166],[964,685,297,166],[1276,685,297,166]];
+function tg(txt,l,t){return '<div class="tag-m" style="left:'+l+'px;top:'+t+'px">'+txt+'</div>';}
+$('#todayStage').innerHTML=
+ '<div class="ts on" data-i="0"><img src="assets/hub2024/slide10c.jpg" alt=""><div class="ov ov-search">'+ICON.search+'<span class="q">network security</span></div><div class="ov ov-drop">No results</div></div>'+
+ '<div class="ts" data-i="1"><img src="assets/hub2024/slide10c.jpg" alt=""><div class="dim"></div><div class="ov modal"><h5>Add Asset</h5><label>Title</label><div class="in">Vodafone Business eUICC 4.2 Datasheet</div><div class="mf"><label>Description</label><div class="in ta">Datasheet for the eUICC 4.2 SIM.</div></div><div class="mf"><label>Tag</label><div class="tl">'+tagList.map(function(t){return '<i>'+t+'</i>'}).join('')+'</div></div><div class="mf" style="width:190px"><label>Thumbnail</label><div class="sq empty">Upload image</div></div><div class="up">Upload</div></div>'+
+ tg('Manual description',492,276)+tg('Manual tagging',521,378)+tg('Manual thumbnail upload',441,535)+'</div>'+
+ '<div class="ts" data-i="2"><img src="assets/hub2024/slide7b.jpg" alt=""><div class="ov flagcard">'+trFlag+'</div>'+boxes.map(function(b){return '<div class="box" style="left:'+b[0]+'px;top:'+b[1]+'px;width:'+b[2]+'px;height:'+b[3]+'px"></div>'}).join('')+'</div>'+
+ '<div class="ts" data-i="3"><img src="assets/hub2024/slide11b.jpg" alt="">'+tg('Layout changes need development',1010,190)+tg('Static pages and PDFs',1120,735)+'</div>';
+
+/* ---------- 5 introducing wall ---------- */
+var WK=['r01','ms-cover','r06','r09','r03','ms-brand-a','r10','r02','r05','ms-brand-b','r08','r04','r07'];
+var colsHTML='';for(var c=0;c<6;c++){var items='';for(var k=0;k<5;k++){var key=WK[(c*3+k*2)%WK.length];var h=[170,230,150,200,260,180][(c+k)%6];items+='<div class="c" style="height:'+h+'px"><img src="'+I(key)+'" alt=""></div>';}
+ colsHTML+='<div class="nw-col'+(c%2?' dn':'')+'" style="--t:'+(50+c*9)+'s">'+items+items+'</div>';}
+$('#nwWall').innerHTML=colsHTML;
+$('#nwBoxes').innerHTML=new Array(12).join('<i></i>')+'<i></i>';
+
+/* ---------- 6 features ---------- */
+function topbar(){return '<div class="ui-top"><div class="ui-brand"><span class="vm"></span>The Marketing Hub</div><div class="ui-search">'+ICON.search+'Ask for anything</div><span class="ui-sp"></span><span class="ui-av"></span></div>';}
+function side(){var it=[['Library',ICON.grid],['Content hubs',ICON.hub],['AI agent',ICON.chat],['Analytics',ICON.chart],['Settings',ICON.cog]];
+ return '<nav class="ui-side">'+it.map(function(x,i){return '<a data-n="'+i+'">'+x[1]+x[0]+'</a>'}).join('')+'<div class="cap">Chapters</div><a class="chp">Reading Room</a><a class="chp">Portfolio</a><a class="chp">Partners</a><a class="chp">Help and Advice</a></nav>';}
+function ac(k,h){var a=A[k];return '<figure class="ac" style="height:'+h+'px"><img src="'+I(k)+'" alt=""><div class="tgs"><i>'+a[2]+'</i><i>'+a[0]+'</i></div></figure>';}
+var paneLib='<div class="ph"><h4>Library</h4><span class="ui-sp"></span><span class="chip dd">Product</span><span class="chip dd">Market</span><span class="chip dd">Industry</span><span class="chip dd">Content type</span><span class="tog on" id="tagTog">Tags <i></i></span></div>'+
+ '<div class="fby"><small>Filtered by</small><span class="chip red">Market: Ireland</span><span class="chip red">Product: 3 selected</span><span class="chip red">Content type: Case study, White paper, Toolkit</span><span class="clr">Clear all</span></div>'+
+ '<div class="recs"><small>Recommended for operating markets</small><i style="background-image:url(assets/ms-cover.jpg)"></i><i style="background-image:url(assets/real/w01.jpg)"></i><i style="background-image:url(assets/r04.jpg)"></i><i style="background-image:url(assets/real/c03.jpg)"></i><i style="background-image:url(assets/ms-brand-a.jpg)"></i></div>'+
+ '<div class="wall">'+[[['ms-cover',150],['real/c02',190],['r09',150]],[['real/w01',200],['r07',140],['real/c05',170]],[['r10',150],['ms-brand-a',230],['real/w06',140]],[['real/c04',190],['r01',150],['real/w02',170]]].map(function(c){return '<div class="col">'+c.map(function(x){return ac(x[0],x[1])}).join('')+'</div>'}).join('')+'</div>';
+function rcard(k,badge,date){var a=A[k];return '<div class="rc"><div class="im" style="background-image:url('+I(k)+')">'+(badge?'<em>'+badge+'</em>':'')+'</div><div class="tx"><b>'+a[1]+'</b><small>'+a[0]+' · '+date+'</small><div class="tg"><i>'+a[2]+'</i><i>'+a[3]+'</i><i>'+a[0]+'</i></div></div></div>';}
+var paneSearch='<div class="qbox">'+ICON.search+'<span class="q"></span><i class="caret"></i></div>'+
+ '<div class="sfix" style="font-size:13px;color:#6e6e73;margin:0 0 10px 6px"><span class="spark" style="vertical-align:-2px;margin-right:6px">'+ICON.spark+'</span>Found across Unified Communications, 5G and Mobile Private Networks</div>'+
+ '<div class="sf" style="display:flex;gap:8px;align-items:center;margin-bottom:14px"><span class="chip red">Industry: Manufacturing</span><span class="chip red">Content type: Case study</span><span class="ui-sp"></span><b style="font-size:13.5px;margin-right:8px">3 results</b><span class="btn ghost">Save as collection</span></div>'+
+ '<div class="res">'+rcard('real/c02','Latest approved','Mar 2026')+rcard('r02','','Jan 2025')+'</div>';
+var LONG='Work smartphones are critical to how businesses operate, but managing them through manual processes, multiple suppliers and upfront spend can become a burden. This toolkit helps markets launch Vodafone Business Managed Smartphone, with context and insights, the buying group, ideal customers, positioning, messaging and buyer-facing content.';
+var paneUp='<div class="up-grid"><div class="drop"><div class="doc"><img src="assets/ms-cover.jpg" alt=""></div><b>Vodafone Business Managed Smartphone Launch Toolkit - Ireland.pdf</b><small class="pg">142 pages</small><div class="prog"><i></i></div></div>'+
+ '<div><div class="ph"><h4>Add assets</h4><span class="ui-sp"></span><span class="chip red"><span class="spark">'+ICON.spark+'</span>Written from the file</span></div>'+
+ '<div class="fld"><small>Title</small><div class="v f1"></div></div>'+
+ '<div class="fld"><small>Short description</small><div class="v f2"></div></div>'+
+ '<div class="fld"><small>Long description</small><div class="v f3" style="min-height:104px"></div></div>'+
+ '<div class="fld"><small>Tags from your taxonomy</small><div class="tg">'+[['Product','Device as a Service'],['Product','Managed and Value-added Services'],['Market','Ireland'],['Business size','Small business'],['Business size','Medium business'],['Industry','Professional services'],['Industry','Manufacturing'],['Industry','Retail'],['Industry','Transport & logistics']].map(function(t){return '<span class="chip"><b>'+t[0]+'</b> '+t[1]+'</span>'}).join('')+'</div></div>'+
+ '<div style="display:flex;gap:10px;margin-top:14px"><span class="btn">Confirm</span><span class="btn ghost">Edit</span></div></div></div>';
+var paneThumb='<div class="th-grid"><div><div class="ph"><h4>Thumbnail</h4></div><div class="asset"><div class="cov"><div class="ph0">No cover</div><div class="img" style="background-image:url(assets/ms-brand-a.jpg)"></div></div><div class="tx"><b>Vodafone Business Managed Smartphone launch toolkit</b><small>Toolkit · PDF · Ireland</small></div></div>'+
+ '<div class="crops"><div style="width:178px;height:100px;background-image:url(assets/ms-brand-a.jpg)"><span>Card 16:9</span></div><div style="width:100px;height:100px;background-image:url(assets/ms-brand-a.jpg)"><span>Square</span></div><div style="width:80px;height:100px;background-image:url(assets/ms-brand-a.jpg)"><span>Wall 4:5</span></div></div></div>'+
+ '<div class="lib"><h5>Brand library</h5><small>Brand-approved images, matched to the asset</small><div class="g">'+['ms-brand-b','r01','ms-brand-a','r06','r09','r10','r03','r08','r02'].map(function(k){return '<i'+(k==='ms-brand-a'?' class="pick"':'')+' style="background-image:url('+I(k)+')"></i>'}).join('')+'</div></div></div>';
+var HUBINTRO='Take the work out of work phones with one managed Vodafone service. Vodafone Business Managed Smartphone brings devices, lifecycle services, digital estate management, secure handling and support together, with a predictable monthly model. Everything you need to launch it in your market is here: insights, positioning, messaging and buyer-facing content.';
+function hubHTML(){return '<div class="hub"><div class="hh"><small>Product hub</small><b>Vodafone Business Managed Smartphone</b><p>'+HUBINTRO+'</p></div><div class="rows">'+
+ '<div><h6>Launch toolkit</h6><div class="t"><i style="background-image:url(assets/ms-cover.jpg)"></i></div></div>'+
+ '<div><h6>Insights</h6><div class="t"><i style="background-image:url(assets/ms-stat-a.jpg)"></i><i style="background-image:url(assets/ms-stat-b.jpg)"></i><i style="background-image:url(assets/ms-stat-c.jpg)"></i></div></div>'+
+ '<div><h6>Imagery</h6><div class="t"><i style="background-image:url(assets/ms-brand-a.jpg)"></i><i style="background-image:url(assets/ms-brand-b.jpg)"></i></div></div></div></div>';}
+var paneHubs='<div class="qbox" style="margin-bottom:12px"><span class="spark">'+ICON.spark+'</span><span class="q"></span><i class="caret"></i><span class="ui-sp"></span><span class="chip">Template: Product hub</span></div><div class="hubwrap">'+hubHTML()+'<div style="display:flex;gap:10px;margin-top:12px"><span class="btn">Review and publish</span></div></div>';
+var paneShare='<div style="opacity:.55">'+hubHTML()+'</div><div class="share"><h5>Share “Vodafone Business Managed Smartphone”</h5>'+
+ '<div class="lbl">Who can open it</div><div class="opt"><span>Colleagues</span><span class="on">A market: Ireland</span><span>Anyone with the link</span></div>'+
+ '<div class="row" style="margin-top:12px"><span>Expires</span><span class="sel">31 January 2027</span></div>'+
+ '<div class="row"><span>Password</span><span class="tog on"><i></i></span></div>'+
+ '<div class="lnk"><div>Link to this hub</div><span class="btn">Copy link</span></div>'+
+ '<div class="opened"><i style="background-image:url(assets/sp-par.jpg)"></i><i style="background-image:url(assets/sp-prod.jpg)"></i><i style="background-image:url(assets/sp-ops.jpg)"></i>Opened by 12 people in Ireland</div>'+
+ '<div class="nolic">No licence needed</div></div>';
+var y='<td class="y">✓</td>',n='<td class="n">–</td>';
+var paneRoles='<div class="ph"><h4>Roles</h4></div><div class="sso"><span class="vm"></span><div><b>Vodafone single sign-on</b><div style="color:#86868b">Everyone signs in with their Vodafone account</div></div><span class="chip">On</span></div>'+
+ '<table class="rt"><tr><th>Role</th><th>Markets</th><th>Upload</th><th>Approve</th><th>Build hubs</th><th>Share</th></tr>'+
+ '<tr><td>Admin</td><td>All markets</td>'+y+y+y+y+'</tr><tr><td>Approver</td><td>All markets</td>'+n+y+n+y+'</tr><tr><td>Editor</td><td>All markets</td>'+y+n+y+y+'</tr><tr><td>Market editor</td><td>Ireland only</td>'+y+n+y+y+'</tr><tr><td>Viewer</td><td>All markets</td>'+n+n+n+y+'</tr></table>'+
+ '<div class="log"><h6>Every change is recorded</h6><div><span>10:42</span>Market editor, Ireland, published the Managed Smartphone hub</div><div><span>09:15</span>Approver approved the Managed Smartphone launch toolkit</div><div><span>08:58</span>Editor added 3 insight assets</div></div>';
+var paneAgent='<div class="chat"><div class="msg u m1">What’s new for Ireland this month?</div>'+
+ '<div class="msg a m2"><span class="spark">'+ICON.spark+'</span>Three new assets are approved for Ireland:<div class="minis">'+['ms-cover','r10','r04'].map(function(k){return '<div class="mini"><i style="background-image:url('+I(k)+')"></i><b>'+A[k][1]+'</b><small>'+A[k][0]+'</small></div>'}).join('')+'</div></div>'+
+ '<div class="msg u m3">Make these a collection for the Managed Smartphone launch.</div>'+
+ '<div class="typing m4"><i></i><i></i><i></i></div>'+
+ '<div class="msg a m5"><span class="spark">'+ICON.spark+'</span>Done. Your collection is ready.<div class="coll"><div class="st"><i style="background-image:url(assets/r04.jpg);left:16px;top:0"></i><i style="background-image:url(assets/r10.jpg);left:8px;top:6px"></i><i style="background-image:url(assets/ms-cover.jpg);left:0;top:12px"></i></div><div><b>Managed Smartphone launch: Ireland</b><small>Collection · 3 assets</small></div></div></div>'+
+ '<div class="cin">Ask the hub</div></div>';
+var paneAnalytics='<div class="ph"><h4>Adoption</h4><span class="ui-sp"></span><span class="chip dd">Last 30 days</span><span class="btn ghost">Share dashboard</span></div>'+
+ '<div class="kpis"><div><small>Active users</small><b>2,140</b></div><div><small>Searches</small><b>9,870</b></div><div><small>Downloads</small><b>2,548</b></div><div><small>Searches with no result</small><b>6%</b></div></div>'+
+ '<div class="dash2"><div class="cardx"><h6>Active users by market</h6><div class="mbars">'+[['UK',92],['Germany',80],['Ireland',74,1],['Italy',58],['Spain',44],['Netherlands',36],['Portugal',14]].map(function(m){return '<div class="'+(m[2]?'hi':'')+'"><span>'+m[1]+'</span><i style="height:'+m[1]*1.25+'px"></i></div>'}).join('')+'</div><div class="mlab">'+['UK','Germany','Ireland','Italy','Spain','Netherlands','Portugal'].map(function(m){return '<span>'+m+'</span>'}).join('')+'</div></div>'+
+ '<div class="cardx nf"><h6>Searches that find nothing</h6><div class="r">network security<span>41</span></div><div class="r">satellite iot pricing<span>23</span></div><div class="r">teams calling case study<span>17</span></div><div class="r">sd-lan datasheet<span>12</span></div></div></div>'+
+ '<div class="aich"><div class="msg u">Which markets used SD-WAN content this month?</div><div class="msg a"><span class="spark">'+ICON.spark+'</span>Ireland, Germany and the UK. Ireland used it most: 86 downloads, against 61 in Germany and 40 in the UK.</div></div>';
+var portal='<div class="ext" id="portal"><div class="px-top"><b>Vodafone Business Ireland</b><span>Sales portal</span><span class="on">Launches</span><span>Customers</span><span>Training</span></div>'+
+ '<div class="px-body"><h4>Managed Smartphone launch</h4><p>Approved content for the Ireland launch.</p><div class="px-cards">'+['ms-cover','ms-brand-a','ms-stat-a','r10'].map(function(k){return '<div class="pxc"><i style="background-image:url('+I(k)+')"></i><div><small>'+A[k][0]+' · latest approved version</small><b>'+A[k][1]+'</b><span class="from"><span class="vm"></span>From The Marketing Hub</span></div></div>'}).join('')+'</div>'+
+ '<div class="px-api"><i></i>Pulled through the Marketing Hub API, with the same access rules as the hub</div></div></div>';
+var FEATS=[
+ ['Library','Every asset in one place, easy to browse.',['See every asset as a picture, not a list','Presentations, videos and documents sit together in a clean layout','Filter by product, market, industry and content type, several at once','Show or hide tags with one switch','Personalised for each market and role'],paneLib,0],
+ ['Upload','Add an asset in minutes. The hub describes and tags it.',['Drop in a file and its description is written for you','Tags are added from your own product, market and industry lists','Your team checks and approves before it goes live','Bring existing content across in bulk from SharePoint, OneDrive or Dropbox'],paneUp,0],
+ ['AI search','Ask in your own words. The hub finds the right content.',['Searches inside every file, not just titles and tags','Understands meaning, so it finds the right asset even when the words differ','Shows related assets with every result','Results ranked for your market and role'],paneSearch,0],
+ ['Thumbnails','Every asset gets an on-brand cover.',['Covers chosen from your approved brand images','Sized for every place they appear','No more flags or stock photos as covers'],paneThumb,0],
+ ['Content hubs','Ask for a hub and it is built for you.',['Describe what you need: “Create a product hub for the new Managed Smartphone launch”','Built on a ready-made template: market, product or campaign','Title, introduction and the right assets filled in','Your team reviews and publishes'],paneHubs,1],
+ ['Sharing','Share a hub with one link.',['Share with colleagues, one market, or anyone with the link','Add an expiry date and a password','See who opened it','No extra licence needed'],paneShare,1],
+ ['Roles','The right access for every team.',['Everyone signs in with their Vodafone account','Admins, approvers, editors and viewers each see and do what they should','Market editors work only on their own market','A record of every change'],paneRoles,4],
+ ['AI agent','A helper that knows all your content.',['Answers questions about the hub and its content','Finds assets and builds collections or hubs when asked','Tells each market what is new for them','Fewer support requests and less training'],paneAgent,2],
+ ['Connected to your sites and tools','Hub content inside the sites and tools your teams already use.',['Market sites and sales tools show hub content directly','Always the latest approved version','Update once in the hub and it changes everywhere'],'',0],
+ ['Analytics','See how the hub is used, and what is missing.',['An adoption dashboard by market and team','Ask questions about usage and get a plain answer','See what people search for and do not find','Share the results with stakeholders'],paneAnalytics,3]
+];
+$('#featStage').innerHTML='<div class="ui">'+topbar()+side()+'<div class="ui-main">'+FEATS.map(function(f,i){return '<div class="pane'+(i===0?' on':'')+'" data-p="'+i+'">'+f[3]+'</div>'}).join('')+'</div></div>'+portal;
+$('#featList').innerHTML=FEATS.map(function(f,i){return '<button class="'+(i===0?'on':'')+'" data-f="'+i+'">'+f[0]+'</button>'}).join('');
+$('#featText').innerHTML=FEATS.map(function(f,i){return '<div class="ft'+(i===0?' on':'')+'" data-f="'+i+'"><h3>'+f[0]+'</h3><p>'+f[1]+'</p><ul>'+f[2].map(function(l){return '<li>'+l+'</li>'}).join('')+'</ul></div>'}).join('');
+function sideOn(n){$$('#featStage .ui-side a[data-n]').forEach(function(a){a.classList.toggle('on',+a.dataset.n===n)})}
+sideOn(0);
+
+/* ---------- 7 content hubs (Netflix) ---------- */
+var HUBS=[
+ {k:'Market hub',d:'Everything approved for one market.',t:'Ireland',l:['Everything approved for Vodafone Business Ireland, in one place.','New content appears as soon as it is approved.'],img:'r08',rows:[['New this month',['ms-cover','real/w01','real/c02','real/w04','r09']],['Case studies',['real/c01','real/c05','real/c03','real/c04','real/c06']]]},
+ {k:'Product hub',t:'Managed Smartphone'},
+ {k:'Campaign hub',t:'Fit for the Future'},
+ {k:'More for your use cases',d:'',t:'More for your use cases',l:['Designed once, filled by AI on demand.'],img:'',rows:[]}
+];
+function nt(k){var a=A[k];return '<div class="nt"><div class="im" style="background-image:url('+I(k)+')"></div><em>'+a[0]+'</em><div class="more"><b>'+a[1]+'</b><span>'+a[2]+' · '+a[3]+'</span></div></div>';}
+function li(k){var a=A[k];return '<div class="pli"><i style="background-image:url('+I(k)+')"></i><div><small>'+a[0]+'</small><b>'+a[1]+'</b></div></div>';}
+function ctile(k){var a=A[k];return '<div class="ctile"><i style="background-image:url('+I(k)+')"></i><small>'+a[0]+'</small><b>'+a[1]+'</b></div>';}
+function productHub(){
+ return '<div class="phb"><div class="phb-hero"><div class="phb-tx"><small>Product hub</small><h3>Managed Smartphone</h3><p>Take the work out of work phones with one managed Vodafone service. The launch toolkit, insights and case studies for every market.</p><div class="phb-act"><button class="open dk">Open toolkit</button><span>Updated 2 days ago</span></div></div><div class="phb-im"></div></div>'+
+  '<div class="phb-grid"><div class="phb-feat"><h4>Launch toolkit</h4><div class="phb-card"><i style="background-image:url(assets/ms-cover.jpg)"></i><b>Vodafone Business Managed Smartphone launch toolkit</b><small>Toolkit · 142 pages · Ireland</small></div></div>'+
+  '<div><h4>Insights</h4>'+['real/w01','real/w02','real/w06'].map(li).join('')+'</div>'+
+  '<div><h4>Case studies</h4>'+['real/c02','real/c05','real/c04'].map(li).join('')+'</div></div></div>';}
+function campaignHub(){
+ var st=[['1','Awareness',['r10','r05']],['2','Consideration',['real/w06','r09']],['3','Decision',['real/c02','real/c06']]];
+ return '<div class="cph"><div class="cph-hero"><div class="cph-tx"><small>Campaign hub · January to March</small><h3>Fit for the Future</h3><p>Everything a market needs to run the campaign, stage by stage.</p></div></div>'+
+  '<div class="cph-st">'+st.map(function(s){return '<div class="cph-col"><h4><span>'+s[0]+'</span>'+s[1]+'</h4>'+s[2].map(ctile).join('')+'</div>'}).join('')+'</div></div>';}
+function renderHub(i){var h=HUBS[i];
+ if(i===1)return productHub();
+ if(i===2)return campaignHub();
+ var body='<div class="hero">'+(h.img?'<div class="hi" style="background-image:url('+I(h.img)+')"></div>':'')+'<div class="hc"><small>'+h.k+(h.d?' · '+h.d:'')+'</small><h3>'+h.t+'</h3><p>'+h.l.join('<br>')+'</p>'+(h.rows.length?'<button class="open">Open</button>':'')+'</div></div>';
+ if(h.rows.length) body+=h.rows.map(function(r){return '<div class="nrow"><h4>'+r[0]+'</h4><div class="ntiles">'+r[1].map(nt).join('')+'</div></div>'}).join('');
+ else body+='<div class="nrow"><h4>&nbsp;</h4><div class="ntiles">'+'<div class="nt ph">+</div>'.repeat(5)+'</div></div><div class="nrow"><h4>&nbsp;</h4><div class="ntiles">'+'<div class="nt ph">+</div>'.repeat(5)+'</div></div>';
+ return body;}
+var hubIdx=0;
+function setHub(i){hubIdx=i;$$('.nfx-top button').forEach(function(b){b.classList.toggle('on',+b.dataset.h===i)});var bd=$('#nfxBody');
+ if(HAS&&!REDUCE){gsap.to(bd,{opacity:0,duration:.2,onComplete:function(){bd.innerHTML=renderHub(i);gsap.fromTo(bd,{opacity:0},{opacity:1,duration:.35});gsap.from($$('.hc > *, .phb-tx > *, .cph-tx > *',bd),{y:20,opacity:0,duration:.6,stagger:.07,ease:'power3.out'});gsap.from($$('.nt, .phb-grid > div, .cph-col',bd),{y:24,opacity:0,duration:.5,stagger:.05,ease:'power3.out',delay:.1});}});}
+ else bd.innerHTML=renderHub(i);}
+$('#nfxBody').innerHTML=renderHub(0);
+
+/* ---------- 8 bento ---------- */
+var SV={
+ sso:'<svg viewBox="0 0 120 66"><rect class="s" x="66" y="26" width="34" height="28" rx="5"/><path class="s" d="M73 26v-8a10 10 0 0120 0v8"/><circle class="fr" cx="83" cy="40" r="4"/><g class="a-key"><circle class="s" cx="26" cy="40" r="9"/><path class="s" d="M35 40h22M50 40v6M56 40v4"/></g></svg>',
+ roles:'<svg viewBox="0 0 120 66"><g><circle class="s" cx="30" cy="24" r="8"/><path class="s" d="M16 52a14 14 0 0128 0"/></g><g class="a-blink"><circle cx="60" cy="22" r="9" class="fr"/><path d="M45 52a15 15 0 0130 0z" class="fr"/></g><g><circle class="s" cx="90" cy="24" r="8"/><path class="s" d="M76 52a14 14 0 0128 0"/></g></svg>',
+ lib:'<svg viewBox="0 0 120 66"><rect class="fg" x="18" y="4" width="24" height="30" rx="4"/><rect class="fg a-blink" x="18" y="38" width="24" height="24" rx="4" style="animation-delay:.4s"/><rect class="fr a-blink" x="48" y="4" width="24" height="20" rx="4"/><rect class="fg" x="48" y="28" width="24" height="34" rx="4"/><rect class="fg" x="78" y="4" width="24" height="36" rx="4"/><rect class="fg a-blink" x="78" y="44" width="24" height="18" rx="4" style="animation-delay:1.2s"/></svg>',
+ search:'<svg viewBox="0 0 120 66"><rect class="s" x="6" y="20" width="108" height="26" rx="13"/><circle class="s" cx="22" cy="33" r="6"/><path class="s" d="M26.5 37.5l4 4"/><circle class="fw a-blink" cx="44" cy="33" r="3"/><circle class="fw a-blink" cx="54" cy="33" r="3" style="animation-delay:.3s"/><circle class="fw a-blink" cx="64" cy="33" r="3" style="animation-delay:.6s"/><circle class="fr" cx="101" cy="33" r="7"/></svg>',
+ upload:'<svg viewBox="0 0 120 66"><path class="s" d="M24 6h28l12 12v42H24z"/><path class="sg" d="M32 30h22M32 38h22M32 46h14"/><g class="a-up"><path class="s" d="M88 44V18M78 28l10-10 10 10" style="stroke:#e60000"/></g><rect class="fw a-pop" x="70" y="50" width="34" height="10" rx="5"/></svg>',
+ thumbs:'<svg viewBox="0 0 120 66"><rect class="fg" x="26" y="8" width="68" height="50" rx="6"/><path d="M26 50l20-18 14 12 10-8 24 18v2a6 6 0 01-6 6H32a6 6 0 01-6-6z" class="fr"/><circle class="fw" cx="78" cy="22" r="5"/><g class="a-crop"><path class="s" d="M18 16V4h12M102 16V4H90M18 50v12h12M102 50v12H90"/></g></svg>',
+ hubs:'<svg viewBox="0 0 120 66"><rect class="fr" x="8" y="4" width="104" height="30" rx="6"/><rect class="fw" x="16" y="12" width="40" height="5" rx="2.5"/><rect class="fw" x="16" y="21" width="26" height="4" rx="2" style="opacity:.7"/><clipPath id="cp1"><rect x="8" y="40" width="104" height="24"/></clipPath><g clip-path="url(#cp1)"><g class="a-slide"><rect class="fg" x="8" y="40" width="30" height="22" rx="4"/><rect class="fg" x="44" y="40" width="30" height="22" rx="4"/><rect class="fg" x="80" y="40" width="30" height="22" rx="4"/><rect class="fg" x="116" y="40" width="30" height="22" rx="4"/></g></g></svg>',
+ share:'<svg viewBox="0 0 120 66"><path class="sg" d="M34 33L86 14M34 33l52 19"/><circle class="fr" cx="30" cy="33" r="9"/><circle class="s" cx="90" cy="13" r="7"/><circle class="s" cx="90" cy="53" r="7"/><circle class="fw" r="3.5"><animateMotion dur="2.2s" repeatCount="indefinite" path="M34 33L86 14"/></circle><circle class="fw" r="3.5"><animateMotion dur="2.2s" begin="1.1s" repeatCount="indefinite" path="M34 33L86 52"/></circle></svg>',
+ agent:'<svg viewBox="0 0 120 66"><path class="s" d="M10 8h56v24H24l-10 8v-8h-4z"/><path d="M54 30h56v24h-6v8l-10-8H54z" class="fr"/><circle class="fw a-blink" cx="70" cy="42" r="3"/><circle class="fw a-blink" cx="82" cy="42" r="3" style="animation-delay:.3s"/><circle class="fw a-blink" cx="94" cy="42" r="3" style="animation-delay:.6s"/></svg>',
+ eco:'<svg viewBox="0 0 120 66"><path class="sg" d="M60 33L18 10M60 33L102 10M60 33L18 56M60 33L102 56"/><circle class="fr" cx="60" cy="33" r="11"/><circle class="fr a-pulse" cx="60" cy="33" r="11" style="opacity:.6"/><rect class="s" x="8" y="2" width="20" height="16" rx="3"/><rect class="s" x="92" y="2" width="20" height="16" rx="3"/><rect class="s" x="8" y="48" width="20" height="16" rx="3"/><rect class="s" x="92" y="48" width="20" height="16" rx="3"/><circle class="fw" r="3"><animateMotion dur="2s" repeatCount="indefinite" path="M60 33L18 10"/></circle><circle class="fw" r="3"><animateMotion dur="2s" begin=".5s" repeatCount="indefinite" path="M60 33L102 56"/></circle><circle class="fw" r="3"><animateMotion dur="2s" begin="1s" repeatCount="indefinite" path="M60 33L102 10"/></circle></svg>',
+ analytics:'<svg viewBox="0 0 120 66"><path class="sg" d="M10 62h100"/><rect class="fg a-grow" x="16" y="30" width="14" height="30" rx="3"/><rect class="fg a-grow" x="36" y="18" width="14" height="42" rx="3" style="animation-delay:.3s"/><rect class="fr a-grow" x="56" y="6" width="14" height="54" rx="3" style="animation-delay:.6s"/><rect class="fg a-grow" x="76" y="24" width="14" height="36" rx="3" style="animation-delay:.9s"/><rect class="fg a-grow" x="96" y="36" width="14" height="24" rx="3" style="animation-delay:1.2s"/></svg>',
+ mig:'<svg viewBox="0 0 120 66"><path class="sg" d="M8 20h70" style="stroke-width:4"/><path d="M38 46h76" stroke="#e60000" stroke-width="4" stroke-linecap="round"/><path class="s" d="M78 20v26" stroke-dasharray="3 4"/><circle class="fw" r="5"><animateMotion dur="3.2s" repeatCount="indefinite" path="M8 20H78V46H114"/></circle></svg>',
+ support:'<svg viewBox="0 0 120 66"><rect class="s" x="18" y="8" width="62" height="42" rx="6"/><path d="M44 20v18l14-9z" class="fr"/><path class="s" d="M38 58h22"/><path d="M84 30h28v18h-6v6l-8-6H84z" class="fw"/><text x="98" y="44" text-anchor="middle" font-size="13" font-weight="700" fill="#000" font-family="VF,Arial">?</text></svg>'
+};
+var B=[['Single sign-on','sso','Sign in with a Vodafone account'],['Roles and permissions','roles','The right access for every team'],['Library','lib','Every asset in one place','w2'],['Upload and auto-tagging','upload','Described and tagged for you','w2'],['AI search','search','Searches inside every file','w2'],'CORE',['Brand thumbnails','thumbs','On-brand covers, every time'],['Content hubs','hubs','Built on demand from templates'],['Sharing','share','One link, with password and expiry'],['AI agent','agent','Answers questions and does tasks'],['Connected sites and tools','eco','Hub content inside your other tools','w2'],['Analytics','analytics','Usage and gaps, by market','w2'],['Migration','mig','All content moved, both hubs run side by side','w2'],['Support and training','support','Help for admins and markets','w2']];
+$('#bento').innerHTML=B.map(function(b){if(b==='CORE')return '<div class="bt core"><span class="vm"></span><b>The Marketing Hub</b><span>AI-powered</span></div>';return '<div class="bt '+(b[3]||'')+'">'+SV[b[1]]+'<b>'+b[0]+'</b><small>'+b[2]+'</small></div>'}).join('');
+
+/* ---------- stage scaling ---------- */
+function fitOne(f){var w=+f.dataset.w||1280;if(f.clientWidth)f.style.setProperty('--s',f.clientWidth/w);}
+var fits=$$('.fit');fits.forEach(fitOne);
+if(window.ResizeObserver){var ro=new ResizeObserver(function(es){es.forEach(function(e){fitOne(e.target)})});fits.forEach(function(f){ro.observe(f)});}
+function typeInto(tl,el,text,dur,at){var o={n:0};tl.to(o,{n:text.length,duration:dur,ease:'none',onStart:function(){el.textContent=''},onUpdate:function(){el.textContent=text.slice(0,Math.round(o.n))}},at);}
+function fmt(v,c){v=Math.round(v);return c?v.toLocaleString('en-GB'):String(v)}
+
+/* ---------- features ---------- */
+var fIdx=0,fTl=null,fTimers=[];
+function clearF(){if(fTl){fTl.kill();fTl=null}fTimers.forEach(clearTimeout);fTimers=[];$$('#featStage .fly').forEach(function(e){e.remove()});}
+function setFeature(i){i=(i+FEATS.length)%FEATS.length;if(i===fIdx)return;fIdx=i;clearF();
+ $$('#featStage .pane').forEach(function(p){p.classList.toggle('on',+p.dataset.p===i)});
+ $('#portal').classList.toggle('on',i===8);
+ sideOn(FEATS[i][4]);
+ $$('#featList button').forEach(function(b){b.classList.toggle('on',+b.dataset.f===i)});
+ $$('.ft').forEach(function(b){b.classList.toggle('on',+b.dataset.f===i)});
+ paneEnter(i);}
+function finalPane(i,p){
+ if(i===2){$('.q',p).textContent='case studies for manufacturing customers'}
+ if(i===1){$('.f1',p).textContent='Vodafone Business Managed Smartphone launch toolkit';$('.f2',p).textContent='Launch toolkit for Vodafone Business Managed Smartphone: insights, positioning, messaging and buyer-facing content.';$('.f3',p).textContent=LONG}
+ if(i===3){$('.cov .img',p).style.opacity=1;$('.lib .pick',p).style.setProperty('--bm',1)}
+ if(i===4){$('.q',p).textContent='Create a product hub for the new Managed Smartphone launch'}
+}
+function paneEnter(i){var p=$('#featStage .pane[data-p="'+i+'"]');
+ if(!HAS||REDUCE){finalPane(i,p);return}
+ var tl=gsap.timeline();fTl=tl;
+ if(i===0){var tog=$('#tagTog'),pane=p;tog.classList.add('on');pane.classList.remove('notags');
+  tl.fromTo($$('.ac',p),{y:30,opacity:0},{y:0,opacity:1,duration:.6,stagger:.04,ease:'power3.out'}).fromTo($$('.fby .chip',p),{scale:.7,opacity:0},{scale:1,opacity:1,duration:.35,stagger:.1,ease:'back.out(2)'},.1).fromTo($$('.recs i',p),{scale:.6,opacity:0},{scale:1,opacity:1,duration:.4,stagger:.06},.3);
+  fTimers.push(setTimeout(function(){tog.classList.remove('on');pane.classList.add('notags')},2200));
+  fTimers.push(setTimeout(function(){tog.classList.add('on');pane.classList.remove('notags')},4000));}
+ if(i===2){var q=$('.q',p);q.textContent='';tl.set([$('.sfix',p),$('.sf',p)],{opacity:0}).set($$('.rc',p),{opacity:0});
+  typeInto(tl,q,'case studies for manufacturing customers',1.4,.2);
+  tl.to($('.sfix',p),{opacity:1,duration:.3}).to($('.sf',p),{opacity:1,duration:.3}).fromTo($$('.sf .chip',p),{scale:.6},{scale:1,duration:.35,stagger:.12,ease:'back.out(2)'},'<').to($$('.rc',p),{opacity:1,duration:.5,stagger:.15},'-=.1').fromTo($$('.rc',p),{y:24},{y:0,duration:.6,stagger:.15,ease:'power3.out'},'<');}
+ if(i===1){var f1=$('.f1',p),f2=$('.f2',p),f3=$('.f3',p);[f1,f2,f3].forEach(function(e){e.textContent=''});
+  tl.set($$('.fld .chip',p),{opacity:0,scale:.6}).fromTo($('.doc',p),{y:-140,rotation:-8,opacity:0},{y:0,rotation:0,opacity:1,duration:.7,ease:'back.out(1.4)'}).fromTo($('.prog i',p),{scaleX:0},{scaleX:1,duration:1,ease:'power2.inOut'});
+  typeInto(tl,f1,'Vodafone Business Managed Smartphone launch toolkit',.6);typeInto(tl,f2,'Launch toolkit for Vodafone Business Managed Smartphone: insights, positioning, messaging and buyer-facing content.',1);typeInto(tl,f3,LONG,2.2);
+  tl.to($$('.fld .chip',p),{opacity:1,scale:1,duration:.3,stagger:.08,ease:'back.out(2)'});}
+ if(i===3){var img=$('.cov .img',p),pick=$('.lib .pick',p);img.style.opacity=0;pick.style.setProperty('--bm',0);
+  tl.fromTo($$('.lib .g i',p),{scale:.8,opacity:0},{scale:1,opacity:1,duration:.4,stagger:.04}).add(function(){pick.style.setProperty('--bm',1)},'+=.2').add(function(){flyThumb(p)},'+=.6').fromTo($$('.crops div',p),{opacity:0,y:12},{opacity:1,y:0,duration:.4,stagger:.1},'+=1.3');}
+ if(i===4){var q2=$('.q',p);q2.textContent='';tl.set($('.hubwrap',p),{opacity:0});typeInto(tl,q2,'Create a product hub for the new Managed Smartphone launch',1.5,.2);
+  tl.to($('.hubwrap',p),{opacity:1,duration:.3},'+=.3').fromTo($('.hh',p),{clipPath:'inset(0 100% 0 0)'},{clipPath:'inset(0 0% 0 0)',duration:.8,ease:'power3.inOut'},'<').fromTo($$('.hh > *',p),{x:-20,opacity:0},{x:0,opacity:1,duration:.5,stagger:.12},'-=.3').fromTo($$('.rows .t i',p),{scale:.7,opacity:0},{scale:1,opacity:1,duration:.4,stagger:.06,ease:'back.out(1.6)'},'-=.2');}
+ if(i===5){tl.fromTo($('.share',p),{x:440},{x:0,duration:.7,ease:'power3.out',delay:.3}).fromTo($$('.share > *',p),{opacity:0,y:10},{opacity:1,y:0,duration:.35,stagger:.05},'-=.3');}
+ if(i===6){tl.fromTo($$('.rt tr, .sso, .log div',p),{opacity:0,x:-14},{opacity:1,x:0,duration:.4,stagger:.05});}
+ if(i===7){var ms=['.m1','.m2','.m3','.m4','.m5'].map(function(s){return $(s,p)});tl.set(ms,{opacity:0,y:14});
+  tl.to(ms[0],{opacity:1,y:0,duration:.4,delay:.2}).to(ms[1],{opacity:1,y:0,duration:.5},'+=.6').fromTo($$('.m2 .mini',p),{scale:.8,opacity:0},{scale:1,opacity:1,stagger:.1,duration:.35},'-=.2').to(ms[2],{opacity:1,y:0,duration:.4},'+=.8').to(ms[3],{opacity:1,y:0,duration:.3},'+=.2').to(ms[3],{opacity:0,duration:.2,display:'none'},'+=1').to(ms[4],{opacity:1,y:0,duration:.5});
+  tl.eventCallback('onStart',function(){ms[3].style.display='flex'});}
+ if(i===8){var pt=$('#portal');tl.fromTo($$('.pxc',pt),{y:30,opacity:0},{y:0,opacity:1,duration:.55,stagger:.1,ease:'power3.out',delay:.3}).fromTo($$('.from',pt),{scale:.6,opacity:0},{scale:1,opacity:1,duration:.3,stagger:.1,ease:'back.out(2)'},'-=.2');}
+ if(i===9){tl.fromTo($$('.mbars i',p),{scaleY:0},{scaleY:1,duration:.7,stagger:.05,ease:'power3.out'}).fromTo($$('.kpis div',p),{y:12,opacity:0},{y:0,opacity:1,duration:.4,stagger:.06},0).fromTo($('.aich',p),{y:40,opacity:0},{y:0,opacity:1,duration:.6,ease:'power3.out'},.6).fromTo($('.aich .msg.a',p),{opacity:0},{opacity:1,duration:.4},1.4);}
+}
+function flyThumb(p){var st=$('#featStage');var s=st.getBoundingClientRect().width/1280;
+ var src=$('.lib .pick',p).getBoundingClientRect(),dst=$('.cov',p).getBoundingClientRect(),sr=st.getBoundingClientRect();
+ var f=document.createElement('div');f.className='fly';f.style.backgroundImage='url(assets/ms-brand-a.jpg)';
+ f.style.left=(src.left-sr.left)/s+'px';f.style.top=(src.top-sr.top)/s+'px';f.style.width=src.width/s+'px';f.style.height=src.height/s+'px';st.appendChild(f);
+ gsap.to(f,{left:(dst.left-sr.left)/s,top:(dst.top-sr.top)/s,width:dst.width/s,height:dst.height/s,borderRadius:0,duration:1.1,ease:'power3.inOut',onComplete:function(){$('.cov .img',p).style.opacity=1;gsap.to(f,{opacity:0,duration:.3,onComplete:function(){f.remove()}})}});}
+paneEnter(0);
+
+/* ---------- today ---------- */
+var TN=4,tIdx=-1,tTl=null,todayST=null;
+function setToday(i){if(i===tIdx)return;tIdx=i;
+ $$('#todayStage .ts').forEach(function(s){s.classList.toggle('on',+s.dataset.i===i)});
+ $$('.ci').forEach(function(c){c.classList.toggle('on',+c.dataset.i===i)});
+ if(tTl){tTl.kill();tTl=null}if(!HAS||REDUCE)return;
+ var s=$('#todayStage .ts[data-i="'+i+'"]'),tl=gsap.timeline();tTl=tl;
+ if(i===0){var q=$('.q',s);tl.set($('.ov-drop',s),{opacity:0});typeInto(tl,q,'network security',.7,.2);tl.to($('.ov-drop',s),{opacity:1,duration:.3});}
+ if(i===1){tl.fromTo($('.modal',s),{y:40,opacity:0},{y:0,opacity:1,duration:.5,ease:'power3.out'}).fromTo($$('.tag-m',s),{x:20,opacity:0},{x:0,opacity:1,duration:.4,stagger:.3,ease:'power3.out'},'+=.2');}
+ if(i===2){tl.fromTo($$('.box',s),{opacity:0},{opacity:1,duration:.3,stagger:.05});}
+ if(i===3){tl.fromTo($$('.tag-m',s),{x:20,opacity:0},{x:0,opacity:1,duration:.4,stagger:.3,ease:'power3.out',delay:.2});}
+}
+
+/* ---------- introducing → features laptop geometry ---------- */
+var G={k:.5,dx:0,dy:0},fShown=false;
+function placeNew(){var vw=window.innerWidth,vh=window.innerHeight;
+ var wrapW=Math.min(1240,vw-64),wrapL=(vw-wrapW)/2,textW=vw<1100?0:340,gap=textW?56:0,lapCol=wrapW-textW-gap;
+ var W=Math.min(lapCol/1.144,(vh-46-150)/(vh/vw)/1.08),k=W/vw,H=vh*k,bz=.024*W;
+ var block=36+34+bz+H+bz*2.1,top0=Math.max(70,(vh-46-block)/2);
+ var sTop=top0+36+34+bz,cx=wrapL+lapCol/2,cy=sTop+H/2;
+ G={k:k,dx:cx-vw/2,dy:cy-vh/2};
+ $('#nwZoom').style.setProperty('--B',(vw*.024)+'px');
+ var pl=$('#featList').style;pl.left=wrapL+'px';pl.top=top0+'px';pl.width=wrapW+'px';
+ var tx=$('#featText').style;tx.left=(wrapL+lapCol+gap)+'px';tx.top=sTop+'px';tx.width=textW+'px';tx.height=H+'px';tx.display=textW?'grid':'none';}
+function newFinal(){placeNew();if(!HAS)return;gsap.set('#nwZoom',{scale:G.k,x:G.dx,y:G.dy});gsap.set('#s-new',{backgroundColor:'#000'});$('#s-new').dataset.theme='dark';
+ gsap.set(['.nw-hd','.nw-veil'],{opacity:0});gsap.set('#nwApp',{opacity:1});gsap.set(['#featList','#featText'],{autoAlpha:1});fShown=true;}
+placeNew();
+window.addEventListener('resize',placeNew);
+
+/* ---------- scroll motion ---------- */
+var newST=null;
+function setup(){
+ if(!HAS){setToday(0);return}
+ setToday(0);
+ if(!REDUCE){
+  // cover: layers at different speeds
+  gsap.from($$('#s-cover .en'),{opacity:0,y:90,scale:.88,duration:1.5,ease:'power3.out',stagger:.06,delay:.1});
+  gsap.from('#s-cover h1 span',{opacity:0,y:40,duration:1.1,ease:'power3.out',stagger:.12,delay:.2});
+  var ct={trigger:'#s-cover',start:'top top',end:'bottom top',scrub:true};
+  gsap.to('#ly1',{y:-120,ease:'none',scrollTrigger:ct});
+  gsap.to('#ly2',{y:-280,ease:'none',scrollTrigger:ct});
+  gsap.to('#ly3',{y:-520,ease:'none',scrollTrigger:ct});
+  gsap.to('#s-cover .ct',{y:160,scale:.9,opacity:0,ease:'none',scrollTrigger:{trigger:'#s-cover',start:'top top',end:'70% top',scrub:true}});
+  // generic reveals
+  $$('.sec').forEach(function(sec){var els=$$('.rv',sec);if(!els.length)return;gsap.from(els,{y:40,opacity:0,duration:.9,ease:'power3.out',stagger:.07,scrollTrigger:{trigger:sec,start:'top 72%',once:true}});});
+  // area cards parallax
+  $$('.px').forEach(function(el){gsap.fromTo(el,{y:+el.dataset.px},{y:-(+el.dataset.px)/3,ease:'none',scrollTrigger:{trigger:'.areas',start:'top bottom',end:'bottom top',scrub:true}});});
+  gsap.from('.prow.pr',{x:-40,opacity:0,duration:.7,ease:'power3.out',stagger:.14,scrollTrigger:{trigger:'.ptable',start:'top 78%',once:true}});
+  // today frame entrance
+  gsap.fromTo('#todayFrame',{scale:.88,rotateX:8,opacity:.4},{scale:1,rotateX:0,opacity:1,ease:'power2.out',scrollTrigger:{trigger:'#s-today',start:'top 90%',end:'top top',scrub:true}});
+  // features: laptop rises and turns to face you
+  // netflix window
+  gsap.fromTo('#nfx',{scale:.9,y:60},{scale:1,y:0,ease:'power2.out',scrollTrigger:{trigger:'#nfx',start:'top bottom',end:'top 25%',scrub:true}});
+  gsap.from('#nfxBody .hc > *',{y:20,opacity:0,duration:.7,stagger:.08,ease:'power3.out',scrollTrigger:{trigger:'#nfx',start:'top 70%',once:true}});
+  // bento
+  // bento: the hub tile lands first, the features gather round it as you scroll
+  var bc=$('.bt.core'),bts=$$('.bt:not(.core)');
+  var btl=gsap.timeline({scrollTrigger:{trigger:'#bento',start:'top 92%',end:'top 22%',scrub:.6}});
+  btl.fromTo(bc,{scale:1.5,opacity:0},{scale:1,opacity:1,duration:1,ease:'power2.out'},0);
+  bts.forEach(function(t){var r=t.getBoundingClientRect(),c=bc.getBoundingClientRect();var dx=(r.left+r.width/2)-(c.left+c.width/2),dy=(r.top+r.height/2)-(c.top+c.height/2);
+   btl.fromTo(t,{x:-dx*.45,y:-dy*.45,scale:.6,opacity:0},{x:0,y:0,scale:1,opacity:1,duration:1,ease:'power3.out'},.35+Math.hypot(dx,dy)/2600);});
+  // investment: Hub + AI rises
+  if(document.querySelector('#recCol')) gsap.from('#recCol',{y:60,opacity:0,duration:1,ease:'power3.out',scrollTrigger:{trigger:'#price',start:'top 80%',once:true}});
+  gsap.from('#price .pcol:not(.lab) .pcell:not(.ph)',{opacity:0,y:10,duration:.4,stagger:.03,scrollTrigger:{trigger:'#price',start:'top 70%',once:true}});
+  // business case preview parallax
+  gsap.fromTo('.bprev',{y:50},{y:-30,ease:'none',scrollTrigger:{trigger:'.bcard',start:'top bottom',end:'bottom top',scrub:true}});
+  // approach: steps light up one by one as you scroll
+  var at=gsap.timeline({scrollTrigger:{trigger:'#steps',start:'top 80%',end:'bottom 60%',scrub:.6}});
+  $$('#steps li').forEach(function(li,k){at.fromTo(li,{opacity:.15,x:-20},{opacity:1,x:0,duration:1},k*.8)});
+ }
+ // counters
+ $$('.count').forEach(function(el){var to=+el.dataset.to,c=!!el.dataset.fmt;if(REDUCE){el.textContent=fmt(to,c);return}var o={v:0};gsap.to(o,{v:to,duration:1.6,ease:'power2.out',scrollTrigger:{trigger:el,start:'top 88%',once:true},onUpdate:function(){el.textContent=fmt(o.v,c)}});});
+ var mm=gsap.matchMedia();
+ mm.add('(min-width: 900px)',function(){
+  todayST=ScrollTrigger.create({trigger:'#s-today',start:'top top',end:function(){return '+='+(window.innerHeight*3.6)},pin:true,anticipatePin:1,onUpdate:function(self){setToday(Math.min(TN-1,Math.floor(self.progress*TN*.9999)))}});
+  if(REDUCE){$('#nwBoxes').style.display='none';newFinal();return function(){todayST=null}}
+  var cards=$$('#nwWall .c'),bx=$$('#nwBoxes i');
+  // the wall builds, zooms out into a laptop on black, and the laptop becomes the features screen
+  var tl=gsap.timeline({scrollTrigger:{trigger:'#s-new',start:'top top',end:function(){return '+='+(window.innerHeight*3.6)},pin:true,scrub:.7,anticipatePin:1,invalidateOnRefresh:true,onRefresh:placeNew,
+   onUpdate:function(){var t=tl.time();$('#s-new').dataset.theme=t>2.6?'dark':'light';var rev=t>=3.45;if(rev&&!fShown){fShown=true;paneEnter(fIdx)}else if(!rev)fShown=false;}}});
+  newST=tl.scrollTrigger;
+  tl.set(cards,{opacity:0},0);
+  tl.to(bx,{scale:.6,opacity:0,filter:'blur(8px)',duration:.6,stagger:{each:.03,from:'random'},ease:'power2.in'},.1);
+  tl.fromTo(cards,{y:function(){return 300+Math.random()*500},x:function(){return -200+Math.random()*400},rotation:function(){return -18+Math.random()*36},scale:1.2,opacity:0},{y:0,x:0,rotation:0,scale:1,opacity:1,duration:1.2,ease:'power3.out',stagger:{each:.01,from:'random'}},.45);
+  tl.fromTo('.nw-hd',{scale:.94},{scale:1,duration:1.6,ease:'none'},0);
+  tl.addLabel('wall',1.9);
+  tl.to(['.nw-hd','.nw-veil'],{opacity:0,y:-30,duration:.35,ease:'power2.in'},2.1);
+  tl.to('#s-new',{backgroundColor:'#000',duration:.6,ease:'none'},2.3);
+  tl.fromTo('#nwZoom',{scale:1,x:0,y:0},{scale:function(){return G.k},x:function(){return G.dx},y:function(){return G.dy},duration:1.1,ease:'power2.inOut'},2.3);
+  tl.fromTo('.nw-screen',{borderRadius:0},{borderRadius:function(){return 6/G.k},duration:1.1,ease:'power2.inOut'},2.3);
+  tl.to('#nwApp',{opacity:1,duration:.35},3.2);
+  tl.fromTo('#featList',{autoAlpha:0,y:16},{autoAlpha:1,y:0,duration:.35},3.3);
+  tl.fromTo('#featText',{autoAlpha:0,x:24},{autoAlpha:1,x:0,duration:.35},3.35);
+  tl.to({},{duration:.5});
+  return function(){todayST=null;newST=null};
+ });
+ mm.add('(max-width: 899px)',function(){$('#nwBoxes').style.display='none';newFinal()});
+}
+
+/* ---------- cover pointer parallax ---------- */
+(function(){if(REDUCE)return;var fcs=$$('#s-cover .fc'),mx=0,my=0,cx=0,cy=0;
+ window.addEventListener('pointermove',function(e){mx=e.clientX/window.innerWidth-.5;my=e.clientY/window.innerHeight-.5});
+ (function loop(){cx+=(mx-cx)*.06;cy+=(my-cy)*.06;fcs.forEach(function(f){var d=+f.dataset.d;f.style.transform='translate3d('+(-cx*30*d)+'px,'+(-cy*22*d)+'px,0)'});requestAnimationFrame(loop)})();})();
+
+/* ---------- interaction ---------- */
+document.addEventListener('click',function(e){
+ var fb=e.target.closest('#featList button');if(fb){setFeature(+fb.dataset.f);return}
+ var hb=e.target.closest('.nfx-top button');if(hb){setHub(+hb.dataset.h);return}
+ var ci=e.target.closest('.ci');if(ci&&todayST){goTo(todayST.start+(+ci.dataset.i+.5)/TN*(todayST.end-todayST.start));return}
+});
+
+/* ---------- stops, keys, footer ---------- */
+var SECS=$$('section.sec'),stops=[];
+function absTop(el){return el.getBoundingClientRect().top+window.scrollY}
+function computeStops(){stops=[];SECS.forEach(function(s){
+ if(s.id==='s-today'&&todayST){for(var k=0;k<TN;k++)stops.push(Math.round(todayST.start+(k+.5)/TN*(todayST.end-todayST.start)));return}
+ if(s.id==='s-new'&&newST){var tn=newST.animation;stops.push(Math.round(newST.start));stops.push(Math.round(newST.start+(tn.labels.wall/tn.duration())*(newST.end-newST.start)));stops.push(Math.round(newST.end-2));return}
+ var t=Math.round(absTop(s));stops.push(t);var h=s.offsetHeight;if(h>window.innerHeight*1.08)stops.push(Math.round(t+h-window.innerHeight));});
+ stops.sort(function(a,b){return a-b});}
+function goTo(y){window.scrollTo({top:Math.max(0,y),behavior:REDUCE?'auto':'smooth'})}
+function step(dir){computeStops();var y=window.scrollY,i;
+ if(dir>0){for(i=0;i<stops.length;i++){if(stops[i]>y+4){goTo(stops[i]);return}}}
+ else{for(i=stops.length-1;i>=0;i--){if(stops[i]<y-4){goTo(stops[i]);return}}goTo(0)}}
+function inView(el){var r=el.getBoundingClientRect();return r.top<window.innerHeight*.5&&r.bottom>window.innerHeight*.5}
+window.addEventListener('keydown',function(e){if(e.metaKey||e.ctrlKey||e.altKey)return;var k=e.key;
+ if(k==='ArrowDown'||k==='PageDown'||(k===' '&&!e.shiftKey)){e.preventDefault();step(1)}
+ else if(k==='ArrowUp'||k==='PageUp'||(k===' '&&e.shiftKey)){e.preventDefault();step(-1)}
+ else if(k==='Home'){e.preventDefault();goTo(0)}
+ else if(k==='End'){e.preventDefault();goTo(document.documentElement.scrollHeight)}
+ else if(k==='ArrowRight'||k==='ArrowLeft'){var d=k==='ArrowRight'?1:-1;
+  if(inView($('#s-new'))&&fShown){e.preventDefault();setFeature(fIdx+d)}
+  else if(inView($('#s-hubs'))){e.preventDefault();setHub((hubIdx+d+4)%4)}}});
+$('#nextBtn').addEventListener('click',function(){step(1)});
+$('#prevBtn').addEventListener('click',function(){step(-1)});
+var foot=$('#foot'),chName=$('#chName'),chNum=$('#chNum'),prog=$('#progBar');
+function onScroll(){var y=window.scrollY,H=document.documentElement.scrollHeight-window.innerHeight;prog.style.width=(H>0?y/H*100:0)+'%';
+ var mid=window.innerHeight*.5,line=window.innerHeight-23,cur=0,th='light';
+ SECS.forEach(function(s,i){var r=s.getBoundingClientRect();if(r.top<=mid)cur=i;if(r.top<=line&&r.bottom>line)th=s.dataset.theme});
+ chName.textContent=SECS[cur].dataset.ch;chNum.textContent=('0'+(cur+1)).slice(-2)+' / '+SECS.length;if(foot.dataset.theme!==th)foot.dataset.theme=th;foot.classList.toggle('hide',cur===0);}
+window.addEventListener('scroll',onScroll,{passive:true});
+
+setup();
+if(HAS){ScrollTrigger.addEventListener('refresh',function(){computeStops();onScroll()});ScrollTrigger.refresh();}
+computeStops();onScroll();
+window.addEventListener('load',function(){if(HAS)ScrollTrigger.refresh();computeStops();fits.forEach(fitOne)});
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(function(){if(HAS)ScrollTrigger.refresh()});
+window.__deck={stops:function(){return stops},setFeature:setFeature,setHub:setHub,todayStop:function(k){return todayST?Math.round(todayST.start+(k+.5)/TN*(todayST.end-todayST.start)):0}};
+})();
+</script>
+</body>
+</html>
