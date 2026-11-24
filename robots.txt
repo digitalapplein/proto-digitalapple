@@ -7,3 +7,4 @@ Disallow: /web-presentations/vodafone-networks-interactive-deck/
 Disallow: /web-presentations/bioness-medical-interactive-presentation/
 Disallow: /web-presentations/vodafone-marketing-hub-rebuilt/
 Disallow: /web-presentations/vodafone-workshop-deck/
+Disallow: /web-presentations/ai-content-at-scale-for-jll/
