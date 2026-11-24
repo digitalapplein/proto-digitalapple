@@ -16,7 +16,7 @@
   if (!k) return say("Open the link you were sent to view this presentation.");
   let page;
   try {
-    const res = await fetch("deck.bin?v=78736a35e39703a9f4fe90b7");
+    const res = await fetch("deck.bin?v=8272a16c38d6adcb46286f8c");
     if (!res.ok) return say("The presentation could not load. Please refresh.");
     const data = new Uint8Array(await res.arrayBuffer());
     const raw = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(k));
